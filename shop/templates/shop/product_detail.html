@@ -1,10 +1,234 @@
+
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+  <meta charset="UTF-8" />
+  <title>{{ product.name }}</title>
+  <link rel="stylesheet" href="{% static 'shop/style.css' %}" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9fafb;
+      margin: 0;
+      padding: 30px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-weight: 700;
+      font-size: 2rem;
+      color: #222;
+    }
+
+    img {
+      width: 100%;
+      max-width: 320px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      object-fit: contain;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    }
+
+    p.description {
+      font-size: 1.1rem;
+      line-height: 1.5;
+      color: #444;
+      margin-bottom: 15px;
+    }
+
+    p.price {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #28a745;
+      margin-bottom: 25px;
+    }
+
+    a.btn {
+      display: inline-block;
+      background-color: #007bff;
+      color: white;
+      padding: 12px 22px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      margin-right: 15px;
+      transition: background-color 0.3s ease;
+    }
+    a.btn:hover {
+      background-color: #0056b3;
+    }
+
+    /* Review Section */
+    .review-section {
+      margin-top: 50px;
+    }
+
+    .review-section h3 {
+      font-weight: 700;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    /* Star rating style */
+    .review-stars {
+      direction: rtl;
+      unicode-bidi: bidi-override;
+      display: inline-block;
+      font-size: 28px;
+      margin-bottom: 15px;
+    }
+
+    .review-stars input[type="radio"] {
+      display: none;
+    }
+
+    .review-stars label {
+      color: #ccc;
+      cursor: pointer;
+      padding: 0 5px;
+      transition: color 0.3s ease;
+      user-select: none;
+    }
+
+    .review-stars input[type="radio"]:checked ~ label,
+    .review-stars label:hover,
+    .review-stars label:hover ~ label {
+      color: #ffc107;
+    }
+
+    /* Textarea */
+    textarea {
+      width: 100%;
+      min-height: 90px;
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      resize: vertical;
+      margin-bottom: 20px;
+      font-family: inherit;
+    }
+
+    /* Submit button */
+    button[type="submit"] {
+      background-color: #28a745;
+      color: white;
+      padding: 12px 25px;
+      font-weight: 600;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button[type="submit"]:hover {
+      background-color: #218838;
+    }
+
+    /* Review box */
+    .review-box {
+      border: 1px solid #ddd;
+      background-color: #fefefe;
+      padding: 18px 22px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.03);
+    }
+
+    .review-box strong {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #333;
+    }
+
+    .review-box .stars {
+      color: #ffc107;
+      font-size: 18px;
+      margin-left: 8px;
+    }
+
+    .review-box small {
+      color: #666;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .review-box p {
+      font-size: 1rem;
+      color: #555;
+      margin: 0;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 20px;
+      }
+      img {
+        max-width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-$END$
+  <div class="container">
+    <h2>{{ product.name }}</h2>
+    <img src="{{ product.image.url }}" alt="{{ product.name }}" />
+    <p class="description">{{ product.description }}</p>
+    <p class="price">${{ product.price }}</p>
+
+    <a href="{% url 'add_to_cart' product.pk %}" class="btn">Add to Cart 🛒</a>
+    <a href="/" class="btn" style="background-color: #6c757d;">Back to Home</a>
+
+    <div class="review-section">
+      <h3>Leave a Review</h3>
+      {% if user.is_authenticated %}
+        <form method="POST">
+          {% csrf_token %}
+          <div class="review-stars">
+            {% for i in "54321" %}
+              <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" {% if form.rating.value|stringformat:"s" == i %}checked{% endif %}/>
+              <label for="star{{ i }}">&#9733;</label>
+            {% endfor %}
+          </div>
+          {{ form.comment }}
+          <button type="submit">Submit Review</button>
+        </form>
+      {% else %}
+        <p><a href="{% url 'login' %}">Login</a> to leave a review.</p>
+      {% endif %}
+
+      <h3>Customer Reviews</h3>
+      {% for review in reviews %}
+        <div class="review-box">
+          <strong>{{ review.user.username }}</strong>
+          <span class="stars">
+            {% for i in "12345" %}
+              {% if forloop.counter <= review.rating %}
+                &#9733;
+              {% else %}
+                <span style="color: #ccc;">&#9733;</span>
+              {% endif %}
+            {% endfor %}
+          </span>
+          <small>{{ review.created_at|date:"F j, Y, g:i a" }}</small>
+          <p>{{ review.comment }}</p>
+        </div>
+      {% empty %}
+        <p>No reviews yet.</p>
+      {% endfor %}
+    </div>
+  </div>
 </body>
 </html>

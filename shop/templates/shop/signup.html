@@ -1,10 +1,44 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8" />
+    <title>Register | MyShop</title>
+    <link rel="stylesheet" href="{% static 'shop/style.css' %}" />
+    <style>
+        .form-container {
+            max-width: 400px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        label, input {
+            display: block;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        input[type="submit"] {
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-$END$
+    <div class="form-container">
+        <h2>Register</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="Register" />
+        </form>
+        <p>Already have an account? <a href="{% url 'login' %}">Login here</a>.</p>
+    </div>
 </body>
 </html>

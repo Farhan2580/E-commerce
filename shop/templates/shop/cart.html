@@ -1,10 +1,61 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <title>Your Cart</title>
+    <link rel="stylesheet" href="{% static 'shop/style.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-$END$
+
+<div class="container">
+    <h1>Your Shopping Cart 🛒</h1>
+
+    {% if items %}
+    <form method="POST" action="{% url 'update_cart' %}">
+        {% csrf_token %}
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Subtotal</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>
+                        <input type="number" name="qty_{{ item.product.pk }}" value="{{ item.qty }}" min="1" class="qty-input">
+                    </td>
+                    <td>${{ item.subtotal }}</td>
+                    <td>
+                        <a href="{% url 'remove_from_cart' item.product.pk %}" class="btn-danger">❌ Remove</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="cart-actions">
+            <button type="submit" class="btn-update">🔁 Update Quantities</button>
+            <a href="{% url 'clear_cart' %}" class="btn-clear">🧹 Clear Cart</a>
+        </div>
+    </form>
+
+    <div class="cart-summary">
+        <h2>Total: ${{ total }}</h2>
+        <a href="{% url 'checkout' %}" class="btn-checkout">✅ Proceed to Checkout</a>
+        <a href="/" class="btn-back">🔙 Continue Shopping</a>
+    </div>
+
+    {% else %}
+        <p class="empty-cart">Your cart is empty.</p>
+        <a href="/" class="btn-back">🛍 Shop Now</a>
+    {% endif %}
+</div>
+
 </body>
 </html>

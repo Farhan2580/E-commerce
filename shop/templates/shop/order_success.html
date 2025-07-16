@@ -1,0 +1,76 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Success</title>
+    <link rel="stylesheet" href="{% static 'shop/style.css' %}">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to right, #d4fc79, #96e6a1);
+            margin: 0;
+            padding: 0;
+        }
+
+        .success-container {
+            max-width: 700px;
+            margin: 100px auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h2 {
+            color: #28a745;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .order-number {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .btn-home {
+            display: inline-block;
+            margin-top: 25px;
+            background: #28a745;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .btn-home:hover {
+            background: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+<div class="success-container">
+    <h2>🎉 Order Placed Successfully!</h2>
+    <p>Thank you <strong>{{ order.full_name }}</strong>!</p>
+    <p>Your order <span class="order-number">#{{ order.id }}</span> has been placed.</p>
+    <p>This is your
+        {{ user_order_count }}
+        {% if user_order_count == 1 %}st
+        {% elif user_order_count == 2 %}nd
+        {% elif user_order_count == 3 %}rd
+        {% else %}th
+        {% endif %}
+        order.
+    </p>
+    <p>Total: ${{ order.total_price }}</p>
+    <a href="/" class="btn-home">🏠 Return to Home</a>
+</div>
+</body>
+</html>

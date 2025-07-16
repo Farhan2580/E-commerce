@@ -1,0 +1,157 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout</title>
+    <link rel="stylesheet" href="{% static 'shop/style.css' %}">
+    <style>
+        body {
+            background: linear-gradient(to right, #e6f0ff, #ffffff);
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .checkout-container {
+            max-width: 900px;
+            margin: 50px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #2b3d61;
+            margin-bottom: 20px;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin: 12px 0 6px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .summary-table {
+            margin-top: 30px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            border: 1px solid #ccc;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .summary-table th {
+            background-color: #f0f4ff;
+        }
+
+        .checkout-total {
+            text-align: right;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .btn-place-order {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: #28a745;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            margin-top: 30px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-place-order:hover {
+            background-color: #218838;
+        }
+
+        @media screen and (max-width: 768px) {
+            .checkout-container {
+                padding: 20px;
+            }
+
+            .summary-table th, .summary-table td {
+                font-size: 14px;
+                padding: 8px;
+            }
+
+            .btn-place-order {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="checkout-container">
+    <h2>🧾 Checkout</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.full_name.label_tag }}
+        {{ form.full_name }}
+
+        {{ form.email.label_tag }}
+        {{ form.email }}
+
+        {{ form.phone.label_tag }}
+        {{ form.phone }}
+
+        {{ form.address.label_tag }}
+        {{ form.address }}
+
+        <h3>🛍 Order Summary</h3>
+        <table class="summary-table">
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Subtotal</th>
+            </tr>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.qty }}</td>
+                <td>${{ item.subtotal }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <p class="checkout-total">Total: ${{ total }}</p>
+
+        <button type="submit" class="btn-place-order">✅ Place Order</button>
+    </form>
+</div>
+</body>
+</html>

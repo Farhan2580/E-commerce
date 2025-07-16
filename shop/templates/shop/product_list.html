@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Products</title>
+  <link rel="stylesheet" href="{% static 'shop/style.css' %}">
+  <style>
+    /* Existing styles... */
+    /* (Same as your provided CSS) */
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  🛒 Cart Items: <span class="cart-count">{{ cart_count }}</span>
+</div>
+
+<div class="container">
+  <div class="search-bar">
+    <input id="search-input" placeholder="Search products..." autocomplete="off">
+    <select id="sort-select">
+      <option value="">Sort</option>
+      <option value="price_asc">Price Low to High</option>
+      <option value="price_desc">Price High to Low</option>
+    </select>
+  </div>
+
+  <div class="product-grid" id="product-grid">
+    <!-- Products will be dynamically inserted here -->
+  </div>
+
+  <div id="no-result" class="no-products" style="display: none;">❌ No products found.</div>
+</div>
+
+<!-- Modal preview -->
+<div id="product-modal" class="modal" tabindex="-1" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-content" role="document">
+    <button id="modal-close" aria-label="Close">&times;</button>
+    <img id="modal-img" src="" alt="Product Image" style="max-width: 100%; border-radius: 10px;">
+    <h3 id="modal-name"></h3>
+    <p id="modal-price"></p>
+    <a id="modal-details" href="#" class="btn">Details</a>
+    <a id="modal-cart" href="#" class="btn">Add to cart</a>
+  </div>
+</div>
+
+<script>
+async function fetchProducts() {
+  const q = document.getElementById('search-input').value;
+  const sort = document.getElementById('sort-select').value;
+  try {
+    const res = await fetch(`{% url 'ajax_products' %}?q=${encodeURIComponent(q)}&sort=${sort}`);
+    if (!res.ok) throw new Error('Network response was not ok');
+    const json = await res.json();
+    const grid = document.getElementById('product-grid');
+    const noResult = document.getElementById('no-result');
+    grid.innerHTML = '';
+
+    if (json.products.length === 0) {
+      noResult.style.display = 'block';
+      return;
+    } else {
+      noResult.style.display = 'none';
+    }
+
+    json.products.forEach(p => {
+      // Escape HTML entities to avoid injection (basic)
+      const safeName = p.name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const safePrice = p.price;
+
+      const card = document.createElement('div');
+      card.className = 'product-card';
+
+      card.innerHTML = `
+        <img src="${p.image}" alt="${safeName}" class="product-image" />
+        <div class="product-name">${safeName}</div>
+        <div class="product-price">$${safePrice}</div>
+        <button type="button" data-id="${p.id}" data-img="${p.image}" data-name="${safeName}" data-price="${safePrice}">Preview</button>
+      `;
+
+      // Add event listener for Preview button to open modal safely
+      card.querySelector('button').addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        openModal(
+          btn.getAttribute('data-id'),
+          btn.getAttribute('data-img'),
+          btn.getAttribute('data-name'),
+          btn.getAttribute('data-price')
+        );
+      });
+
+      grid.appendChild(card);
+    });
+  } catch (error) {
+    console.error('Fetch error:', error);
+  }
+}
+
+function openModal(id, img, name, price) {
+  const modal = document.getElementById('product-modal');
+  document.getElementById('modal-img').src = img;
+  document.getElementById('modal-img').alt = name;
+  document.getElementById('modal-name').innerText = name;
+  document.getElementById('modal-price').innerText = '$' + price;
+  document.getElementById('modal-details').href = `/product/${id}/`;
+  document.getElementById('modal-cart').href = `/add-to-cart/${id}/`;
+  modal.style.display = 'block';
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+// Close modal on close button click or outside modal click
+const modal = document.getElementById('product-modal');
+document.getElementById('modal-close').addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
+});
+
+function closeModal() {
+  const modal = document.getElementById('product-modal');
+  modal.style.display = 'none';
+  modal.setAttribute('aria-hidden', 'true');
+}
+
+// Fetch products on search input or sort select change
+document.getElementById('search-input').addEventListener('input', fetchProducts);
+document.getElementById('sort-select').addEventListener('change', fetchProducts);
+
+// Initial fetch when page loads
+window.addEventListener('DOMContentLoaded', fetchProducts);
+</script>
+
+</body>
+</html>

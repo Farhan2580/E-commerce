@@ -1,0 +1,221 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>🔥 Special Offers - MyShop</title>
+    <link rel="stylesheet" href="{% static 'shop/style.css' %}" />
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+        /* Same Navbar & Product style from home.html */
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            background-color: #f8f9fa;
+        }
+
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #343a40;
+            padding: 10px 20px;
+            color: white;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .brand a {
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        form.search-form {
+            flex-grow: 1;
+            max-width: 500px;
+            display: flex;
+            gap: 10px;
+        }
+
+        form.search-form input[type="text"],
+        form.search-form select {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: none;
+            flex-grow: 1;
+        }
+
+        form.search-form button {
+            background-color: #ffc107;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            font-weight: 600;
+            cursor: pointer;
+            color: black;
+            transition: background-color 0.3s ease;
+        }
+
+        form.search-form button:hover {
+            background-color: #e0a800;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 15px;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #ffc107;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            form.search-form {
+                max-width: 100%;
+                margin-top: 10px;
+            }
+
+            .nav-links {
+                margin-top: 10px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 15px;
+                justify-content: center;
+            }
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #e67e22;
+            margin-bottom: 30px;
+        }
+
+        .offer-card {
+            background: #fffaf0;
+            border-left: 6px solid #f39c12;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .offer-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.1);
+        }
+
+        .offer-card img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .offer-card h2 {
+            margin-bottom: 10px;
+            color: #d35400;
+        }
+
+        .offer-card p {
+            line-height: 1.5;
+        }
+
+        footer {
+            background: #343a40;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-top: 60px;
+        }
+
+        footer a {
+            color: #ffc107;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <div class="brand">
+        <a href="{% url 'home' %}">🛍 MyShop</a>
+    </div>
+
+    <form method="get" action="{% url 'home' %}" class="search-form">
+        <input type="text" name="q" placeholder="Search products..." value="{{ request.GET.q }}">
+        <select name="category" onchange="this.form.submit()">
+            <option value="All" {% if request.GET.category == 'All' or not request.GET.category %}selected{% endif %}>All Categories</option>
+            {% for cat in categories %}
+                <option value="{{ cat }}" {% if request.GET.category == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Search</button>
+    </form>
+
+    <div class="nav-links">
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'offers' %}">Offers</a>
+        <a href="{% url 'preorder' %}">Preorder</a>
+        <a href="{% url 'cart_view' %}">Cart 🛒</a>
+
+        {% if user.is_authenticated %}
+            <a href="{% url 'order_history' %}">My Orders</a>
+            <a href="{% url 'logout' %}">Logout</a>
+        {% else %}
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'signup' %}">Register</a>
+        {% endif %}
+    </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+    <h1>🔥 Special Offers Just for You</h1>
+
+    {% for offer in offers %}
+        <div class="offer-card">
+            <h2>{{ offer.title }}</h2>
+            <p>{{ offer.description }}</p>
+            {% if offer.image %}
+                <img src="{{ offer.image.url }}" alt="{{ offer.title }}">
+            {% endif %}
+        </div>
+    {% empty %}
+        <p style="text-align:center; font-size:18px; color:#c0392b;">No offers available now. Stay tuned!</p>
+    {% endfor %}
+</div>
+
+<!-- FOOTER -->
+<footer>
+    <p>© {{ now|date:"Y" }} MyShop | All rights reserved</p>
+    <p>
+        Connect with us:
+        <a href="https://facebook.com" target="_blank">Facebook</a> |
+        <a href="https://instagram.com" target="_blank">Instagram</a> |
+        <a href="https://twitter.com" target="_blank">Twitter</a>
+    </p>
+</footer>
+
+</body>
+</html>
