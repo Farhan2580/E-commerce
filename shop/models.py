@@ -7,16 +7,18 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+
 class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2)
     image = models.ImageField(upload_to='product_images/', blank=True, null=True)
-    logo = models.ImageField(upload_to='logos/', blank=True, null=True)
+
 
     def __str__(self):
         return self.name
+
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
@@ -30,6 +32,7 @@ class Order(models.Model):
     def __str__(self):
         return f"Order #{self.id} by {self.user.username}"
 
+
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -38,6 +41,7 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product.name} (x{self.quantity})"
+
 
 class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
@@ -48,11 +52,12 @@ class Review(models.Model):
 
     class Meta:
         unique_together = ('product', 'user')
+        ordering = ['-created_at']
 
     def __str__(self):
         return f"{self.product.name} - {self.rating}★ by {self.user.username}"
 
-# ✅ Offer Model should be OUTSIDE the Review model
+
 class Offer(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
@@ -62,3 +67,20 @@ class Offer(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Preorder(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    address = models.TextField()
+    product_name = models.CharField(max_length=255)
+    product_details = models.TextField()
+    image = models.ImageField(upload_to='preorder_images/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Preorder: {self.product_name} by {self.name}"

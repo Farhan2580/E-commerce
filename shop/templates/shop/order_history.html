@@ -1,0 +1,74 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>📦 My Orders | MyShop</title>
+    <link rel="stylesheet" href="{% static 'shop/style.css' %}">
+    <style>
+        /* your existing CSS here (unchanged) */
+    </style>
+</head>
+<body>
+    <h1>📦 My Orders</h1>
+    <div class="order-section">
+
+        {% if orders %}
+            {% for order in orders %}
+                <div class="order-card">
+                    <h3>🧾 Order #{{ order.id }} — {{ order.date_ordered|date:"F d, Y h:i A" }}</h3>
+                    <p><strong>Name:</strong> {{ order.full_name }}</p>
+                    <p><strong>Email:</strong> {{ order.email }}</p>
+                    <p><strong>Address:</strong> {{ order.address }}</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Qty</th>
+                                <th>Unit Price</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items.all %}
+                            <tr>
+                                <td>{{ item.product.name }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>${{ item.price }}</td>
+                                <td>${{ item.quantity|add:0|floatformat:2|add:0|floatformat:2 }} × ${{ item.price|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <p class="total">Total: ${{ order.total_price }}</p>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if preorders %}
+            <h2 style="text-align:center; margin-top: 50px;">📦 My Preorders</h2>
+            {% for pre in preorders %}
+                <div class="order-card">
+                    <h3>Preorder: {{ pre.product_name }} — {{ pre.created_at|date:"F d, Y h:i A" }}</h3>
+                    <p><strong>Name:</strong> {{ pre.name }}</p>
+                    <p><strong>Email:</strong> {{ pre.email }}</p>
+                    <p><strong>Phone:</strong> {{ pre.phone }}</p>
+                    <p><strong>Address:</strong> {{ pre.address }}</p>
+                    <p><strong>Details:</strong> {{ pre.product_details }}</p>
+                    {% if pre.image %}
+                        <img src="{{ pre.image.url }}" alt="Preorder image" style="max-height: 200px; margin-top: 10px;">
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if not orders and not preorders %}
+            <div class="no-orders">
+                <p>😢 You haven't placed any orders or preorders yet.</p>
+                <p><a href="{% url 'home' %}">Browse Products →</a></p>
+            </div>
+        {% endif %}
+
+    </div>
+</body>
+</html>

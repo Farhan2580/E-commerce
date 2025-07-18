@@ -1,0 +1,121 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Phones & Tablets | MyShop</title>
+    <link rel="stylesheet" href="{% static 'shop/style.css' %}" />
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.05);
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+        .product-card {
+            text-align: center;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 6px;
+            transition: 0.3s;
+            background: #fff;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .product-card img {
+            height: 160px;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+        .product-name {
+            font-weight: 600;
+            font-size: 16px;
+            color: #333;
+        }
+        .product-price {
+            color: #ff3d00;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 7px 15px;
+            margin-top: 5px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .btn-details {
+            background: #333;
+            color: #fff;
+        }
+        .btn-cart {
+            background: #ff3d00;
+            color: #fff;
+        }
+        .btn-details:hover {
+            background-color: #555;
+        }
+        .btn-cart:hover {
+            background-color: #e63600;
+        }
+        .cart-link {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .cart-link a {
+            color: #ff3d00;
+            font-weight: 600;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Phones & Tablets</h1>
+    <div class="product-grid">
+        {% for product in products %}
+            <div class="product-card">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                {% else %}
+                    <img src="{% static 'shop/no-image.png' %}" alt="No image">
+                {% endif %}
+                <div class="product-name">{{ product.name }}</div>
+                <div class="product-price">${{ product.price }}</div>
+                <a href="{% url 'product_detail' product.pk %}" class="btn btn-details">Details</a>
+                <a href="{% url 'add_to_cart' product.pk %}" class="btn btn-cart">Add to Cart</a>
+            </div>
+        {% empty %}
+            <p>No products found in this category.</p>
+        {% endfor %}
+    </div>
+    <div class="cart-link">
+        <a href="{% url 'cart_view' %}">🛒 View Cart</a>
+    </div>
+</div>
+
+</body>
+</html>

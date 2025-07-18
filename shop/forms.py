@@ -1,5 +1,5 @@
 from django import forms
-from .models import Review
+from .models import Review, Preorder
 
 class CheckoutForm(forms.Form):
     full_name = forms.CharField(max_length=100, label="Full Name")
@@ -8,10 +8,9 @@ class CheckoutForm(forms.Form):
     phone = forms.CharField(max_length=20, label="Phone Number")
 
 
-
 class ReviewForm(forms.ModelForm):
     rating = forms.ChoiceField(
-        choices=[(i, i) for i in range(1, 6)],
+        choices=[(i, str(i)) for i in range(1, 6)],  # i as int, str(i) as label
         widget=forms.RadioSelect,
         label='Rating'
     )
@@ -20,5 +19,14 @@ class ReviewForm(forms.ModelForm):
         model = Review
         fields = ['rating', 'comment']
         widgets = {
-            'comment': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Write your review here...'}),
+            'comment': forms.Textarea(attrs={
+                'rows': 3,
+                'placeholder': 'Write your review here...'
+            }),
         }
+
+
+class PreOrderForm(forms.ModelForm):
+    class Meta:
+        model = Preorder
+        fields = '__all__'

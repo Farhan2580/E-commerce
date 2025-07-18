@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Category, Product, Order, OrderItem, Review, Offer
+from .models import Preorder
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'price', 'category')
@@ -27,5 +28,12 @@ class OfferAdmin(admin.ModelAdmin):
     list_filter = ('is_active', 'created_at')
     search_fields = ('title', 'description')
 
+class PreOrderAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'phone', 'product_info', 'created_at')
+    readonly_fields = ('created_at',)
+
+
+
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Category)
+admin.site.register(Preorder)

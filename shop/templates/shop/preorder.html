@@ -2,13 +2,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>Preorder | MyShop</title>
-    <link rel="stylesheet" href="{% static 'shop/style.css' %}" />
+    <meta charset="UTF-8">
+    <title>Preorder Product - MyShop</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f1f2f6;
+            padding: 40px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #2d3436;
+            margin-bottom: 10px;
+        }
+        .subheading {
+            text-align: center;
+            font-size: 1.1em;
+            color: #636e72;
+            margin-bottom: 25px;
+        }
+        label {
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 6px;
+            border: 1px solid #dfe6e9;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .errorlist {
+            color: #d63031;
+            margin: 0 0 12px 0;
+            list-style: none;
+            padding-left: 0;
+            font-size: 0.9em;
+        }
+        button {
+            background-color: #00cec9;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 15px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0984e3;
+        }
+        .success-msg {
+            background-color: #dff9fb;
+            color: #0984e3;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <h1>Preorder Products</h1>
-    <p>Order your favorite items today for guaranteed delivery!</p>
-    <a href="{% url 'home' %}">← Back to Home</a>
+<div class="container">
+    <h2>📦 Looking For Something Different??</h2>
+    <p class="subheading">Put Your Information in The Box...</p>
+
+    {% if success %}
+        <div class="success-msg">✅ Your preorder has been submitted successfully!</div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        {% for field in form %}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+                <small style="color:#636e72;">{{ field.help_text }}</small>
+            {% endif %}
+            {% if field.errors %}
+                <ul class="errorlist">
+                    {% for error in field.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endfor %}
+
+        <button type="submit">Submit Preorder</button>
+    </form>
+</div>
 </body>
 </html>

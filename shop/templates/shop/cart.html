@@ -2,9 +2,128 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Your Cart</title>
+    <title>Your Cart | MyShop</title>
     <link rel="stylesheet" href="{% static 'shop/style.css' %}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+        h1 {
+            text-align: center;
+            color: #343a40;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .cart-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .cart-table th, .cart-table td {
+            padding: 14px 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        .cart-table th {
+            background-color: #343a40;
+            color: white;
+        }
+        .qty-input {
+            width: 60px;
+            padding: 5px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .btn-danger {
+            color: white;
+            background-color: #ff4d4f;
+            padding: 6px 12px;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+        .btn-danger:hover {
+            background-color: #d9363e;
+        }
+        .cart-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .btn-update, .btn-clear {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-update {
+            background-color: #ffc107;
+            color: #111;
+        }
+        .btn-update:hover {
+            background-color: #e0a800;
+        }
+        .btn-clear {
+            background-color: #ff4d4f;
+            color: white;
+        }
+        .btn-clear:hover {
+            background-color: #d9363e;
+        }
+        .cart-summary {
+            text-align: center;
+        }
+        .cart-summary h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .btn-checkout, .btn-back {
+            display: inline-block;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+            margin: 10px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .btn-checkout {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-checkout:hover {
+            background-color: #218838;
+        }
+        .btn-back {
+            background-color: #343a40;
+            color: white;
+        }
+        .btn-back:hover {
+            background-color: #555;
+        }
+        .empty-cart {
+            text-align: center;
+            color: #777;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
 
@@ -40,9 +159,12 @@
         </table>
 
         <div class="cart-actions">
-            <button type="submit" class="btn-update">🔁 Update Quantities</button>
-            <a href="{% url 'clear_cart' %}" class="btn-clear">🧹 Clear Cart</a>
-        </div>
+    <div>
+        <button type="submit" class="btn-update">🔁 Update Quantities</button>
+        <a href="{% url 'clear_cart' %}" class="btn-clear">🧹 Clear Cart</a>
+    </div>
+</div>
+
     </form>
 
     <div class="cart-summary">
