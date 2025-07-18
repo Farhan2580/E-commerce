@@ -258,14 +258,17 @@ def preorder_thanks(request):
 #new navbar
 
 def laptop_desktop(request):
-    return render(request, 'shop/laptop_desktop.html')
+    products = Product.objects.filter(category__name__in=['Laptop', 'Laptop & Desktop'])
+    return render(request, 'shop/laptop_desktop.html', {'products': products})
 
 def phones_tablets(request):
     products = Product.objects.filter(category__name='Phones & Tablets')
     return render(request, 'shop/phones_tablets.html', {'products': products})
 
 def sound_equipment(request):
-    return render(request, 'shop/sound_equipment.html')
+    products = Product.objects.filter(category__name='Sound Equipment')
+    context = {'products': products}
+    return render(request, 'shop/sound_equipment.html', context)
 
 def power_accessories(request):
     return render(request, 'shop/power_accessories.html')

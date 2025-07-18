@@ -1,1 +1,95 @@
-<h1>This is Phones & Tablets Page</h1>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Sound Equipment - MyShop</title>
+    <link rel="stylesheet" href="{% static 'shop/style.css' %}" />
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #d35400;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill,minmax(220px,1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .product-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+        }
+        .product-card img {
+            height: 160px;
+            object-fit: contain;
+            margin-bottom: 15px;
+            border-radius: 6px;
+        }
+        .product-name {
+            font-weight: 600;
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .product-price {
+            color: #e67e22;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        .btn {
+            background-color: #d35400;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #b03e00;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Sound Equipment</h1>
+    <div class="product-grid">
+        {% for product in products %}
+            <div class="product-card">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                {% else %}
+                    <img src="{% static 'shop/no-image.png' %}" alt="No Image">
+                {% endif %}
+                <div class="product-name">{{ product.name }}</div>
+                <div class="product-price">${{ product.price }}</div>
+                <a href="{% url 'product_detail' product.pk %}" class="btn">View Details</a>
+            </div>
+        {% empty %}
+            <p style="text-align:center; color:#c0392b;">No sound equipment products available now.</p>
+        {% endfor %}
+    </div>
+
+</body>
+</html>

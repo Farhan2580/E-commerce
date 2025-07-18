@@ -2,36 +2,197 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>🖥 Laptop & Desktop | MyShop</title>
-    <link rel="stylesheet" href="{% static 'shop/style.css' %}">
+    <meta charset="UTF-8" />
+    <title>🖥️ Laptop & Desktop | MyShop</title>
+    <link rel="stylesheet" href="{% static 'shop/style.css' %}" />
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet" />
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
             background-color: #f4f4f4;
-            padding: 20px;
+            margin: 0;
+            padding: 0;
         }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
+        nav.navbar {
+            background-color: #343a40;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            flex-wrap: wrap;
+        }
+        nav.navbar .brand a {
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        nav.navbar .nav-links a {
+            color: white;
+            margin-left: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        nav.navbar .nav-links a:hover {
+            color: #ffc107;
         }
         .container {
-            max-width: 1000px;
-            margin: 0 auto;
+            max-width: 1200px;
+            margin: 40px auto;
             background: white;
-            padding: 30px;
-            border-radius: 10px;
+            padding: 40px;
+            border-radius: 8px;
             box-shadow: 0 0 15px rgba(0,0,0,0.05);
+        }
+        h1 {
+            font-size: 32px;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #ffc107;
+            padding-bottom: 10px;
+            color: #343a40;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 25px;
+        }
+        .product-card {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0,0,0,0.03);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.1);
+        }
+        .product-card img {
+            max-height: 160px;
+            width: auto;
+            object-fit: contain;
+            margin-bottom: 12px;
+        }
+        .product-name {
+            font-weight: 600;
+            font-size: 18px;
+            color: #222;
+            margin-bottom: 8px;
+            min-height: 50px; /* for uniform height */
+        }
+        .product-price {
+            color: #ff3d00;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        .btn-details, .btn-cart {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            margin: 4px 5px;
+            transition: background-color 0.3s ease;
+        }
+        .btn-details {
+            background-color: #343a40;
+            color: white;
+        }
+        .btn-details:hover {
+            background-color: #555;
+        }
+        .btn-cart {
+            background-color: #ff3d00;
+            color: white;
+        }
+        .btn-cart:hover {
+            background-color: #e63600;
+        }
+        .no-products {
+            font-size: 18px;
+            color: #777;
+            text-align: center;
+            padding: 40px 0;
+        }
+        footer {
+            background: #343a40;
+            color: white;
+            text-align: center;
+            padding: 25px 0;
+            margin-top: 50px;
+        }
+        footer a {
+            color: #ffc107;
+            text-decoration: none;
+            margin: 0 10px;
+            font-weight: 600;
+        }
+        footer a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
 
+<nav class="navbar">
+    <div class="brand">
+        <a href="{% url 'home' %}">🛍 MyShop</a>
+    </div>
+    <div class="nav-links">
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'offers' %}">Offers</a>
+        <a href="{% url 'preorder' %}">Preorder</a>
+        <a href="{% url 'cart_view' %}">Cart 🛒</a>
+        <a href="{% url 'order_history' %}">My Orders</a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'logout' %}">Logout</a>
+        {% else %}
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'signup' %}">Register</a>
+        {% endif %}
+    </div>
+</nav>
+
 <div class="container">
-    <h1>Laptop & Desktop Collection</h1>
-    <p style="text-align: center;">Here you can showcase your Laptop & Desktop products.</p>
+    <h1>Laptop & Desktop</h1>
+
+    {% if products %}
+    <div class="product-grid">
+        {% for product in products %}
+            <div class="product-card">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                {% else %}
+                    <img src="{% static 'shop/no-image.png' %}" alt="No image available">
+                {% endif %}
+                <div class="product-name">{{ product.name }}</div>
+                <div class="product-price">${{ product.price }}</div>
+                <a href="{% url 'product_detail' product.pk %}" class="btn-details btn">Details</a>
+                <a href="{% url 'add_to_cart' product.pk %}" class="btn-cart btn">Add to Cart</a>
+            </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <div class="no-products">No products found in Laptop & Desktop category.</div>
+    {% endif %}
 </div>
+
+<footer>
+    <p>© {{ now|date:"Y" }} MyShop | All rights reserved</p>
+    <p>
+        Connect with us:
+        <a href="https://facebook.com" target="_blank">Facebook</a> |
+        <a href="https://instagram.com" target="_blank">Instagram</a> |
+        <a href="https://twitter.com" target="_blank">Twitter</a>
+    </p>
+</footer>
 
 </body>
 </html>

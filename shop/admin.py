@@ -4,7 +4,7 @@ from .models import Preorder
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'price', 'category')
-    fields = ('name', 'description', 'price', 'category', 'image', 'logo')
+    fields = ('name', 'description', 'price', 'category', 'image',)
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
