@@ -2,3 +2,4 @@ django
 gunicorn
 whitenoise
 django-widget-tweaks
+Pillow
