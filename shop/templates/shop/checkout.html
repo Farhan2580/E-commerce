@@ -1,157 +1,106 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Checkout</title>
-    <link rel="stylesheet" href="{% static 'shop/style.css' %}">
-    <style>
-        body {
-            background: linear-gradient(to right, #e6f0ff, #ffffff);
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 0;
-        }
 
-        .checkout-container {
-            max-width: 900px;
-            margin: 50px auto;
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        }
+{% block content %}
+<!-- Alpine.js is needed for payment switching -->
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-        h2 {
-            text-align: center;
-            color: #2b3d61;
-            margin-bottom: 20px;
-        }
+<div class="min-h-screen bg-[#fcfcfd] py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="mb-12 text-center">
+            <h1 class="text-4xl md:text-5xl font-black text-[#0b0f1a] tracking-tighter mb-4 italic uppercase">
+                Secure <span class="text-orange-500">Checkout</span>
+            </h1>
+            <div class="h-1.5 w-20 bg-purple-600 mx-auto mt-4 rounded-full shadow-[0_0_15px_rgba(147,51,234,0.3)]"></div>
+        </div>
 
-        form {
-            margin-top: 20px;
-        }
+        <form method="POST" action="{% url 'checkout' %}" class="grid lg:grid-cols-12 gap-12">
+            {% csrf_token %}
 
-        label {
-            display: block;
-            margin: 12px 0 6px;
-            font-weight: bold;
-            color: #333;
-        }
+            <!-- Left Column -->
+            <div class="lg:col-span-7 space-y-8">
 
-        input[type="text"],
-        input[type="email"],
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
+                <!-- Shipping Info -->
+                <div class="bg-white border border-gray-100 rounded-[35px] p-8 shadow-sm">
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="h-10 w-1.5 bg-purple-600 rounded-full"></div>
+                        <h2 class="text-2xl font-black text-[#0b0f1a]">Shipping Information</h2>
+                    </div>
 
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
+                    <div class="grid gap-6">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Full Name</label>
+                            <input type="text" name="full_name" required placeholder="John Doe"
+                                   class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-purple-600/20 text-[#0b0f1a] font-bold outline-none transition-all">
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Email Address</label>
+                                <input type="email" name="email" required placeholder="john@example.com"
+                                       class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-purple-600/20 text-[#0b0f1a] font-bold outline-none">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Phone</label>
+                                <input type="text" name="phone" required placeholder="+880"
+                                       class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-purple-600/20 text-[#0b0f1a] font-bold outline-none">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Address</label>
+                            <textarea name="shipping_address" rows="3" required placeholder="House, Road, Area..."
+                                      class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-purple-600/20 text-[#0b0f1a] font-bold outline-none"></textarea>
+                        </div>
+                    </div>
+                </div>
 
-        .summary-table {
-            margin-top: 30px;
-            width: 100%;
-            border-collapse: collapse;
-        }
+                <!-- Payment Options -->
+                {% include 'shop/includes/payment_options.html' %}
 
-        .summary-table th,
-        .summary-table td {
-            border: 1px solid #ccc;
-            padding: 12px;
-            text-align: center;
-        }
+            </div>
 
-        .summary-table th {
-            background-color: #f0f4ff;
-        }
+            <!-- Right Column: Order Summary -->
+            <div class="lg:col-span-5">
+                <div class="sticky top-8 bg-[#0b0f1a] rounded-[45px] p-10 text-white shadow-2xl relative overflow-hidden">
+                    <!-- Decor element -->
+                    <div class="absolute -top-20 -right-20 w-60 h-60 bg-purple-600/10 rounded-full blur-[80px]"></div>
 
-        .checkout-total {
-            text-align: right;
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 20px;
-            color: #333;
-        }
+                    <h2 class="text-2xl font-black mb-8 italic uppercase tracking-tighter">Order <span class="text-orange-500">Summary</span></h2>
 
-        .btn-place-order {
-            display: block;
-            width: 100%;
-            padding: 14px;
-            background-color: #28a745;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            margin-top: 30px;
-            transition: 0.3s;
-            cursor: pointer;
-        }
+                    <div class="space-y-6 mb-10 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                        {% for item in cart_items %}
+                        <div class="flex justify-between items-center group">
+                            <div class="flex-1">
+                                <p class="text-sm font-bold truncate group-hover:text-orange-500 transition-colors">{{ item.product.name }}</p>
+                                <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Qty: {{ item.quantity }}</p>
+                            </div>
+                            <p class="text-sm font-black tracking-tighter ml-4">৳{{ item.total_price }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
 
-        .btn-place-order:hover {
-            background-color: #218838;
-        }
+                    <div class="pt-8 border-t border-white/10 space-y-4">
+                        <div class="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                            <span>Subtotal</span>
+                            <span class="text-white">৳{{ subtotal }}</span>
+                        </div>
+                        <div class="flex justify-between items-end pt-4 border-t border-white/5">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-orange-500">Total Payable</span>
+                            <span class="text-4xl font-black italic tracking-tighter">৳{{ grand_total }}</span>
+                        </div>
+                    </div>
 
-        @media screen and (max-width: 768px) {
-            .checkout-container {
-                padding: 20px;
-            }
-
-            .summary-table th, .summary-table td {
-                font-size: 14px;
-                padding: 8px;
-            }
-
-            .btn-place-order {
-                font-size: 14px;
-            }
-        }
-    </style>
-</head>
-<body>
-<div class="checkout-container">
-    <h2>🧾 Checkout</h2>
-
-    <form method="post">
-        {% csrf_token %}
-        {{ form.full_name.label_tag }}
-        {{ form.full_name }}
-
-        {{ form.email.label_tag }}
-        {{ form.email }}
-
-        {{ form.phone.label_tag }}
-        {{ form.phone }}
-
-        {{ form.address.label_tag }}
-        {{ form.address }}
-
-        <h3>🛍 Order Summary</h3>
-        <table class="summary-table">
-            <tr>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Subtotal</th>
-            </tr>
-            {% for item in items %}
-            <tr>
-                <td>{{ item.product.name }}</td>
-                <td>{{ item.qty }}</td>
-                <td>${{ item.subtotal }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-
-        <p class="checkout-total">Total: ${{ total }}</p>
-
-        <button type="submit" class="btn-place-order">✅ Place Order</button>
-    </form>
+                    <button type="submit" class="w-full mt-10 py-6 bg-orange-500 rounded-3xl text-white font-black uppercase tracking-widest shadow-[0_20px_40px_rgba(249,115,22,0.3)] hover:bg-white hover:text-[#0b0f1a] transition-all duration-500 transform hover:-translate-y-1 active:scale-95">
+                        Place Order ⚡
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
-</body>
-</html>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+</style>
+{% endblock %}

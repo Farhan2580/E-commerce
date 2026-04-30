@@ -4,12 +4,11 @@ from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('products/', views.product_list, name='product_list'),  # ✅ এই লাইন যোগ করো
+    path('products/', views.product_list, name='product_list'),
     path('product/<int:pk>/', views.product_detail, name='product_detail'),
     path('add-to-cart/<int:pk>/', views.add_to_cart, name='add_to_cart'),
     path('cart/', views.cart_view, name='cart_view'),
-    path('update-cart/', views.update_cart, name='update_cart'),
-    path('remove-from-cart/<int:pk>/', views.remove_from_cart, name='remove_from_cart'),
+    path('cart/update/', views.update_cart, name='update_cart'),    path('remove-from-cart/<int:pk>/', views.remove_from_cart, name='remove_from_cart'),
     path('clear-cart/', views.clear_cart, name='clear_cart'),
     path('checkout/', views.checkout, name='checkout'),
     path('ajax/products/', views.ajax_products, name='ajax_products'),
@@ -19,11 +18,16 @@ urlpatterns = [
     path('preorder/', views.preorder, name='preorder'),
     path('preorder/thanks/', views.preorder_thanks, name='preorder_thanks'),
     path('order-history/', views.order_history, name='order_history'),
+    path('order-success/<int:order_id>/', views.order_success, name='order_success_with_id'),
     path('signup/', views.signup, name='signup'),
+    path('register/', views.register_view, name='register'),
 
-    path('login/', auth_views.LoginView.as_view(template_name='shop/login.html'), name='login'),
+    path('login/', auth_views.LoginView.as_view(
+        template_name='shop/login.html',
+        next_page='home'
+    ), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='home'), name='logout'),
-
+    path('profile/', views.profile_view, name='profile'),
 
 path('laptop-desktop/', views.laptop_desktop, name='laptop_desktop'),
 path('phones-tablets/', views.phones_tablets, name='phones_tablets'),

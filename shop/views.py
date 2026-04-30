@@ -94,56 +94,127 @@ def cart_view(request):
             continue
     return render(request, 'shop/cart.html', {'items': items, 'total': total})
 
+def cart_count(request):
+    cart = request.session.get('cart', {})
+    # কার্টে থাকা সকল প্রোডাক্টের পরিমাণের যোগফল
+    count = sum(cart.values()) if cart else 0
+    return {'cart_count': count}
+
+
 def update_cart(request):
     if request.method == 'POST':
         cart = request.session.get('cart', {})
+
         for key, value in request.POST.items():
             if key.startswith('qty_'):
-                product_id = key.split('_')[1]
-                if value.isdigit() and int(value) > 0:
-                    cart[product_id] = int(value)
+                product_id = key.replace('qty_', '')
+                try:
+                    new_qty = int(value)
+                    if new_qty > 0:
+                        cart[product_id] = new_qty
+                    else:
+                        cart.pop(product_id, None)
+                except ValueError:
+                    continue
+
         request.session['cart'] = cart
+        request.session.modified = True
+
     return redirect('cart_view')
 
 def clear_cart(request):
     request.session['cart'] = {}
     return redirect('cart_view')
 
-# Checkout View
 @login_required
 def checkout(request):
     cart = request.session.get('cart', {})
-    items, total = [], 0
-    for pk, qty in cart.items():
-        product = get_object_or_404(Product, pk=pk)
-        subtotal = product.price * qty
-        items.append({'product': product, 'qty': qty, 'subtotal': subtotal})
-        total += subtotal
+
+    if not cart and request.method == "GET":
+        messages.warning(request, "Your cart is empty!")
+        return redirect('product_list')
 
     if request.method == 'POST':
-        form = CheckoutForm(request.POST)
-        if form.is_valid():
-            order = Order.objects.create(
-                user=request.user,
-                full_name=form.cleaned_data['full_name'],
-                email=form.cleaned_data['email'],
-                address=form.cleaned_data['address'],
-                phone=form.cleaned_data['phone'],
-                total_price=total
-            )
-            for item in items:
+        full_name = request.POST.get('full_name')
+        email = request.POST.get('email')
+        shipping_address = request.POST.get('shipping_address')
+        phone = request.POST.get('phone')
+        # পেমেন্ট মেথডটি রিসিভ করা হচ্ছে
+        payment_method = request.POST.get('payment_method', 'COD')
+
+        # ১. নতুন অর্ডার তৈরি
+        order = Order.objects.create(
+            user=request.user,
+            full_name=full_name,
+            email=email,
+            address=shipping_address,
+            phone=phone,
+            payment_method=payment_method, # মডেল আপডেট করার পর এটি কাজ করবে
+            total_price=0
+        )
+
+        subtotal = 0
+        for key, value in cart.items():
+            try:
+                product = Product.objects.get(id=key)
+                qty = value['quantity'] if isinstance(value, dict) else value
+                item_total = product.price * qty
+                subtotal += item_total
+
                 OrderItem.objects.create(
                     order=order,
-                    product=item['product'],
-                    quantity=item['qty'],
-                    price=item['product'].price
+                    product=product,
+                    quantity=qty,
+                    price=product.price
                 )
-            request.session['cart'] = {}
-            return redirect('my_orders')
-    else:
-        form = CheckoutForm()
+            except Product.DoesNotExist:
+                continue
 
-    return render(request, 'shop/checkout.html', {'form': form, 'items': items, 'total': total})
+        # ২. টোটাল প্রাইজ আপডেট ও সেভ
+        order.total_price = subtotal
+        order.save()
+
+        # ৩. সেশন ক্লিয়ার করা
+        request.session['cart'] = {}
+        request.session.modified = True
+
+        messages.success(request, "Order placed successfully!")
+        return redirect('order_success_with_id', order_id=order.id)
+
+    # GET লজিক
+    cart_items = []
+    grand_total = 0
+    for key, value in cart.items():
+        try:
+            product = Product.objects.get(id=key)
+            qty = value['quantity'] if isinstance(value, dict) else value
+            item_total = product.price * qty
+            grand_total += item_total
+            cart_items.append({
+                'product': product,
+                'quantity': qty,
+                'total_price': item_total,
+            })
+        except Product.DoesNotExist:
+            continue
+
+    context = {
+        'cart_items': cart_items,
+        'subtotal': grand_total,
+        'grand_total': grand_total,
+    }
+    return render(request, 'shop/checkout.html', context)
+
+
+def order_success(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    user_order_count = Order.objects.filter(user=request.user).count()
+
+    return render(request, 'shop/order_success.html', {
+        'order': order,
+        'user_order_count': user_order_count
+    })
+
 
 # Offers Page
 def offers(request):
@@ -166,15 +237,11 @@ def preorder(request):
     return render(request, 'shop/preorder.html', {'form': form})
 
 # Order History
-@login_required
 def my_orders(request):
-    user_orders = Order.objects.filter(user=request.user).order_by('-date_ordered')
-    user_preorders = Preorder.objects.filter(user=request.user).order_by('-created_at')
+    # 'created_at' এর বদলে 'date_ordered' ব্যবহার করুন
+    orders_list = Order.objects.filter(user=request.user).order_by('-date_ordered')
 
-    return render(request, 'shop/my_orders.html', {
-        'orders': user_orders,
-        'preorders': user_preorders,
-    })
+    return render(request, 'shop/order_history.html', {'orders': orders_list})
 
 @login_required
 def order_detail(request, order_id):
@@ -184,12 +251,26 @@ def order_detail(request, order_id):
 
 @login_required
 def order_history(request):
-    orders = Order.objects.filter(user=request.user).order_by('-date_ordered')
-    preorders = Preorder.objects.filter(user=request.user).order_by('-created_at')
+    orders = Order.objects.filter(user=request.user)
+
+    # PreOrder টেবিল না থাকলে যেন এরর না দেয়, তাই এটি ট্রাই-ক্যাপচার এর মধ্যে রাখুন
+    try:
+        preorders = PreOrder.objects.filter(user=request.user)
+    except:
+        preorders = []  # টেবিল না থাকলে খালি লিস্ট পাঠাবে, সাইট ক্র্যাশ করবে না
+
     return render(request, 'shop/order_history.html', {
         'orders': orders,
-        'preorders': preorders,
+        'preorders': preorders
     })
+
+
+# shop/views.py
+def place_order(request):
+    if request.method == 'POST':
+        # ... অর্ডার সেভ করার লজিক ...
+        # অর্ডার সফল হলে:
+        return redirect('order_success') # urls.py এ এই নাম থাকতে হবে
 
 # AJAX Product Search
 @require_GET
@@ -270,11 +351,53 @@ def sound_equipment(request):
     context = {'products': products}
     return render(request, 'shop/sound_equipment.html', context)
 
+
 def power_accessories(request):
-    return render(request, 'shop/power_accessories.html')
+
+    products = Product.objects.filter(category__name='Power')
+
+    context = {
+        'products': products,
+    }
+    return render(request, 'shop/power_accessories.html', context)
+
+# shop/views.py
+# shop/views.py
 
 def fitness_wearable(request):
-    return render(request, 'shop/fitness_wearable.html')
+    # 'Watch' jodi apnar category-r nam hoy, tobe eita use korun
+    # Category name-ti admin panel theke check kore exact namti ekhane din
+    products = Product.objects.filter(category__name__icontains='Watch')
+
+    # Jodi category name 'Fitness' hoy, tobe:
+    # products = Product.objects.filter(category__name__icontains='Fitness')
+
+    return render(request, 'shop/fitness_wearable.html', {'products': products})
+
 
 def smart_electronics(request):
-    return render(request, 'shop/smart_electronics.html')
+    # আপনার অ্যাডমিন প্যানেলে ক্যাটাগরির নাম 'Smart Tech' থাকলে এটি কাজ করবে
+    products = Product.objects.filter(category__name='Smart Tech')
+
+    context = {
+        'products': products,
+    }
+    return render(request, 'shop/smart_electronics.html', context)
+
+# Registration View (Register URL এর জন্য)
+
+def register_view(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Registration successful! You can now login.")
+            return redirect('login')
+    else:
+        form = UserCreationForm()
+    # এখানে 'shop/signup.html' এর বদলে 'shop/register.html' দিন
+    return render(request, 'shop/register.html', {'form': form})
+
+@login_required
+def profile_view(request):
+    return render(request, 'shop/profile.html')

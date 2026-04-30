@@ -2,373 +2,368 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>🛍 MyShop | Home</title>
-    <link rel="stylesheet" href="{% static 'shop/style.css' %}" />
-    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GadgetFlow | Next-Gen Tech Store</title>
+
+    <!-- Google Fonts & Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            background-color: #f4f4f4;
+        :root {
+            --ag-orange: #ff6600;
+            --ag-purple: #8b5cf6;
+            --ag-black: #0f172a;
+            --ag-white: #ffffff;
+            --ag-bg: #f8fafc;
+            --glass: rgba(255, 255, 255, 0.8);
         }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            background-color: var(--ag-bg);
+            color: var(--ag-black);
+            overflow-x: hidden;
+        }
+
+        /* --- Custom Scrollbar --- */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: var(--ag-purple); border-radius: 10px; }
+
+        /* --- Navbar & Glassmorphism --- */
         .navbar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background-color: #343a40;
-            padding: 10px 20px;
-            color: white;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .brand a {
-            color: white;
-            font-size: 24px;
-            font-weight: 700;
-            text-decoration: none;
-        }
-        form.search-form {
-            flex-grow: 1;
-            max-width: 500px;
-            display: flex;
-            gap: 10px;
-        }
-        form.search-form input[type="text"],
-        form.search-form select {
-            padding: 8px 12px;
-            border-radius: 5px;
-            border: none;
-            flex-grow: 1;
-        }
-        form.search-form button {
-            background-color: #ffc107;
-            border: none;
-            border-radius: 5px;
-            padding: 8px 15px;
-            font-weight: 600;
-            cursor: pointer;
-            color: black;
-            transition: 0.3s;
-        }
-        form.search-form button:hover {
-            background-color: #e0a800;
-        }
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            margin-left: 15px;
-            font-weight: 600;
-            transition: 0.3s;
-        }
-        .nav-links a:hover {
-            color: #ffc107;
+            padding: 15px 5%;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
         }
 
-        /* Category bar 1 line */
-        .categories-bar {
-            background: white;
-            padding: 10px 0;
-            border-bottom: 1px solid #ddd;
-        }
-        .categories-list {
-            max-width: 1200px;
-            margin: 0 auto;
+        /* PREMIUM LOGO STYLES */
+        .brand-container {
             display: flex;
-            gap: 14px;
-            flex-wrap: nowrap;
-            justify-content: center;
-            overflow-x: auto;
-            padding: 10px 0;
-        }
-        .categories-list::-webkit-scrollbar {
-            display: none;
-        }
-        .categories-list a {
-            white-space: nowrap;
-            color: #333;
-            font-weight: 600;
+            align-items: center;
+            gap: 12px;
             text-decoration: none;
-            padding: 6px 14px;
-            border-radius: 20px;
-            transition: all 0.4s ease;
-        }
-        .categories-list a:hover {
-            background-color: #ff9900;
-            color: white;
         }
 
-        .slider {
+        .logo-box {
             position: relative;
-            width: 100%;
-            height: 420px;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        .slides {
-            display: none;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .slider img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .prev, .next {
-            cursor: pointer;
-            position: absolute;
-            top: 50%;
-            padding: 10px 15px;
-            color: white;
-            font-weight: bold;
-            font-size: 24px;
-            user-select: none;
-            background-color: rgba(0,0,0,0.3);
-            border-radius: 50%;
-            transform: translateY(-50%);
-        }
-        .prev { left: 10px; }
-        .next { right: 10px; }
-
-        .categories {
+            width: 42px;
+            height: 42px;
             display: flex;
+            align-items: center;
             justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-            margin: 30px 0;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .categories a {
-            padding: 10px 20px;
-            background-color: #343a40;
-            color: white;
-            border-radius: 20px;
-            text-decoration: none;
-            font-weight: 600;
+
+        .logo-box::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, var(--ag-orange), var(--ag-purple));
+            border-radius: 12px;
+            opacity: 0.15;
             transition: 0.3s;
         }
-        .categories a:hover {
-            background-color: #ffc107;
-            color: #111;
+
+        .brand-container:hover .logo-box {
+            transform: rotate(-5deg) scale(1.1);
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 20px auto;
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.05);
+        .brand-container:hover .logo-box::before {
+            opacity: 0.3;
+            filter: blur(8px);
         }
-        h1 {
-            font-size: 28px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
         }
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 20px;
+
+        .brand-name {
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--ag-black);
+            letter-spacing: -1px;
         }
-        .product-card {
-            text-align: center;
-            border: 1px solid #eee;
-            padding: 15px;
-            border-radius: 6px;
-            transition: transform 0.4s ease, box-shadow 0.4s ease;
+
+        .brand-name span {
+            background: linear-gradient(45deg, var(--ag-orange), var(--ag-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-tagline {
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        /* --- Search Bar Upgrade --- */
+        .search-form { flex: 0 0 40%; }
+        .search-container {
+            display: flex;
+            align-items: center;
+            background: #f1f5f9;
+            border-radius: 20px;
+            padding: 5px 20px;
+            border: 2px solid transparent;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .search-container:focus-within {
             background: #fff;
+            border-color: var(--ag-purple);
+            box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.2);
         }
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        }
-        .product-card img {
-            height: 160px;
-            object-fit: contain;
-            margin-bottom: 10px;
-        }
-        .product-name {
-            font-weight: 600;
-            font-size: 16px;
-            color: #333;
-        }
-        .product-price {
-            color: #ff3d00;
-            font-weight: bold;
-            margin: 5px 0;
-        }
-        .btn {
-            display: inline-block;
-            padding: 7px 15px;
-            margin-top: 5px;
-            border-radius: 4px;
-            text-decoration: none;
+
+        .search-container input {
+            border: none;
+            background: transparent;
+            width: 100%;
+            padding: 10px;
+            outline: none;
             font-weight: 500;
-            font-size: 14px;
+            color: var(--ag-black);
         }
-        .btn-details {
-            background: #333;
-            color: #fff;
+
+        .search-btn { background: none; border: none; cursor: pointer; color: var(--ag-purple); font-size: 18px; }
+
+        /* --- Icons & Badges --- */
+        .nav-icons { display: flex; gap: 15px; align-items: center; }
+        .nav-icons a { text-decoration: none; color: var(--ag-black); font-weight: 600; font-size: 14px; transition: 0.3s; }
+
+        /* Flash Sale Fix: ডিফল্ট কালার কালো থাকবে, হোভারে কালার হবে */
+        .nav-icons .flash-sale-link { color: var(--ag-black); transition: 0.3s; }
+        .nav-icons .flash-sale-link:hover { color: var(--ag-orange); }
+
+        .icon-circle {
+            width: 45px; height: 45px;
+            background: #fff; border-radius: 15px;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            transition: 0.3s; border: 1px solid #f1f5f9;
         }
-        .btn-cart {
-            background: #ff3d00;
-            color: #fff;
+
+        .icon-circle:hover { transform: translateY(-3px); background: var(--ag-black); color: #fff; }
+
+        /* Badge Fix: নম্বর নিশ্চিত করার জন্য display: flex এবং z-index */
+       .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--ag-orange);
+    color: white;
+    font-size: 11px;
+    font-weight: 800;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    z-index: 50;
+}
+
+        /* --- User Dropdown --- */
+        .user-dropdown { position: relative; display: inline-block; }
+        .dropdown-content {
+            display: none; position: absolute; right: 0;
+            background-color: white; min-width: 170px;
+            box-shadow: 0px 15px 35px rgba(0,0,0,0.1);
+            border-radius: 18px; z-index: 1100; overflow: hidden;
+            border: 1px solid #f1f5f9; margin-top: 10px;
+            padding: 8px 0;
         }
-        .btn-details:hover {
-            background-color: #555;
+        .dropdown-content a {
+            color: var(--ag-black); padding: 12px 20px;
+            text-decoration: none; display: flex; align-items: center; gap: 10px;
+            font-size: 13px; font-weight: 600; transition: 0.3s;
         }
-        .btn-cart:hover {
-            background-color: #e63600;
-        }
-        .cart-link {
-            margin-top: 30px;
-            text-align: center;
-        }
-        .cart-link a {
-            color: #ff3d00;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        footer {
-            background: #343a40;
-            color: #fff;
-            text-align: center;
-            padding: 30px 0;
-            margin-top: 40px;
-        }
-        footer a {
-            color: #ffc107;
-            margin: 0 10px;
-            text-decoration: none;
-        }
+        .dropdown-content a:hover { background-color: #f8fafc; color: var(--ag-purple); }
+        .user-dropdown:hover .dropdown-content { display: block; }
+
+
+        .sub-nav { display: flex; justify-content: center; gap: 12px; padding: 15px 0; background: #fff; border-bottom: 1px solid #f1f5f9; }
+        .sub-nav a { text-decoration: none; color: #64748b; font-size: 13px; font-weight: 700; padding: 8px 18px; border-radius: 50px; background: #f8fafc; transition: 0.3s; }
+        .sub-nav a:hover { background: var(--ag-purple); color: #fff; transform: scale(1.05); }
+        .hero-section { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; padding: 25px 5%; }
+        .main-slider { border-radius: 30px; overflow: hidden; height: 450px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .main-slider img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+        .side-banners { display: flex; flex-direction: column; gap: 20px; }
+        .side-banners img { width: 100%; border-radius: 25px; height: 215px; object-fit: cover; }
+        .features-bar { display: flex; justify-content: space-around; margin: 20px 5%; padding: 30px; background: #fff; border-radius: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
+        .feature-item { display: flex; flex-direction: column; align-items: center; gap: 10px; font-weight: 700; font-size: 12px; }
+        .feature-item i { font-size: 24px; padding: 15px; background: #fff5ed; color: var(--ag-orange); border-radius: 18px; transition: 0.3s; }
+        .container { padding: 40px 5%; }
+        .section-title { font-size: 32px; font-weight: 800; margin-bottom: 30px; letter-spacing: -1px; }
+        .section-title span { background: linear-gradient(to right, var(--ag-orange), var(--ag-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; }
+        .product-card { background: #fff; border-radius: 30px; padding: 25px; transition: 0.4s; border: 1px solid #f1f5f9; position: relative; }
+        .product-card:hover { transform: translateY(-15px); box-shadow: 0 30px 50px rgba(0,0,0,0.08); border-color: var(--ag-purple); }
+        .product-card img { width: 100%; height: 200px; object-fit: contain; margin-bottom: 20px; }
+        .product-title { font-size: 17px; font-weight: 700; margin: 10px 0; height: 48px; line-height: 1.4; }
+        .product-price { font-size: 22px; font-weight: 800; color: var(--ag-orange); margin-bottom: 20px; }
+        .card-buttons { display: flex; gap: 10px; }
+        .btn-main { padding: 12px 20px; border-radius: 15px; font-size: 13px; font-weight: 700; text-decoration: none; transition: 0.3s; text-align: center; flex: 1; }
+        .btn-details { background: #f1f5f9; color: var(--ag-black); }
+        .btn-cart { background: linear-gradient(45deg, var(--ag-purple), #a855f7); color: #fff; }
+        footer { background: var(--ag-black); color: #fff; padding: 80px 5% 40px; text-align: center; border-radius: 50px 50px 0 0; margin-top: 80px; }
     </style>
 </head>
 <body>
 
+<!-- Modern Navbar -->
 <nav class="navbar">
     <div class="brand">
-        <a href="{% url 'home' %}">🛍 MyShop</a>
+        <a href="/" class="brand-container">
+            <div class="logo-box">
+                <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:var(--ag-orange)" />
+                            <stop offset="100%" style="stop-color:var(--ag-purple)" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M75 35C70 25 58 20 45 20C25 20 10 35 10 55C10 75 25 90 45 90C65 90 80 75 80 55V50H45" stroke="url(#logoGradient)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M65 50L85 50M75 50L75 70" stroke="var(--ag-orange)" stroke-width="8" stroke-linecap="round" />
+                </svg>
+            </div>
+            <div class="brand-text">
+                <span class="brand-name">Gadget<span>Flow</span></span>
+                <span class="brand-tagline">Premium Tech Hub</span>
+            </div>
+        </a>
     </div>
 
-    <form method="get" action="{% url 'home' %}" class="search-form">
-        <input type="text" name="q" placeholder="Search products..." value="{{ search_query }}">
-        <select name="category" onchange="this.form.submit()">
-            <option value="All" {% if selected_category == 'All' or not selected_category %}selected{% endif %}>All Categories</option>
-            {% for cat in categories %}
-                <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit">Search</button>
+    <form class="search-form" action="{% url 'home' %}" method="GET">
+        <div class="search-container">
+            <input type="text" name="q" placeholder="Explore future tech..." value="{{ search_query|default:'' }}">
+            <button type="submit" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
     </form>
 
-    <div class="nav-links">
-        <a href="{% url 'home' %}">Home</a>
-        <a href="{% url 'offers' %}">Offers</a>
-        <a href="{% url 'preorder' %}">Preorder</a>
-        <a href="{% url 'cart_view' %}">Cart 🛒</a>
-        <a href="{% url 'order_history' %}">My Orders</a>
-        {% if user.is_authenticated %}
-            <a href="{% url 'logout' %}">Logout</a>
+    <div class="nav-icons">
+        <a href="{% url 'preorder' %}">Pre-order</a>
+
+        <a href="{% url 'offers' %}" class="flash-sale-link">Flash Sale</a>
+
+        <a href="{% url 'cart_view' %}" class="icon-circle">
+    <i class="fa-solid fa-bag-shopping"></i>
+    <!-- Badge Section -->
+    <span class="badge" id="cart-count">
+        {% if cart_count > 0 %}
+            {{ cart_count }}
         {% else %}
-            <a href="{% url 'login' %}">Login</a>
-            <a href="{% url 'signup' %}">Register</a>
+            0
         {% endif %}
+    </span>
+</a>
+        <!-- User Profile Dropdown -->
+        <div class="user-dropdown">
+            <a href="#" class="icon-circle">
+                <i class="fa-regular fa-user-circle" style="font-size: 20px;"></i>
+            </a>
+            <div class="dropdown-content">
+                {% if user.is_authenticated %}
+    <a href="{% url 'profile' %}"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+                    <hr style="border:0; border-top:1px solid #f1f5f9; margin: 5px 0;">
+                    <a href="{% url 'logout' %}" style="color: #ef4444;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+                {% else %}
+                    <a href="{% url 'login' %}"><i class="fa-solid fa-right-to-bracket"></i> Sign In</a>
+                    <a href="{% url 'register' %}"><i class="fa-solid fa-user-plus"></i> Register</a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </nav>
 
-<div class="categories-bar">
-    <div class="categories-list">
-        <a href="{% url 'phones_tablets' %}">Phones & Tablets</a>
-        <a href="{% url 'laptop_desktop' %}">Laptop & Desktop</a>
-        <a href="{% url 'sound_equipment' %}">Sound Equipment</a>
-        <a href="{% url 'power_accessories' %}">Power & Accessories</a>
-        <a href="{% url 'fitness_wearable' %}">Fitness & Wearable</a>
-        <a href="{% url 'smart_electronics' %}">Smart Electronics</a>
-    </div>
+<!-- (Sub Nav, Hero, Product grid, Footer) -->
+<div class="sub-nav">
+    <a href="{% url 'phones_tablets' %}"><i class="fa-solid fa-mobile-screen-button"></i> Phones</a>
+    <a href="{% url 'laptop_desktop' %}"><i class="fa-solid fa-laptop"></i> Laptops</a>
+    <a href="{% url 'power_accessories' %}"><i class="fa-solid fa-plug"></i> Power</a>
+    <a href="{% url 'smart_electronics' %}"><i class="fa-solid fa-microchip"></i> Smart Tech</a>
+    <a href="{% url 'sound_equipment' %}"><i class="fa-solid fa-headphones"></i> Audio</a>
+    <a href="{% url 'fitness_wearable' %}"><i class="fa-solid fa-stopwatch"></i> Wearables</a>
 </div>
 
-<div style="max-width: 1200px; margin: 20px auto; display: flex; gap: 20px;">
-    <div style="flex: 2; position: relative;">
-        <div class="slider">
-            <img class="slides" src="{% static 'images/slider1.jpg.webp' %}" alt="Slide 1">
-            <img class="slides" src="{% static 'images/slider2.jpg.webp' %}" alt="Slide 2">
-            <img class="slides" src="{% static 'images/slider3.jpg.jpg' %}" alt="Slide 3">
-            <img class="slides" src="{% static 'images/slider4.jpg.jpg' %}" alt="Slide 4">
-
-            <a class="prev" onclick="plusSlides(-1)">❮</a>
-            <a class="next" onclick="plusSlides(1)">❯</a>
-        </div>
+<section class="hero-section">
+    <div class="main-slider">
+        <img src="{% static 'images/slider1.jpg.webp' %}" id="slider">
     </div>
-
-    <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
-        <div style="border-radius: 10px; overflow: hidden;">
-            <img src="{% static 'images/watch-banner.jpg.png' %}" alt="Watch" style="width: 100%; display: block;">
-        </div>
-        <div style="border-radius: 10px; overflow: hidden;">
-            <img src="{% static 'images/airbuds-banner.png.webp' %}" alt="Airbuds" style="width: 100%; display: block;">
-        </div>
+    <div class="side-banners">
+        {% for offer in offers %}
+            {% if forloop.counter <= 2 %}
+                <img src="{{ offer.image.url }}" alt="{{ offer.title }}">
+            {% endif %}
+        {% empty %}
+            <img src="{% static 'images/watch-banner.jpg.png' %}" alt="Watch">
+            <img src="{% static 'images/airbuds-banner.png.webp' %}" alt="Audio">
+        {% endfor %}
     </div>
-</div>
+</section>
 
-<script>
-    let slideIndex = 1;
-    showSlides(slideIndex);
-    function plusSlides(n) {
-        showSlides(slideIndex += n);
-    }
-    function showSlides(n) {
-        let i;
-        let slides = document.getElementsByClassName("slides");
-        if (n > slides.length) { slideIndex = 1 }
-        if (n < 1) { slideIndex = slides.length }
-        for (i = 0; i < slides.length; i++) {
-            slides[i].style.display = "none";
-        }
-        slides[slideIndex - 1].style.display = "block";
-    }
-    setInterval(() => { plusSlides(1) }, 3000);
-</script>
-
-<div class="categories">
-    <a href="#">Smartphones</a>
-    <a href="#">Accessories</a>
-    <a href="#">Laptops</a>
-    <a href="#">Audio</a>
+<div class="features-bar">
+    <div class="feature-item"><i class="fa-solid fa-bolt"></i> 36M EMI</div>
+    <div class="feature-item"><i class="fa-solid fa-truck-fast"></i> Express Delivery</div>
+    <div class="feature-item"><i class="fa-solid fa-rotate"></i> Easy Exchange</div>
+    <div class="feature-item"><i class="fa-solid fa-shield-halved"></i> 1Y Warranty</div>
 </div>
 
 <div class="container">
-    <h1>Latest Products</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="section-title">New <span>Arrivals</span></h2>
+        <a href="#" style="color: var(--ag-purple); font-weight: 700; text-decoration: none;">View All →</a>
+    </div>
+
     <div class="product-grid">
         {% for product in products %}
-            <div class="product-card">
-                {% if product.image %}
-                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
-                {% else %}
-                    <img src="{% static 'shop/no-image.png' %}" alt="No image">
-                {% endif %}
-                <div class="product-name">{{ product.name }}</div>
-                <div class="product-price">${{ product.price }}</div>
-                <a href="{% url 'product_detail' product.pk %}" class="btn btn-details">Details</a>
-                <a href="{% url 'add_to_cart' product.pk %}" class="btn btn-cart">Add to Cart</a>
+        <div class="product-card">
+            {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+            {% endif %}
+            <div class="product-title">{{ product.name }}</div>
+            <div class="product-price">৳{{ product.price }}</div>
+            <div class="card-buttons">
+                <a href="{% url 'product_detail' product.pk %}" class="btn-main btn-details">View</a>
+                <a href="{% url 'add_to_cart' product.pk %}" class="btn-main btn-cart">Add to Cart</a>
             </div>
+        </div>
         {% empty %}
-            <p>No products available.</p>
+        <div style="grid-column: 1/-1; text-align: center; padding: 100px;">
+            <i class="fa-solid fa-box-open" style="font-size: 50px; color: #cbd5e1; margin-bottom: 20px;"></i>
+            <p style="color: #64748b; font-weight: 600;">The inventory is currently empty.</p>
+        </div>
         {% endfor %}
-    </div>
-    <div class="cart-link">
-        <a href="{% url 'cart_view' %}">🛒 View Cart</a>
     </div>
 </div>
 
 <footer>
-    <p>© {{ now|date:"Y" }} MyShop | All rights reserved</p>
-    <p>
-        Connect with us:
-        <a href="https://facebook.com" target="_blank">Facebook</a> |
-        <a href="https://instagram.com" target="_blank">Instagram</a> |
-        <a href="https://twitter.com" target="_blank">Twitter</a>
+    <a href="/" class="footer-logo-container">
+        <svg width="35" height="35" viewBox="0 0 100 100" fill="none">
+            <path d="M75 35C70 25 58 20 45 20C25 20 10 35 10 55C10 75 25 90 45 90C65 90 80 75 80 55V50H45" stroke="var(--ag-orange)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span style="font-size: 28px; font-weight: 900; color: white; letter-spacing: -1px;">GADGET<span style="color: var(--ag-orange);">FLOW</span></span>
+    </a>
+    <p style="color: #94a3b8; max-width: 500px; margin: 0 auto 40px; line-height: 1.8;">Your one-stop destination for the latest premium tech accessories in Bangladesh.</p>
+    <p style="border-top: 1px solid #1e293b; padding-top: 30px; font-size: 12px; color: #64748b;">
+        &copy; 2026 Developed by <span style="color: var(--ag-orange);">Farhan Labib</span>
     </p>
 </footer>
 

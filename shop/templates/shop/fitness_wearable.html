@@ -1,1 +1,93 @@
-<h1>This is Phones & Tablets Page</h1>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-[#fcfcfd] py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+
+        <!-- Ultra-Premium Header -->
+        <div class="relative mb-20 text-center">
+            <!-- Ambient Glow Effects -->
+            <div class="absolute inset-0 flex justify-center items-center opacity-10 pointer-events-none">
+                <div class="w-80 h-80 bg-cyan-400 rounded-full blur-[130px]"></div>
+                <div class="w-64 h-64 bg-purple-400 rounded-full blur-[100px] -ml-20"></div>
+            </div>
+
+            <h1 class="relative text-5xl md:text-7xl font-black text-[#0b0f1a] tracking-tighter uppercase italic">
+                Active <span class="text-orange-500">Intelligence</span>
+            </h1>
+            <p class="relative text-gray-400 text-sm font-bold tracking-[0.4em] uppercase mt-4">Next-Gen Performance Wearables</p>
+            <div class="h-1.5 w-24 bg-gradient-to-r from-orange-500 via-purple-600 to-cyan-500 mx-auto mt-8 rounded-full"></div>
+        </div>
+
+        {% if products %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+            {% for product in products %}
+            <div class="group relative bg-white border border-gray-100 rounded-[45px] p-7 transition-all duration-500 hover:shadow-[0_40px_80px_rgba(0,0,0,0.06)] hover:-translate-y-3">
+
+                <!-- Image Showcase (Clean Glassmorphism) -->
+                <div class="relative aspect-square mb-8 overflow-hidden rounded-[35px] bg-[#f8fafc] flex items-center justify-center">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-3/4 h-3/4 object-contain transition-transform duration-700 group-hover:scale-110">
+                    {% else %}
+                        <img src="{% static 'shop/no-image.png' %}" alt="No image" class="opacity-10 w-1/2">
+                    {% endif %}
+
+                    <!-- Fitness Track Badge -->
+                    <div class="absolute top-5 right-5 h-10 w-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Product Content -->
+                <div class="space-y-5">
+                    <div class="min-h-[50px]">
+                        <span class="text-[9px] font-black text-purple-600 uppercase tracking-[0.2em] block mb-1">{{ product.brand.name|default:"Elite Series" }}</span>
+                        <h3 class="text-xl font-bold text-[#0b0f1a] group-hover:text-orange-500 transition-colors leading-tight">
+                            {{ product.name }}
+                        </h3>
+                    </div>
+
+                    <div class="flex items-end justify-between py-2">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Price</span>
+                            <span class="text-3xl font-black text-[#0b0f1a] tracking-tighter italic">৳{{ product.price }}</span>
+                        </div>
+                        <!-- Fitness Status Icon -->
+                        <div class="flex h-9 w-9 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600 group-hover:bg-[#0b0f1a] group-hover:text-white transition-all duration-300">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Unified Action Grid -->
+                    <div class="grid grid-cols-5 gap-2">
+                        <a href="{% url 'product_detail' product.pk %}" class="col-span-1 flex items-center justify-center border-2 border-gray-100 rounded-2xl hover:bg-[#0b0f1a] hover:text-white transition-all duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </a>
+                        <a href="{% url 'add_to_cart' product.pk %}" class="col-span-4 py-4 bg-[#0b0f1a] text-white rounded-2xl text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-orange-500 transition-all duration-500">
+                            Add to Cart 🛒
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-32 bg-white rounded-[60px] border border-gray-50">
+            <div class="inline-flex h-24 w-24 items-center justify-center bg-cyan-50 text-4xl rounded-full mb-8">⌚</div>
+            <h3 class="text-3xl font-black text-[#0b0f1a] tracking-tighter italic">NO TRACKERS YET</h3>
+            <p class="text-gray-400 mt-3 font-medium uppercase tracking-widest text-xs">Stay tuned for the latest fitness gear.</p>
+            <a href="/" class="mt-8 inline-block px-10 py-4 bg-[#0b0f1a] text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-orange-500 transition-all">Go Home</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -6,11 +6,20 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'price', 'category')
     fields = ('name', 'description', 'price', 'category', 'image',)
 
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'full_name', 'email', 'total_price', 'date_ordered')
-    list_filter = ('date_ordered',)
-    search_fields = ('full_name', 'email', 'user__username')
+    # অ্যাডমিন প্যানেলে কোন কোন কলাম দেখা যাবে
+    list_display = ('id', 'user', 'full_name', 'total_price', 'date_ordered')
+
+    # ডানপাশে ফিল্টার করার অপশন
+    list_filter = ('date_ordered', 'user')
+
+    # সার্চ করার অপশন
+    search_fields = ('full_name', 'phone', 'email')
+
+    # অর্ডারের ভেতরে ঢুকলে যা যা এডিট করা যাবে (সব রিড-অনলি রাখতে চাইলে readonly_fields ব্যবহার করুন)
+    readonly_fields = ('date_ordered',)
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):

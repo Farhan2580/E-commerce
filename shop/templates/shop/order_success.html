@@ -3,74 +3,126 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Order Success</title>
-    <link rel="stylesheet" href="{% static 'shop/style.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Success | GadgetFlow</title>
+    <!-- Tailwind CSS for modern utility classes -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(to right, #d4fc79, #96e6a1);
-            margin: 0;
-            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #fcfcfd;
+            overflow-x: hidden;
         }
 
-        .success-container {
-            max-width: 700px;
-            margin: 100px auto;
-            background: #fff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 0 12px rgba(0,0,0,0.1);
-            text-align: center;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.05);
         }
 
-        h2 {
-            color: #28a745;
-            font-size: 32px;
-            margin-bottom: 20px;
+        .success-icon-wrap {
+            animation: float 4s ease-in-out infinite;
         }
 
-        p {
-            font-size: 18px;
-            color: #333;
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
         }
 
-        .order-number {
-            font-weight: bold;
-            color: #2c3e50;
+        .modern-gradient {
+            background: linear-gradient(135deg, #0b0f1a 0%, #1a2235 100%);
         }
 
-        .btn-home {
-            display: inline-block;
-            margin-top: 25px;
-            background: #28a745;
-            color: white;
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
+        .btn-shine {
+            position: relative;
+            overflow: hidden;
         }
 
-        .btn-home:hover {
-            background: #1e7e34;
+        .btn-shine::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255,255,255,0.1);
+            transform: rotate(45deg);
+            transition: 0.5s;
+        }
+
+        .btn-shine:hover::after {
+            left: 120%;
         }
     </style>
 </head>
-<body>
-<div class="success-container">
-    <h2>🎉 Order Placed Successfully!</h2>
-    <p>Thank you <strong>{{ order.full_name }}</strong>!</p>
-    <p>Your order <span class="order-number">#{{ order.id }}</span> has been placed.</p>
-    <p>This is your
-        {{ user_order_count }}
-        {% if user_order_count == 1 %}st
-        {% elif user_order_count == 2 %}nd
-        {% elif user_order_count == 3 %}rd
-        {% else %}th
-        {% endif %}
-        order.
-    </p>
-    <p>Total: ${{ order.total_price }}</p>
-    <a href="/" class="btn-home">🏠 Return to Home</a>
-</div>
+<body class="min-h-screen flex items-center justify-center p-6">
+
+    <!-- Decorative Elements -->
+    <div class="fixed top-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-100 rounded-full blur-[120px] opacity-60"></div>
+    <div class="fixed bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-100 rounded-full blur-[120px] opacity-60"></div>
+
+    <div class="max-w-xl w-full relative z-10">
+        <!-- Floating Success Icon -->
+        <div class="success-icon-wrap flex justify-center mb-10">
+            <div class="relative">
+                <div class="absolute inset-0 bg-green-400 rounded-[40px] blur-2xl opacity-20 animate-pulse"></div>
+                <div class="relative h-32 w-32 glass-card rounded-[40px] flex items-center justify-center text-6xl border border-white">
+                    ✅
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Card -->
+        <div class="glass-card rounded-[50px] p-10 md:p-14 text-center border border-white shadow-2xl">
+            <h1 class="text-xs font-black tracking-[0.5em] text-gray-400 uppercase mb-4">Transaction Completed</h1>
+            <h2 class="text-4xl md:text-5xl font-extrabold text-[#0b0f1a] tracking-tighter mb-6 italic uppercase">
+                Order <span class="text-green-500">Placed!</span>
+            </h2>
+
+            <p class="text-gray-500 font-medium leading-relaxed mb-8">
+                Thank you, <span class="text-[#0b0f1a] font-bold">{{ order.full_name }}</span>.
+                Your premium tech selection is being prepared for delivery.
+            </p>
+
+            <!-- Order Specs -->
+            <div class="grid grid-cols-2 gap-4 mb-10">
+                <div class="p-6 bg-gray-50/50 rounded-3xl border border-gray-100">
+                    <span class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Order ID</span>
+                    <span class="text-lg font-black text-[#0b0f1a]">#{{ order.id }}</span>
+                </div>
+                <div class="p-6 bg-gray-50/50 rounded-3xl border border-gray-100">
+                    <span class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Amount Paid</span>
+                    <span class="text-lg font-black text-green-600">৳{{ order.total_price }}</span>
+                </div>
+            </div>
+
+            <!-- Frequency Badge -->
+            <div class="inline-flex items-center gap-3 px-6 py-3 bg-[#0b0f1a] rounded-2xl text-white mb-10">
+                <span class="text-[10px] font-black uppercase tracking-widest opacity-60">Loyalty Level:</span>
+                <span class="text-xs font-bold italic">
+                    {{ user_order_count }}<sup>{% if user_order_count == 1 %}st{% elif user_order_count == 2 %}nd{% elif user_order_count == 3 %}rd{% else %}th{% endif %}</sup> Purchase
+                </span>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex flex-col gap-4">
+                <a href="/" class="btn-shine py-6 modern-gradient rounded-3xl text-white font-black uppercase tracking-[0.2em] text-sm shadow-[0_20px_40px_rgba(0,0,0,0.15)] transition-all hover:-translate-y-1 active:scale-95">
+                    Return to Store
+                </a>
+                <a href="/orders" class="py-6 bg-white border border-gray-200 rounded-3xl text-[#0b0f1a] font-black uppercase tracking-[0.2em] text-sm hover:bg-gray-50 transition-all">
+                    Track Shipment
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer Note -->
+        <p class="mt-10 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">
+            Elite Security & End-to-End Encryption
+        </p>
+    </div>
+
 </body>
 </html>

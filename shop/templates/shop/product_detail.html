@@ -1,234 +1,107 @@
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>{{ product.name }}</title>
-  <link rel="stylesheet" href="{% static 'shop/style.css' %}" />
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f9fafb;
-      margin: 0;
-      padding: 30px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }} | Apple Gadgets BD Clone</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root { --ag-blue: #0066cc; --ag-gray: #f5f5f7; --ag-black: #1d1d1f; }
+        body { font-family: 'Inter', sans-serif; margin: 0; background: #fff; color: var(--ag-black); }
 
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 30px 40px;
-      border-radius: 12px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-    }
+        /* Navbar & Top-bar (Same as home) */
+        .navbar { display: flex; align-items: center; justify-content: space-between; padding: 15px 8%; border-bottom: 1px solid #e6e6e6; position: sticky; top: 0; background: #fff; z-index: 100; }
+        .brand a { font-size: 22px; font-weight: 800; color: #000; text-decoration: none; }
 
-    h2 {
-      margin-top: 0;
-      margin-bottom: 20px;
-      font-weight: 700;
-      font-size: 2rem;
-      color: #222;
-    }
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
 
-    img {
-      width: 100%;
-      max-width: 320px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      object-fit: contain;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
-    }
+        /* Product Main Section */
+        .product-main { display: grid; grid-template-columns: 1.2fr 1fr; gap: 50px; margin-bottom: 60px; }
+        
+        .product-gallery { background: var(--ag-gray); border-radius: 20px; padding: 40px; display: flex; align-items: center; justify-content: center; }
+        .product-gallery img { max-width: 100%; height: auto; mix-blend-mode: multiply; }
 
-    p.description {
-      font-size: 1.1rem;
-      line-height: 1.5;
-      color: #444;
-      margin-bottom: 15px;
-    }
+        .product-info h1 { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
+        .status-badge { background: #e8f5e9; color: #2e7d32; padding: 5px 12px; border-radius: 5px; font-size: 13px; font-weight: 600; display: inline-block; margin-bottom: 20px; }
+        
+        .price-box { font-size: 28px; font-weight: 700; color: var(--ag-blue); margin-bottom: 30px; }
+        
+        .action-btns { display: flex; gap: 15px; margin-top: 30px; }
+        .btn-cart { background: var(--ag-black); color: #fff; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: 0.3s; }
+        .btn-cart:hover { opacity: 0.8; }
 
-    p.price {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #28a745;
-      margin-bottom: 25px;
-    }
+        /* Specification Table (Exactly like Apple Gadgets) */
+        .spec-section { margin-top: 80px; }
+        .spec-title { font-size: 24px; font-weight: 700; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 30px; }
+        
+        .spec-table { width: 100%; border-collapse: collapse; }
+        .spec-table tr { border-bottom: 1px solid #f0f0f0; }
+        .spec-table td { padding: 15px 0; font-size: 15px; }
+        .spec-label { width: 30%; color: #86868b; font-weight: 500; }
+        .spec-value { color: #1d1d1f; font-weight: 400; }
 
-    a.btn {
-      display: inline-block;
-      background-color: #007bff;
-      color: white;
-      padding: 12px 22px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
-      margin-right: 15px;
-      transition: background-color 0.3s ease;
-    }
-    a.btn:hover {
-      background-color: #0056b3;
-    }
-
-    /* Review Section */
-    .review-section {
-      margin-top: 50px;
-    }
-
-    .review-section h3 {
-      font-weight: 700;
-      margin-bottom: 15px;
-      color: #333;
-    }
-
-    /* Star rating style */
-    .review-stars {
-      direction: rtl;
-      unicode-bidi: bidi-override;
-      display: inline-block;
-      font-size: 28px;
-      margin-bottom: 15px;
-    }
-
-    .review-stars input[type="radio"] {
-      display: none;
-    }
-
-    .review-stars label {
-      color: #ccc;
-      cursor: pointer;
-      padding: 0 5px;
-      transition: color 0.3s ease;
-      user-select: none;
-    }
-
-    .review-stars input[type="radio"]:checked ~ label,
-    .review-stars label:hover,
-    .review-stars label:hover ~ label {
-      color: #ffc107;
-    }
-
-    /* Textarea */
-    textarea {
-      width: 100%;
-      min-height: 90px;
-      padding: 12px;
-      font-size: 1rem;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      resize: vertical;
-      margin-bottom: 20px;
-      font-family: inherit;
-    }
-
-    /* Submit button */
-    button[type="submit"] {
-      background-color: #28a745;
-      color: white;
-      padding: 12px 25px;
-      font-weight: 600;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-    button[type="submit"]:hover {
-      background-color: #218838;
-    }
-
-    /* Review box */
-    .review-box {
-      border: 1px solid #ddd;
-      background-color: #fefefe;
-      padding: 18px 22px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.03);
-    }
-
-    .review-box strong {
-      font-weight: 700;
-      font-size: 1.05rem;
-      color: #333;
-    }
-
-    .review-box .stars {
-      color: #ffc107;
-      font-size: 18px;
-      margin-left: 8px;
-    }
-
-    .review-box small {
-      color: #666;
-      font-size: 0.85rem;
-      margin-bottom: 10px;
-      display: block;
-    }
-
-    .review-box p {
-      font-size: 1rem;
-      color: #555;
-      margin: 0;
-    }
-
-    @media (max-width: 600px) {
-      .container {
-        padding: 20px;
-      }
-      img {
-        max-width: 100%;
-      }
-    }
-  </style>
+        footer { background: #000; color: #fff; padding: 40px 0; text-align: center; margin-top: 100px; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h2>{{ product.name }}</h2>
-    <img src="{{ product.image.url }}" alt="{{ product.name }}" />
-    <p class="description">{{ product.description }}</p>
-    <p class="price">${{ product.price }}</p>
 
-    <a href="{% url 'add_to_cart' product.pk %}" class="btn">Add to Cart 🛒</a>
-    <a href="/" class="btn" style="background-color: #6c757d;">Back to Home</a>
-
-    <div class="review-section">
-      <h3>Leave a Review</h3>
-      {% if user.is_authenticated %}
-        <form method="POST">
-          {% csrf_token %}
-          <div class="review-stars">
-            {% for i in "54321" %}
-              <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" {% if form.rating.value|stringformat:"s" == i %}checked{% endif %}/>
-              <label for="star{{ i }}">&#9733;</label>
-            {% endfor %}
-          </div>
-          {{ form.comment }}
-          <button type="submit">Submit Review</button>
-        </form>
-      {% else %}
-        <p><a href="{% url 'login' %}">Login</a> to leave a review.</p>
-      {% endif %}
-
-      <h3>Customer Reviews</h3>
-      {% for review in reviews %}
-        <div class="review-box">
-          <strong>{{ review.user.username }}</strong>
-          <span class="stars">
-            {% for i in "12345" %}
-              {% if forloop.counter <= review.rating %}
-                &#9733;
-              {% else %}
-                <span style="color: #ccc;">&#9733;</span>
-              {% endif %}
-            {% endfor %}
-          </span>
-          <small>{{ review.created_at|date:"F j, Y, g:i a" }}</small>
-          <p>{{ review.comment }}</p>
-        </div>
-      {% empty %}
-        <p>No reviews yet.</p>
-      {% endfor %}
+<nav class="navbar">
+    <div class="brand"><a href="{% url 'home' %}">GADGETS</a></div>
+    <div style="font-size: 14px; font-weight: 500;">
+        <a href="{% url 'home' %}" style="text-decoration:none; color:#333; margin-right:20px;">Home</a>
+        <a href="{% url 'cart_view' %}" style="text-decoration:none; color:#333;">Cart 🛒</a>
     </div>
-  </div>
+</nav>
+
+<div class="container">
+    <div class="product-main">
+        <div class="product-gallery">
+            {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+            {% else %}
+                <img src="{% static 'shop/no-image.png' %}" alt="No image">
+            {% endif %}
+        </div>
+
+        <div class="product-info">
+            <span class="status-badge">In Stock</span>
+            <h1>{{ product.name }}</h1>
+            <p style="color: #6e6e73; line-height: 1.6;">{{ product.description|truncatewords:30 }}</p>
+            
+            <div class="price-box">৳{{ product.price }}</div>
+            
+            <div class="action-btns">
+                <a href="{% url 'add_to_cart' product.pk %}" class="btn-cart">Add to Cart</a>
+                <a href="#" style="padding: 15px; color: var(--ag-blue); font-weight: 600; text-decoration: none;">Add to Wishlist</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="spec-section">
+        <h2 class="spec-title">Specification</h2>
+        <table class="spec-table">
+            <tr>
+                <td class="spec-label">Category</td>
+                <td class="spec-value">{{ product.category.name }}</td>
+            </tr>
+            <tr>
+                <td class="spec-label">Model</td>
+                <td class="spec-value">{{ product.name }}</td>
+            </tr>
+            <tr>
+                <td class="spec-label">Full Description</td>
+                <td class="spec-value">{{ product.description }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2026 Apple Gadgets BD Clone</p>
+</footer>
+
 </body>
 </html>

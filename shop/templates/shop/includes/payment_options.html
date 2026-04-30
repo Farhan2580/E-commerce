@@ -1,0 +1,73 @@
+<!-- Payment Methods Wrapper -->
+<div class="bg-white border border-gray-100 rounded-[35px] p-8 shadow-sm" x-data="{ method: 'COD' }">
+    <div class="flex items-center gap-4 mb-8">
+        <div class="h-10 w-1.5 bg-purple-600 rounded-full"></div>
+        <h2 class="text-2xl font-black text-[#0b0f1a]">Payment <span class="text-orange-500">Method</span></h2>
+    </div>
+
+    <!-- Hidden input for Django form -->
+    <input type="hidden" name="payment_method" :value="method">
+
+    <!-- Method Selection Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <!-- COD -->
+        <div @click="method = 'COD'"
+             :class="method === 'COD' ? 'border-orange-500 bg-orange-50 scale-[1.05] shadow-lg' : 'border-gray-100 bg-gray-50 opacity-60'"
+             class="cursor-pointer p-8 rounded-[30px] border-2 transition-all duration-500 text-center group">
+            <div class="text-3xl mb-4 group-hover:rotate-12 transition-transform">📦</div>
+            <p class="text-[10px] font-black text-[#0b0f1a] uppercase tracking-widest">Cash on Delivery</p>
+        </div>
+
+        <!-- MFS -->
+        <div @click="method = 'MFS'"
+             :class="method === 'MFS' ? 'border-purple-600 bg-purple-50 scale-[1.05] shadow-lg' : 'border-gray-100 bg-gray-50 opacity-60'"
+             class="cursor-pointer p-8 rounded-[30px] border-2 transition-all duration-500 text-center group">
+            <div class="text-3xl mb-4 group-hover:rotate-12 transition-transform">📱</div>
+            <p class="text-[10px] font-black text-[#0b0f1a] uppercase tracking-widest">Mobile Wallet</p>
+        </div>
+
+        <!-- Card -->
+        <div @click="method = 'CARD'"
+             :class="method === 'CARD' ? 'border-orange-500 bg-orange-50 scale-[1.05] shadow-lg' : 'border-gray-100 bg-gray-50 opacity-60'"
+             class="cursor-pointer p-8 rounded-[30px] border-2 transition-all duration-500 text-center group">
+            <div class="text-3xl mb-4 group-hover:rotate-12 transition-transform">💳</div>
+            <p class="text-[10px] font-black text-[#0b0f1a] uppercase tracking-widest">Online Card</p>
+        </div>
+    </div>
+
+    <!-- Content Panels -->
+    <div class="relative min-h-[150px]">
+        <!-- COD Panel -->
+        <div x-show="method === 'COD'" x-transition class="text-center py-6 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+            <h4 class="text-lg font-bold text-[#0b0f1a] mb-2 uppercase tracking-tighter">Pay at Doorstep</h4>
+            <p class="text-gray-500 text-[10px] font-black uppercase tracking-widest px-4">Pay with cash when our delivery agent reaches your home.</p>
+        </div>
+
+        <!-- MFS Panel -->
+        <div x-show="method === 'MFS'" x-transition class="space-y-4">
+            <div class="bg-purple-600 p-6 rounded-3xl text-white flex justify-between items-center shadow-xl shadow-purple-200">
+                <div>
+                    <p class="text-[8px] font-black uppercase tracking-[0.3em] opacity-80 mb-1">Send Money to</p>
+                    <p class="text-xl font-black tracking-widest italic">01300 972 969</p>
+                </div>
+                <div class="flex gap-2">
+                    <img src="https://www.logo.wine/a/logo/BKash/BKash-Logo.wine.svg" class="h-6 brightness-0 invert" alt="bkash">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" name="sender_number" placeholder="SENDER NUMBER" class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-purple-600/20 text-[#0b0f1a] font-bold outline-none">
+                <input type="text" name="transaction_id" placeholder="TRANSACTION ID" class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-purple-600/20 text-[#0b0f1a] font-bold outline-none">
+            </div>
+        </div>
+
+        <!-- Card Panel -->
+        <div x-show="method === 'CARD'" x-transition class="bg-[#0b0f1a] p-8 rounded-[35px] text-white flex items-center gap-6 relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl"></div>
+            <div class="text-4xl">🔐</div>
+            <div>
+                <h4 class="text-lg font-black italic uppercase tracking-tighter">Secured by SSLCommerz</h4>
+                <p class="text-[9px] text-gray-500 font-black uppercase tracking-widest mt-1">Accepting Visa, Mastercard & Amex</p>
+            </div>
+        </div>
+    </div>
+</div>

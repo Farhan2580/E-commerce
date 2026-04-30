@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center bg-[#f8fafc] px-6 py-12">
+    <div class="w-full max-w-2xl">
+
+        <!-- Minimalist Profile Card -->
+        <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
+
+            <!-- Top Section: Account Header -->
+            <div class="p-10 md:p-14 text-center border-b border-slate-50">
+                <div class="relative inline-block mb-6">
+                    <!-- User Initial Circle -->
+                    <div class="h-24 w-24 rounded-full bg-slate-900 flex items-center justify-center shadow-lg mx-auto">
+                        <span class="text-3xl font-light text-white tracking-widest">
+                            {{ user.username|slice:":1"|upper }}
+                        </span>
+                    </div>
+                    <!-- Status Indicator -->
+                    <div class="absolute bottom-1 right-1 h-4 w-4 bg-emerald-500 border-4 border-white rounded-full"></div>
+                </div>
+
+                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight uppercase mb-1">
+                    {{ user.username }}
+                </h1>
+                <p class="text-sm font-medium text-slate-400 tracking-wider uppercase mb-8">
+                    {{ user.email|default:"Member since 2026" }}
+                </p>
+
+                <!-- Profile Actions -->
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a href="{% url 'order_history' %}" class="px-8 py-3 bg-slate-900 text-white text-[11px] font-bold uppercase tracking-[0.2em] rounded-full hover:bg-slate-800 transition-all duration-300">
+                        Orders
+                    </a>
+                    <a href="{% url 'cart_view' %}" class="px-8 py-3 bg-white text-slate-900 border border-slate-200 text-[11px] font-bold uppercase tracking-[0.2em] rounded-full hover:border-slate-900 transition-all duration-300">
+                        View Cart
+                    </a>
+                </div>
+            </div>
+
+            <!-- Bottom Section: Account Meta -->
+            <div class="bg-slate-50/50 px-10 py-6 grid grid-cols-2 divide-x divide-slate-100">
+                <div class="text-center px-4">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Membership</p>
+                    <p class="text-sm font-bold text-slate-700">Premium</p>
+                </div>
+                <div class="text-center px-4">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Last Active</p>
+                    <p class="text-sm font-bold text-slate-700">Just Now</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logout Link -->
+        <div class="mt-8 text-center">
+            <form action="{% url 'logout' %}" method="POST" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-[0.3em] transition-colors">
+                    — Secure Sign Out —
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
