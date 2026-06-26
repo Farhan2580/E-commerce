@@ -1,4 +1,4 @@
-# 🛒 GadgetFlow | Premium Tech Hub E-commerce Platform
+# 🛒 GadgetFlow | Tech Hub E-commerce Platform
 
 GadgetFlow is a fully functional, production-ready full-stack E-commerce platform built using modern web layouts and a robust Python backend architecture. Designed with a sleek user experience, the system enables dynamic product curation, localized currency listings (BDT ৳), interactive shopping workflows, and highly granular category cataloging.
 
