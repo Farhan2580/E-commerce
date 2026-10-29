@@ -1,0 +1,37 @@
+﻿{% extends 'base.html' %}
+{% block title %}{{ title }} | GadgetFlow{% endblock %}
+{% block content %}
+<section class="gf-shell gf-page gf-information" lang="{{ support_language }}">
+    {% include 'shop/includes/information_header.html' %}
+    {% if page_body %}<div class="gf-panel gf-info-intro">{{ page_body|linebreaks }}</div>{% endif %}
+    {% if page.slug == 'contact' %}
+        <div class="gf-support-layout">
+            <aside class="gf-panel gf-contact-panel"><p>{{ support_ui.contact_intro }}</p>{% include 'shop/includes/business_contact.html' %}</aside>
+            <section class="gf-panel"><h2>{{ support_ui.contact_form }}</h2>{% include 'shop/includes/support_form.html' %}</section>
+        </div>
+    {% elif page.slug == 'faqs' %}
+        <form method="get" class="gf-faq-search gf-panel"><label>{{ support_ui.search }}<input type="search" name="q" value="{{ faq_query }}" maxlength="200"></label>
+            <select name="group" aria-label="{{ support_ui.all_groups }}"><option value="">{{ support_ui.all_groups }}</option>{% for key, label in faq_group_options %}<option value="{{ key }}" {% if selected_faq_group == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+            <button class="gf-button gf-button-primary">{{ support_ui.search_action }}</button>
+        </form>
+        {% for group in faq_groups %}<section class="gf-faq-group"><h2>{{ group.label }}</h2>{% for entry in group.entries %}<details class="gf-faq-item"><summary>{{ entry.question }}</summary><div>{{ entry.answer|linebreaks }}</div></details>{% endfor %}</section>{% empty %}<p class="gf-empty-state">{{ support_ui.no_faqs }}</p>{% endfor %}
+    {% elif page.slug == 'shipping' %}
+        <div class="gf-panel gf-shipping-fact"><h2>{{ support_ui.shipping_charge }}</h2><strong>৳{{ store.shipping_price|floatformat:2 }}</strong><p>{{ support_ui.shipping_note }}</p></div>
+    {% elif page.slug == 'payments' %}
+        <h2>{{ support_ui.enabled_payments }}</h2><div class="gf-payment-cards">{% for method in payment_cards %}<article class="gf-panel"><h3>{{ method.title }}</h3><p>{{ method.instructions }}</p>{% if method.number %}<p>{{ support_ui.receiving_number }}: <strong>{{ method.number }}</strong></p>{% endif %}</article>{% empty %}<p class="gf-notice">{{ support_ui.no_payments }}</p>{% endfor %}</div>
+        <p class="gf-notice">{{ support_ui.payment_help }}</p>
+    {% elif page.slug == 'cookies' %}
+        <section class="gf-panel"><h2>{{ support_ui.cookies }}</h2><h3>{{ support_ui.essential }}</h3><dl class="gf-cookie-list">{% for cookie in cookie_inventory %}<dt>{{ cookie.name }}</dt><dd>{{ cookie.purpose }} ({{ cookie.days }} days)</dd>{% endfor %}</dl>
+            <h3>{{ support_ui.local_storage }}</h3><p><code>gf-theme-v2</code> — your chosen theme; <code>gf-shopping-change</code> — cart, comparison and wishlist change signals between tabs.</p>
+            <p>{{ support_ui.no_analytics }}</p><p>{{ support_ui.font_provider }}</p><p>{{ support_ui.map_note }}</p>
+        </section>
+    {% elif page.slug == 'about' %}
+        <section class="gf-panel"><h2>{{ support_ui.categories }}</h2><div class="gf-info-category-links">{% for category in about_categories %}<a href="{% url 'product_list' %}?category={{ category.pk }}">{{ category.name }}</a>{% endfor %}</div>{% include 'shop/includes/business_contact.html' %}</section>
+    {% elif page.slug == 'warranty' %}
+        <form method="get" class="gf-faq-search gf-panel"><label>{{ support_ui.find_warranty }}<input type="search" name="q" value="{{ warranty_query }}" maxlength="200"></label><button class="gf-button gf-button-primary">{{ support_ui.search_action }}</button></form>
+        {% for warranty in warranty_entries %}<section class="gf-panel gf-warranty-card"><h2><a href="{% url 'product_detail' warranty.product.pk %}">{{ warranty.product.name }}</a></h2>{% include 'shop/includes/warranty_content.html' %}</section>{% empty %}<p>{{ support_ui.no_warranty }}</p>{% endfor %}
+    {% endif %}
+    {% for section in information_sections %}<section class="gf-panel gf-information-section" lang="{{ section.language }}"><h2>{{ section.heading }}</h2>{{ section.body|linebreaks }}</section>{% endfor %}
+    {% if page.slug != 'contact' and 'contact' in information_public_slugs %}<p><a class="gf-button gf-button-secondary" href="{% url 'policy' 'contact' %}">{{ support_ui.support_contact }} →</a></p>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,75 @@
+<header class="gf-header">
+    <div class="gf-nav gf-shell">
+        <details class="gf-mobile-menu" id="mobile-menu">
+            <summary aria-label="Open category menu">☰</summary>
+            <div class="gf-mobile-drawer">
+                <div class="gf-drawer-heading">Shop by category
+                    <button type="button" data-close-menu aria-label="Close category menu">×</button>
+                </div>{% for category in nav_categories %}
+                <a href="{% url 'product_list' %}?category={{ category.pk }}">{{ category.name }}</a>
+                {% for child in category.children.all %}<a class="gf-child-link"
+                                                           href="{% url 'product_list' %}?category={{ child.pk }}">{{ child.name }}</a>
+                {% endfor %}{% endfor %}<a href="{% url 'preorder' %}">Pre-order</a><a
+                    href="{% url 'offers' %}">Offers</a><a href="{% url 'policy' 'contact' %}">Contact GadgetFlow</a>
+            </div>
+        </details>
+        <a class="gf-brand" href="{% url 'home' %}" aria-label="GadgetFlow home">Gadget<span>Flow</span><small>Tech.
+            Connected.</small></a>
+        <div class="gf-search-wrap">
+            <form class="gf-search" action="{% url 'product_list' %}" method="get" role="search">
+                <label class="gf-sr-only" for="nav-search">Search products and brands</label>
+                <input id="nav-search" name="q" type="search" autocomplete="off"
+                       placeholder="Search product, brand, and more…" value="{{ search_query|default:'' }}"
+                       aria-controls="search-suggestions" aria-expanded="false"
+                       data-suggest-url="{% url 'ajax_products' %}">
+                <button type="submit" aria-label="Search">
+                    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <circle cx="10" cy="10" r="7"/>
+                        <path d="m15 15 6 6"/>
+                    </svg>
+                </button>
+            </form>
+            <div id="search-suggestions" class="gf-suggestions" hidden><p class="gf-search-status" role="status"></p>
+                <div data-suggestion-items></div>
+            </div>
+        </div>
+        <div class="gf-nav-actions"><button class="gf-theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark theme" aria-pressed="false">◐</button><a class="gf-nav-link" href="{% url 'preorder' %}">Pre-order</a><a
+                class="gf-nav-link gf-offers-link" href="{% url 'offers' %}">Offers</a><a
+                class="gf-icon-link gf-wishlist-link" href="{% url 'wishlist' %}" aria-label="Wishlist, {{ wishlist_ids|length }} saved products">♡<small data-wishlist-count>{{ wishlist_ids|length }}</small></a><a
+                class="gf-icon-link gf-cart" href="{% url 'cart_view' %}" data-open-cart aria-label="Cart, {{ cart_count }} items">
+            <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <path d="m3 3 2 2 2 12h12l2-9H6"/>
+                <circle cx="9" cy="21" r="1"/>
+                <circle cx="18" cy="21" r="1"/>
+            </svg>
+            <span id="cart-count" data-cart-count>{{ cart_count }}</span></a>
+            <details class="gf-account">
+                <summary aria-label="Account menu">
+                    <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                        <circle cx="12" cy="7" r="4"/>
+                        <path d="M3 22v-2a9 7 0 0 1 18 0v2"/>
+                    </svg>
+                </summary>
+                <div class="gf-account-menu">{% if user.is_authenticated %}<p>{{ user.username }}</p>
+                    <a href="{% url 'profile' %}">My account</a><a href="{% url 'order_history' %}">My orders</a>
+                    <a href="{% url 'wishlist' %}">Wishlist</a>
+                    <form action="{% url 'logout' %}" method="post">{% csrf_token %}
+                        <button>Sign out</button>
+                    </form>{% else %}<a href="{% url 'login' %}">Sign in</a>
+                    <a href="{% url 'register' %}">Create account</a>{% endif %}</div>
+            </details>
+        </div>
+    </div>
+    <nav class="gf-categories" aria-label="Product categories">
+        <div class="gf-shell">{% for category in nav_categories %}
+            <div class="gf-category-menu"><a
+                    href="{% url 'product_list' %}?category={{ category.pk }}">{{ category.name }}</a>
+                {% if category.children.all %}
+                    <details>
+                        <summary aria-label="{{ category.name }} subcategories">⌄</summary>
+                        <div>{% for child in category.children.all %}
+                            <a href="{% url 'product_list' %}?category={{ child.pk }}">{{ child.name }}</a>{% endfor %}
+                        </div>
+                    </details>{% endif %}</div>{% endfor %}</div>
+    </nav>
+</header>

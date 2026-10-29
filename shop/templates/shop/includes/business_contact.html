@@ -1,0 +1,8 @@
+<div class="gf-contact-details">
+    {% if store.phone %}<div><span>{{ support_ui.phone }}</span><a href="tel:{{ store.phone }}">{{ store.phone }}</a></div>{% endif %}
+    {% if store.support_hours %}<div><span>{{ support_ui.hours }}</span><p>{{ store.support_hours }}</p></div>{% endif %}
+    {% if store.email %}<div><span>{{ support_ui.email }}</span><a href="mailto:{{ store.email }}">{{ store.email }}</a></div>{% endif %}
+    {% if store.address %}<div><span>{{ support_ui.address }}</span><p>{{ store.address|linebreaksbr }}</p></div>{% endif %}
+    {% if store.license_details %}<div><span>{{ support_ui.license }}</span><p>{{ store.license_details|linebreaksbr }}</p></div>{% endif %}
+    {% for link in business_links %}<a class="gf-button gf-button-secondary" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }} ↗</a>{% endfor %}
+</div>

@@ -1,0 +1,10 @@
+<form method="post" class="gf-form gf-support-form">
+    {% csrf_token %}{{ support_form.form_token }}
+    {% if support_form.errors %}<p class="gf-notice error" role="alert">{{ support_ui.form_error }}</p>{% endif %}
+    {{ support_form.non_field_errors }}{{ support_form.form_token.errors }}
+    <div class="gf-honeypot" aria-hidden="true">{{ support_form.website.label_tag }}{{ support_form.website }}</div>
+    {% for field in support_form.visible_fields %}{% if field.name != 'website' %}
+        <p>{{ field.label_tag }}{{ field }}{{ field.errors }}</p>
+    {% endif %}{% endfor %}
+    <button class="gf-button gf-button-primary">{{ support_ui.send }}</button>
+</form>

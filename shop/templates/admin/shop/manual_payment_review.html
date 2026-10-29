@@ -1,0 +1,8 @@
+{% extends 'admin/base_site.html' %}
+{% block content %}
+<h1>Check merchant records before confirming</h1>
+<p>Order #{{ claim.attempt.order_id }} · Reference {{ claim.reference }}</p>
+<p>Expected receipt: {{ claim.attempt.currency }} {{ claim.attempt.amount }} to {{ claim.attempt.manual_receiver }} · order reference GF{{ claim.attempt.order_id }}</p>
+<p>A submitted reference or screenshot is a claim, not proof. Verify the actual merchant receipt. Expired/released reservations cannot be confirmed for fulfillment.</p>
+<form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Record review</button></form>
+{% endblock %}

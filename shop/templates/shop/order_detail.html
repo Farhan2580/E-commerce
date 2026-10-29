@@ -1,0 +1,62 @@
+﻿{% extends 'base.html' %}
+{% block title %}Order {{ order.pk }} | GadgetFlow{% endblock %}
+{% block content %}
+    <div class="gf-shell gf-page">
+        <div class="gf-section-heading"><h1>Order #{{ order.pk }}</h1><a href="{% url 'order_history' %}">All your
+            orders →</a></div>
+        <div class="gf-panel"><p>Placed {{ order.date_ordered|date:'d M Y, H:i' }}</p>
+            <p>{{ order.full_name }} · {{ order.email }} · {{ order.phone }}</p>
+            <p>{{ order.address|linebreaksbr }}</p>
+            <p>{{ order.get_payment_method_display }} — {{ order.get_payment_status_display }}</p>
+            {% if order.payment_attempt and order.payment_attempt.provider == 'sslcommerz' %}
+                <section aria-label="Online payment status" class="gf-notice">
+                    <p role="status">Payment: {{ order.payment_attempt.get_status_display }}.</p>
+                    {% if order.payment_status == 'pending' %}<p>Payment has not been confirmed. Do not make another payment while verification is pending. Stock is reserved for up to 30 minutes.</p>{% endif %}
+                    {% if order.payment_status == 'review' %}<p>Payment needs store review. This order will not be fulfilled automatically. Contact support before paying again.</p>{% endif %}
+                    {% if order.inventory_released %}<p>The stock reservation has been released. Any late payment requires store review.</p>{% endif %}
+                    {% if order.payment_attempt.status == 'created' or order.payment_attempt.status == 'pending' %}
+                    <form method="post" action="{% url 'payment_start' order.payment_attempt.pk %}" data-payment-action>{% csrf_token %}<button class="gf-button gf-button-primary">Continue hosted payment</button></form>
+                    {% endif %}
+                    {% if order.payment_status == 'failed' or order.payment_status == 'cancelled' %}
+                        <p>Your delivery details are saved above. Retry this same order after stock and discounts are checked again.</p>
+                        <form method="post" action="{% url 'payment_retry' order.payment_attempt.pk %}" data-payment-action>{% csrf_token %}<button class="gf-button gf-button-primary">Retry payment · ৳{{ order.total_price }}</button></form>
+                    {% endif %}
+                    {% if order.payment_status == 'expired' %}<p>Payment timed out. Check its status. A new charge is blocked until the provider confirms that the previous payment failed or was cancelled.</p>{% endif %}
+                    {% if order.payment_status != 'paid' %}<form method="post" action="{% url 'payment_refresh' order.payment_attempt.pk %}" data-payment-action>{% csrf_token %}<button class="gf-button gf-button-secondary">Check payment status</button></form>{% endif %}
+                </section>
+            {% endif %}
+            {% if order.payment_attempt.provider == 'manual_bkash' %}{% include 'shop/includes/manual_payment.html' %}{% endif %}
+            <h2>Order progress: {{ order.get_status_display }}</h2><ol class="gf-timeline">{% for event in order.status_events.all %}<li><strong>{{ event.get_status_display }}</strong><time>{{ event.created_at|date:'d M Y, H:i' }}</time></li>{% empty %}<li>Historical order — detailed fulfillment events were not recorded.</li>{% endfor %}</ol>
+            {% if order.courier_name %}<p>Courier: {{ order.courier_name }}</p>{% endif %}
+            {% if order.tracking_number %}<p>Tracking number: {{ order.tracking_number }}</p>{% endif %}
+            {% if order.public_tracking_url %}<p><a href="{{ order.public_tracking_url }}" target="_blank" rel="noopener noreferrer">Open courier tracking ↗</a></p>{% endif %}
+            {% if 'tracking' in information_public_slugs %}<p><a class="gf-button gf-button-secondary" href="{% url 'track_order_detail' order.pk %}">Track this order / request support →</a></p>{% endif %}
+            {% if order.payment_method == 'BKASH' %}
+                <p>A transaction reference is a payment claim, not proof of payment. Your transfer requires manual
+                    verification.</p>{% endif %}
+            <div class="gf-table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Purchased item</th>
+                        <th>Quantity</th>
+                        <th>Unit price</th>
+                        <th>Subtotal</th>
+                    </tr>
+                    </thead>
+                    <tbody>{% for item in order.items.all %}
+                        <tr>
+                            <td>{{ item.product_name }}{% if item.variant_name %}<small>
+                                {{ item.variant_name }}{% if item.sku %} · {{ item.sku }}{% endif %}</small>{% endif %}
+                            </td>
+                            <td>{{ item.quantity }}</td>
+                            <td>৳{{ item.price }}</td>
+                            <td>৳{{ item.subtotal }}</td>
+                        </tr>{% endfor %}</tbody>
+                </table>
+            </div>
+            <div class="gf-order-totals"><p>Subtotal: ৳{{ order.subtotal }}</p>
+                {% if order.coupon_discount %}<p>Coupon {{ order.coupon_code }}: −৳{{ order.coupon_discount }}</p>{% endif %}
+                <p>Shipping: ৳{{ order.shipping_price }}</p><strong>Total: ৳{{ order.total_price }}</strong></div>
+        </div>
+    </div>{% endblock %}

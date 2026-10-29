@@ -1,0 +1,31 @@
+<footer class="gf-footer" lang="{{ support_language }}">
+    <div class="gf-shell gf-footer-grid {% if not information_footer.policies %}gf-footer-grid--compact{% endif %}">
+        <div><a class="gf-brand" href="{% url 'home' %}">Gadget<span>Flow</span></a>
+            <p>{{ store.tagline }}</p>{% if store.address %}<p>{{ store.address|linebreaksbr }}</p>{% endif %}
+            {% if store.phone %}<a href="tel:{{ store.phone }}">{{ store.phone }}</a>{% endif %}{% if store.email %}
+                <a href="mailto:{{ store.email }}">{{ store.email }}</a>{% endif %}</div>
+        <nav class="gf-footer-care" aria-labelledby="footer-care-heading">
+            <h3 id="footer-care-heading">{{ support_ui.care }}</h3>
+            <ul class="gf-footer-links">{% for link in information_footer.care %}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{% endfor %}</ul>
+        </nav>
+        {% if information_footer.policies %}<nav aria-labelledby="footer-policies-heading">
+            <h3 id="footer-policies-heading">{{ support_ui.policies }}</h3>
+            <ul class="gf-footer-links">{% for link in information_footer.policies %}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{% endfor %}</ul>
+        </nav>{% endif %}
+        <nav aria-labelledby="footer-account-heading">
+            <h3 id="footer-account-heading">{{ support_ui.company }}</h3>
+            <ul class="gf-footer-links">
+                {% for link in information_footer.company %}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{% endfor %}
+                <li><a href="{% url 'profile' %}">{{ support_ui.account }}</a></li>
+                <li><a href="{% url 'order_history' %}">{{ support_ui.orders }}</a></li>
+                <li><a href="{% url 'wishlist' %}">{{ support_ui.wishlist }}</a></li>
+                <li><a href="{% url 'cart_view' %}">{{ support_ui.cart }}</a></li>
+                <li><a href="{% url 'product_list' %}">{{ support_ui.catalog }}</a></li>
+                <li><a href="{% url 'offers' %}">{{ support_ui.offers }}</a></li>
+                <li><a href="{% url 'preorder' %}">{{ support_ui.preorder }}</a></li>
+            </ul>
+            {% if store.cod_enabled or store.bkash_number %}<p>{% if store.cod_enabled %}{{ support_ui.cod }}{% endif %}{% if store.bkash_number %}<br>{{ support_ui.bkash }}{% endif %}</p>{% endif %}
+        </nav>
+    </div>
+    <div class="gf-shell gf-footer-bottom">© {% now 'Y' %} GadgetFlow. <span>Developed by Farhan Labib.</span></div>
+</footer>

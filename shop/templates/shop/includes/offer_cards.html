@@ -1,0 +1,10 @@
+{% for offer in offers %}
+    <article class="gf-offer" id="offer-{{ offer.pk }}">{% if offer.image %}
+        <img src="{{ offer.image.url }}" alt="{{ offer.title }}" width="600" height="300" loading="lazy">{% endif %}
+        <div>{% if offer.exclusive %}<span class="gf-tag">Exclusive deal</span>{% endif %}<h3>{{ offer.title }}</h3>
+            <p class="gf-offer-description">{{ offer.description|linebreaksbr }}</p>{% if offer.ends_at %}<p>Ends <time datetime="{{ offer.ends_at|date:'c' }}" data-countdown>{{ offer.ends_at|date:'d M Y, H:i T' }}</time></p>{% endif %}{% if offer.link %}
+                <a href="{{ offer.link }}">Explore offer →</a>{% elif offer.products.exists %}
+                <a href="{% url 'product_list' %}?offer={{ offer.pk }}">Shop this offer →</a>{% endif %}</div>
+    </article>{% empty %}
+    <p class="gf-empty-state">There are no active offers right now. <a href="{% url 'product_list' %}">Explore the
+        catalog.</a></p>{% endfor %}

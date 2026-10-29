@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="gf-shell gf-page gf-narrow">
+        <section class="gf-panel"><h1>Welcome back.</h1>
+            <p>Sign in to your GadgetFlow account.</p>
+            <form method="post" class="gf-form">{% csrf_token %}{{ form.as_p }}{% if next %}
+                <input name="next" type="hidden" value="{{ next }}">{% endif %}
+                <button class="gf-button gf-button-primary">Sign in</button>
+            </form>
+            <p>New here? <a href="{% url 'register' %}">Create an account</a></p></section>
+    </div>{% endblock %}

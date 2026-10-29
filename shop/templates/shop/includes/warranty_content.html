@@ -1,0 +1,9 @@
+<p>{{ support_ui.warranty }}: <strong>{{ warranty.type }}</strong></p>
+{% if warranty.period %}<p>{{ support_ui.period }}: {{ warranty.period }}</p>{% endif %}
+{% if warranty.coverage %}<h3>{{ support_ui.coverage }}</h3>{{ warranty.coverage|linebreaks }}{% endif %}
+{% if warranty.exclusions %}<h3>{{ support_ui.exclusions }}</h3>{{ warranty.exclusions|linebreaks }}{% endif %}
+{% if warranty.claim_steps %}<h3>{{ support_ui.claim_steps }}</h3>{{ warranty.claim_steps|linebreaks }}{% endif %}
+{% if warranty.phone or warranty.email or warranty.service_address %}<h3>{{ support_ui.service_contact }}</h3>{% endif %}
+{% if warranty.phone %}<p><a href="tel:{{ warranty.phone }}">{{ warranty.phone }}</a></p>{% endif %}
+{% if warranty.email %}<p><a href="mailto:{{ warranty.email }}">{{ warranty.email }}</a></p>{% endif %}
+{% if warranty.service_address %}{{ warranty.service_address|linebreaks }}{% endif %}

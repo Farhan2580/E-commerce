@@ -1,0 +1,11 @@
+<div class="gf-quick-layout">
+    <div>{% if product.image %}<img class="gf-quick-image" src="{{ product.image.url }}" alt="{{ product.name }}" width="400" height="400">{% endif %}</div>
+    <section><p class="gf-card-category">{{ product.category.name }}</p><h3>{{ product.name }}</h3><p>{{ product.description|truncatewords:45 }}</p>
+        <p class="gf-detail-price">৳<span data-quick-price>{{ product.selling_price|floatformat:2 }}</span></p><p data-quick-stock>{{ product.availability }}</p>
+        <form method="post" action="{% url 'add_to_cart' product.pk %}" data-cart-form class="gf-form">{% csrf_token %}
+            {% if product.has_variants %}<label>Option<select name="variant" data-quick-variant required><option value="">Choose an option</option>{% for variant in product.variants.all %}<option value="{{ variant.pk }}" data-price="{{ variant.price }}" data-stock="{{ variant.stock }}">{{ variant.option_label }} · ৳{{ variant.price }} · {{ variant.stock }} available{% if variant.sku %} · {{ variant.sku }}{% endif %}</option>{% endfor %}</select></label>{% endif %}
+            <label>Quantity<input name="quantity" type="number" min="1" max="{% if product.has_variants or product.stock is None %}99{% else %}{{ product.stock }}{% endif %}" value="1" required></label>
+            <button class="gf-button gf-button-primary" {% if product.has_variants or not product.can_purchase %}disabled{% endif %}>Add to cart</button><p class="gf-form-status" role="status"></p>
+        </form><a href="{% url 'product_detail' product.pk %}">Full details, specifications & reviews →</a>
+    </section>
+</div>

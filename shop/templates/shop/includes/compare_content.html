@@ -1,0 +1,21 @@
+{% if products %}
+<div class="gf-comparison-actions"><p id="comparison-help">On smaller screens, swipe the table sideways. Use Tab to reach each product.</p>
+    <form action="{% url 'compare_clear' %}" method="post" data-compare-form>{% csrf_token %}<button class="gf-button gf-button-secondary">Clear comparison</button></form>
+</div>
+<div class="gf-panel gf-table-wrap gf-comparison-scroll" tabindex="0" role="region" aria-label="Product comparison" aria-describedby="comparison-help">
+    <table class="gf-compare-table">
+        <caption class="gf-sr-only">Side-by-side product details</caption>
+        <thead><tr><th scope="col">Product</th>{% for product in products %}<th scope="col" data-compare-product="{{ product.pk }}">
+            {% if product.image %}<img src="{{ product.image.url }}" alt="{{ product.name }}" width="140" height="140" loading="lazy">{% else %}<span class="gf-image-placeholder">Image not provided</span>{% endif %}
+            <a href="{% url 'product_detail' product.pk %}">{{ product.name }}</a>
+            <form method="post" action="{% url 'compare_toggle' product.pk %}" data-compare-form data-product-id="{{ product.pk }}">{% csrf_token %}<input type="hidden" name="action" value="remove"><button class="gf-button gf-button-secondary" aria-label="Remove {{ product.name }} from comparison">Remove</button></form>
+        </th>{% endfor %}</tr></thead>
+        <tbody>
+            <tr><th scope="row">Price</th>{% for product in products %}<td>{% if product.has_variants %}From {% endif %}৳{{ product.selling_price|floatformat:2 }}</td>{% endfor %}</tr>
+            <tr><th scope="row">Availability</th>{% for product in products %}<td>{{ product.availability }}</td>{% endfor %}</tr>
+            <tr><th scope="row">Brand</th>{% for product in products %}<td>{{ product.brand|default:'Not provided' }}</td>{% endfor %}</tr>
+            {% for row in rows %}<tr><th scope="row">{{ row.label }}</th>{% for value in row.values %}<td>{{ value }}</td>{% endfor %}</tr>{% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}<div class="gf-empty-state"><h2>Your comparison is empty.</h2><p>Select Compare on a product card to add up to four products.</p></div>{% endif %}

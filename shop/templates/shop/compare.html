@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Compare products | GadgetFlow{% endblock %}
+{% block content %}
+<section class="gf-shell gf-page">
+    <div class="gf-section-heading"><h1>Find your best fit.</h1><span><span data-compare-count>{{ compare_ids|length }}</span>/4 selected</span></div>
+    <p>Compare current prices, availability and specifications. Products with options show the lowest available option price.</p>
+    <p class="gf-sr-only" data-compare-status role="status"></p>
+    <div data-compare-content data-url="{% url 'compare' %}">{% include 'shop/includes/compare_content.html' %}</div>
+    <a class="gf-button gf-button-primary" href="{% url 'product_list' %}">Browse products</a>
+</section>
+{% endblock %}

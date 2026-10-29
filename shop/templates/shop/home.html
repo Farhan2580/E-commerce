@@ -1,371 +1,107 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GadgetFlow | Next-Gen Tech Store</title>
+{% extends 'base.html' %}
+{% block content %}
+    <h1 class="gf-sr-only">GadgetFlow — tech and everyday essentials</h1>
+    <div class="gf-shell gf-home-top">
+        <section class="gf-promo-layout" aria-label="GadgetFlow promotions">
+            <div class="gf-carousel" data-carousel aria-roledescription="carousel" aria-label="Promotional banners">
+                {% for banner in banners %}
+                    <article class="gf-banner {% if banner.image %}gf-banner-upload{% endif %}" data-slide
+                             {% if not forloop.first %}hidden{% endif %}
+                             aria-label="Promotion {{ forloop.counter }} of {{ banners|length }}">
+                        {% if banner.image %}
+                            <a href="{{ banner.link }}"><img src="{{ banner.image.url }}" alt="{{ banner.title }}"
+                                                             width="960" height="480"
+                                                             {% if forloop.first %}fetchpriority="high"
+                                                             {% else %}loading="lazy"{% endif %}></a>
+                            <a class="gf-banner-image-link" href="{{ banner.link }}">{{ banner.button_label }} →</a>
+                        {% else %}
+                            <div class="gf-banner-copy"><p>Discover it at GadgetFlow</p>
+                                <h2>{{ banner.title }}</h2>{% if banner.description %}
+                                    <p>{{ banner.description }}</p>{% endif %}{% if banner.product %}
+                                    <strong>৳{{ banner.product.selling_price|floatformat:2 }}</strong>{% endif %}<a
+                                        class="gf-button gf-button-primary"
+                                        href="{{ banner.link }}">{{ banner.button_label }} →</a></div>
+                            {% if banner.product.image %}<a class="gf-banner-product" href="{{ banner.link }}"><img
+                                    src="{{ banner.product.image.url }}" alt="{{ banner.product.name }}" width="500"
+                                    height="500" {% if forloop.first %}fetchpriority="high"
+                                    {% else %}loading="lazy"{% endif %}>
 
-    <!-- Google Fonts & Font Awesome -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <style>
-        :root {
-            --ag-orange: #ff6600;
-            --ag-purple: #8b5cf6;
-            --ag-black: #0f172a;
-            --ag-white: #ffffff;
-            --ag-bg: #f8fafc;
-            --glass: rgba(255, 255, 255, 0.8);
-        }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            margin: 0;
-            background-color: var(--ag-bg);
-            color: var(--ag-black);
-            overflow-x: hidden;
-        }
-
-        /* --- Custom Scrollbar --- */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: var(--ag-purple); border-radius: 10px; }
-
-        /* --- Navbar & Glassmorphism --- */
-        .navbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px 5%;
-            background: var(--glass);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
-        }
-
-        /* PREMIUM LOGO STYLES */
-        .brand-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-        }
-
-        .logo-box {
-            position: relative;
-            width: 42px;
-            height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .logo-box::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(45deg, var(--ag-orange), var(--ag-purple));
-            border-radius: 12px;
-            opacity: 0.15;
-            transition: 0.3s;
-        }
-
-        .brand-container:hover .logo-box {
-            transform: rotate(-5deg) scale(1.1);
-        }
-
-        .brand-container:hover .logo-box::before {
-            opacity: 0.3;
-            filter: blur(8px);
-        }
-
-        .brand-text {
-            display: flex;
-            flex-direction: column;
-            line-height: 1;
-        }
-
-        .brand-name {
-            font-size: 22px;
-            font-weight: 900;
-            color: var(--ag-black);
-            letter-spacing: -1px;
-        }
-
-        .brand-name span {
-            background: linear-gradient(45deg, var(--ag-orange), var(--ag-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .brand-tagline {
-            font-size: 8px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 700;
-            color: #94a3b8;
-            margin-top: 2px;
-        }
-
-        /* --- Search Bar Upgrade --- */
-        .search-form { flex: 0 0 40%; }
-        .search-container {
-            display: flex;
-            align-items: center;
-            background: #f1f5f9;
-            border-radius: 20px;
-            padding: 5px 20px;
-            border: 2px solid transparent;
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .search-container:focus-within {
-            background: #fff;
-            border-color: var(--ag-purple);
-            box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.2);
-        }
-
-        .search-container input {
-            border: none;
-            background: transparent;
-            width: 100%;
-            padding: 10px;
-            outline: none;
-            font-weight: 500;
-            color: var(--ag-black);
-        }
-
-        .search-btn { background: none; border: none; cursor: pointer; color: var(--ag-purple); font-size: 18px; }
-
-        /* --- Icons & Badges --- */
-        .nav-icons { display: flex; gap: 15px; align-items: center; }
-        .nav-icons a { text-decoration: none; color: var(--ag-black); font-weight: 600; font-size: 14px; transition: 0.3s; }
-
-        /* Flash Sale Fix: ডিফল্ট কালার কালো থাকবে, হোভারে কালার হবে */
-        .nav-icons .flash-sale-link { color: var(--ag-black); transition: 0.3s; }
-        .nav-icons .flash-sale-link:hover { color: var(--ag-orange); }
-
-        .icon-circle {
-            width: 45px; height: 45px;
-            background: #fff; border-radius: 15px;
-            display: flex; align-items: center; justify-content: center;
-            position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            transition: 0.3s; border: 1px solid #f1f5f9;
-        }
-
-        .icon-circle:hover { transform: translateY(-3px); background: var(--ag-black); color: #fff; }
-
-        /* Badge Fix: নম্বর নিশ্চিত করার জন্য display: flex এবং z-index */
-       .badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: var(--ag-orange);
-    color: white;
-    font-size: 11px;
-    font-weight: 800;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    border: 2px solid #fff;
-    z-index: 50;
-}
-
-        /* --- User Dropdown --- */
-        .user-dropdown { position: relative; display: inline-block; }
-        .dropdown-content {
-            display: none; position: absolute; right: 0;
-            background-color: white; min-width: 170px;
-            box-shadow: 0px 15px 35px rgba(0,0,0,0.1);
-            border-radius: 18px; z-index: 1100; overflow: hidden;
-            border: 1px solid #f1f5f9; margin-top: 10px;
-            padding: 8px 0;
-        }
-        .dropdown-content a {
-            color: var(--ag-black); padding: 12px 20px;
-            text-decoration: none; display: flex; align-items: center; gap: 10px;
-            font-size: 13px; font-weight: 600; transition: 0.3s;
-        }
-        .dropdown-content a:hover { background-color: #f8fafc; color: var(--ag-purple); }
-        .user-dropdown:hover .dropdown-content { display: block; }
-
-
-        .sub-nav { display: flex; justify-content: center; gap: 12px; padding: 15px 0; background: #fff; border-bottom: 1px solid #f1f5f9; }
-        .sub-nav a { text-decoration: none; color: #64748b; font-size: 13px; font-weight: 700; padding: 8px 18px; border-radius: 50px; background: #f8fafc; transition: 0.3s; }
-        .sub-nav a:hover { background: var(--ag-purple); color: #fff; transform: scale(1.05); }
-        .hero-section { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; padding: 25px 5%; }
-        .main-slider { border-radius: 30px; overflow: hidden; height: 450px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-        .main-slider img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
-        .side-banners { display: flex; flex-direction: column; gap: 20px; }
-        .side-banners img { width: 100%; border-radius: 25px; height: 215px; object-fit: cover; }
-        .features-bar { display: flex; justify-content: space-around; margin: 20px 5%; padding: 30px; background: #fff; border-radius: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
-        .feature-item { display: flex; flex-direction: column; align-items: center; gap: 10px; font-weight: 700; font-size: 12px; }
-        .feature-item i { font-size: 24px; padding: 15px; background: #fff5ed; color: var(--ag-orange); border-radius: 18px; transition: 0.3s; }
-        .container { padding: 40px 5%; }
-        .section-title { font-size: 32px; font-weight: 800; margin-bottom: 30px; letter-spacing: -1px; }
-        .section-title span { background: linear-gradient(to right, var(--ag-orange), var(--ag-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; }
-        .product-card { background: #fff; border-radius: 30px; padding: 25px; transition: 0.4s; border: 1px solid #f1f5f9; position: relative; }
-        .product-card:hover { transform: translateY(-15px); box-shadow: 0 30px 50px rgba(0,0,0,0.08); border-color: var(--ag-purple); }
-        .product-card img { width: 100%; height: 200px; object-fit: contain; margin-bottom: 20px; }
-        .product-title { font-size: 17px; font-weight: 700; margin: 10px 0; height: 48px; line-height: 1.4; }
-        .product-price { font-size: 22px; font-weight: 800; color: var(--ag-orange); margin-bottom: 20px; }
-        .card-buttons { display: flex; gap: 10px; }
-        .btn-main { padding: 12px 20px; border-radius: 15px; font-size: 13px; font-weight: 700; text-decoration: none; transition: 0.3s; text-align: center; flex: 1; }
-        .btn-details { background: #f1f5f9; color: var(--ag-black); }
-        .btn-cart { background: linear-gradient(45deg, var(--ag-purple), #a855f7); color: #fff; }
-        footer { background: var(--ag-black); color: #fff; padding: 80px 5% 40px; text-align: center; border-radius: 50px 50px 0 0; margin-top: 80px; }
-    </style>
-</head>
-<body>
-
-<!-- Modern Navbar -->
-<nav class="navbar">
-    <div class="brand">
-        <a href="/" class="brand-container">
-            <div class="logo-box">
-                <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:var(--ag-orange)" />
-                            <stop offset="100%" style="stop-color:var(--ag-purple)" />
-                        </linearGradient>
-                    </defs>
-                    <path d="M75 35C70 25 58 20 45 20C25 20 10 35 10 55C10 75 25 90 45 90C65 90 80 75 80 55V50H45" stroke="url(#logoGradient)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M65 50L85 50M75 50L75 70" stroke="var(--ag-orange)" stroke-width="8" stroke-linecap="round" />
-                </svg>
+                            </a>{% endif %}{% endif %}
+                    </article>
+                {% empty %}
+                    <article class="gf-banner">
+                        <div class="gf-banner-copy"><p>Welcome to GadgetFlow</p>
+                            <h2>Find your next upgrade.</h2><a class="gf-button gf-button-primary"
+                                                               href="{% url 'product_list' %}">Explore products →</a>
+                        </div>
+                    </article>{% endfor %}
+                {% if banners|length > 1 %}
+                    <div class="gf-carousel-controls">
+                        <button type="button" data-slide-prev aria-label="Previous promotion">‹</button>
+                        <div>{% for banner in banners %}
+                            <button type="button" data-slide-index="{{ forloop.counter0 }}"
+                                    aria-label="Show {{ banner.title }}"
+                                    aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}"></button>{% endfor %}
+                        </div>
+                        <button type="button" data-slide-next aria-label="Next promotion">›</button>
+                    </div>{% endif %}
             </div>
-            <div class="brand-text">
-                <span class="brand-name">Gadget<span>Flow</span></span>
-                <span class="brand-tagline">Premium Tech Hub</span>
+        </section>
+        <nav class="gf-quick-links" aria-label="Shopping shortcuts"><a href="{% url 'product_list' %}">▦ Browse the
+            catalog</a><a href="{% url 'offers' %}">％ Current offers</a><a href="{% url 'preorder' %}">＋ Request a
+            preorder</a><a href="{% url 'order_history' %}">▤ Your orders</a></nav>
+    </div>
+    <section class="gf-shell gf-section" aria-labelledby="category-heading">
+        <div class="gf-section-heading"><h2 id="category-heading">Featured <span>Categories</span></h2><a
+                href="{% url 'product_list' %}">See all products →</a></div>
+        <div class="gf-category-tiles">{% for category in featured_categories %}
+            <a href="{% url 'product_list' %}?category={{ category.pk }}">{% if category.image %}
+                <img src="{{ category.image.url }}" alt="" width="96" height="96" loading="lazy">
+                {% else %}{% with category.products.first as item %}{% if item.image %}
+                    <img src="{{ item.image.url }}" alt="" width="96" height="96" loading="lazy">{% else %}
+                    <span class="gf-category-symbol" aria-hidden="true">▦</span>{% endif %}{% endwith %}{% endif %}
+                <span>{{ category.name }}</span></a>{% endfor %}</div>
+    </section>
+    {% if search_query or selected_category %}
+        <section class="gf-shell gf-section">
+            <div class="gf-section-heading"><h2>Search <span>results</span></h2><a href="{% url 'home' %}">Clear
+                filters</a></div>{% if filter_error %}<p role="alert">{{ filter_error }}</p>{% endif %}
+            <div class="gf-grid">{% include 'shop/includes/product_grid.html' %}</div>
+            {% include 'shop/includes/pagination.html' %}</section>{% endif %}
+    {% for entry in sections %}
+        <section class="gf-shell gf-section" id="section-{{ entry.section.pk }}" data-product-section>
+            <div class="gf-section-heading"><h2>{{ entry.section.title }}</h2><a href="
+                    {% url 'product_list' %}{% if entry.section.category %}?category={{ entry.section.category.pk }}{% endif %}">View
+                all →</a></div>
+            <div class="gf-section-tabs" aria-label="{{ entry.section.title }} categories"><a
+                    href="?section={{ entry.section.pk }}#section-{{ entry.section.pk }}"
+                    data-section-tab="{% url 'home_section' entry.section.pk %}"
+                    {% if not entry.selected_tab %}aria-current="true"{% endif %}>All</a>
+                {% for category in entry.tabs %}
+                    <a href="?section={{ entry.section.pk }}&tab={{ category.pk }}#section-{{ entry.section.pk }}"
+                       data-section-tab="{% url 'home_section' entry.section.pk %}?category={{ category.pk }}"
+                       {% if entry.selected_tab == category.pk|stringformat:'s' %}aria-current="true"{% endif %}>{{ category.name }}</a>{% endfor %}
             </div>
-        </a>
-    </div>
-
-    <form class="search-form" action="{% url 'home' %}" method="GET">
-        <div class="search-container">
-            <input type="text" name="q" placeholder="Explore future tech..." value="{{ search_query|default:'' }}">
-            <button type="submit" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
-        </div>
-    </form>
-
-    <div class="nav-icons">
-        <a href="{% url 'preorder' %}">Pre-order</a>
-
-        <a href="{% url 'offers' %}" class="flash-sale-link">Flash Sale</a>
-
-        <a href="{% url 'cart_view' %}" class="icon-circle">
-    <i class="fa-solid fa-bag-shopping"></i>
-    <!-- Badge Section -->
-    <span class="badge" id="cart-count">
-        {% if cart_count > 0 %}
-            {{ cart_count }}
-        {% else %}
-            0
-        {% endif %}
-    </span>
-</a>
-        <!-- User Profile Dropdown -->
-        <div class="user-dropdown">
-            <a href="#" class="icon-circle">
-                <i class="fa-regular fa-user-circle" style="font-size: 20px;"></i>
-            </a>
-            <div class="dropdown-content">
-                {% if user.is_authenticated %}
-    <a href="{% url 'profile' %}"><i class="fa-solid fa-user-gear"></i> My Profile</a>
-                    <hr style="border:0; border-top:1px solid #f1f5f9; margin: 5px 0;">
-                    <a href="{% url 'logout' %}" style="color: #ef4444;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-                {% else %}
-                    <a href="{% url 'login' %}"><i class="fa-solid fa-right-to-bracket"></i> Sign In</a>
-                    <a href="{% url 'register' %}"><i class="fa-solid fa-user-plus"></i> Register</a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</nav>
-
-<!-- (Sub Nav, Hero, Product grid, Footer) -->
-<div class="sub-nav">
-    <a href="{% url 'phones_tablets' %}"><i class="fa-solid fa-mobile-screen-button"></i> Phones</a>
-    <a href="{% url 'laptop_desktop' %}"><i class="fa-solid fa-laptop"></i> Laptops</a>
-    <a href="{% url 'power_accessories' %}"><i class="fa-solid fa-plug"></i> Power</a>
-    <a href="{% url 'smart_electronics' %}"><i class="fa-solid fa-microchip"></i> Smart Tech</a>
-    <a href="{% url 'sound_equipment' %}"><i class="fa-solid fa-headphones"></i> Audio</a>
-    <a href="{% url 'fitness_wearable' %}"><i class="fa-solid fa-stopwatch"></i> Wearables</a>
-</div>
-
-<section class="hero-section">
-    <div class="main-slider">
-        <img src="{% static 'images/slider1.jpg.webp' %}" id="slider">
-    </div>
-    <div class="side-banners">
-        {% for offer in offers %}
-            {% if forloop.counter <= 2 %}
-                <img src="{{ offer.image.url }}" alt="{{ offer.title }}">
-            {% endif %}
-        {% empty %}
-            <img src="{% static 'images/watch-banner.jpg.png' %}" alt="Watch">
-            <img src="{% static 'images/airbuds-banner.png.webp' %}" alt="Audio">
-        {% endfor %}
-    </div>
-</section>
-
-<div class="features-bar">
-    <div class="feature-item"><i class="fa-solid fa-bolt"></i> 36M EMI</div>
-    <div class="feature-item"><i class="fa-solid fa-truck-fast"></i> Express Delivery</div>
-    <div class="feature-item"><i class="fa-solid fa-rotate"></i> Easy Exchange</div>
-    <div class="feature-item"><i class="fa-solid fa-shield-halved"></i> 1Y Warranty</div>
-</div>
-
-<div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 class="section-title">New <span>Arrivals</span></h2>
-        <a href="#" style="color: var(--ag-purple); font-weight: 700; text-decoration: none;">View All →</a>
-    </div>
-
-    <div class="product-grid">
-        {% for product in products %}
-        <div class="product-card">
-            {% if product.image %}
-                <img src="{{ product.image.url }}" alt="{{ product.name }}">
-            {% endif %}
-            <div class="product-title">{{ product.name }}</div>
-            <div class="product-price">৳{{ product.price }}</div>
-            <div class="card-buttons">
-                <a href="{% url 'product_detail' product.pk %}" class="btn-main btn-details">View</a>
-                <a href="{% url 'add_to_cart' product.pk %}" class="btn-main btn-cart">Add to Cart</a>
-            </div>
-        </div>
-        {% empty %}
-        <div style="grid-column: 1/-1; text-align: center; padding: 100px;">
-            <i class="fa-solid fa-box-open" style="font-size: 50px; color: #cbd5e1; margin-bottom: 20px;"></i>
-            <p style="color: #64748b; font-weight: 600;">The inventory is currently empty.</p>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-
-<footer>
-    <a href="/" class="footer-logo-container">
-        <svg width="35" height="35" viewBox="0 0 100 100" fill="none">
-            <path d="M75 35C70 25 58 20 45 20C25 20 10 35 10 55C10 75 25 90 45 90C65 90 80 75 80 55V50H45" stroke="var(--ag-orange)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span style="font-size: 28px; font-weight: 900; color: white; letter-spacing: -1px;">GADGET<span style="color: var(--ag-orange);">FLOW</span></span>
-    </a>
-    <p style="color: #94a3b8; max-width: 500px; margin: 0 auto 40px; line-height: 1.8;">Your one-stop destination for the latest premium tech accessories in Bangladesh.</p>
-    <p style="border-top: 1px solid #1e293b; padding-top: 30px; font-size: 12px; color: #64748b;">
-        &copy; 2026 Developed by <span style="color: var(--ag-orange);">Farhan Labib</span>
-    </p>
-</footer>
-
-</body>
-</html>
+            <p class="gf-section-status gf-sr-only" role="status"></p>
+            <div class="gf-grid"
+                 data-section-grid>{% include 'shop/includes/product_grid.html' with products=entry.products %}</div>
+        </section>{% empty %}
+        <section class="gf-shell gf-section">
+            <div class="gf-section-heading"><h2>Explore <span>products</span></h2></div>
+            <div class="gf-grid">{% include 'shop/includes/product_grid.html' %}</div>
+            {% include 'shop/includes/pagination.html' %}</section>{% endfor %}
+    {% if offers %}
+        <section class="gf-shell gf-section gf-pastel-section">
+            <div class="gf-section-heading"><h2>Offers & <span>Exclusive Deals</span></h2><a href="{% url 'offers' %}">All
+                offers →</a></div>
+            <div class="gf-offer-grid">{% include 'shop/includes/offer_cards.html' %}</div>
+        </section>{% endif %}
+    {% if featured_brands %}
+        <section class="gf-shell gf-section">
+            <div class="gf-section-heading"><h2>Explore by <span>brand</span></h2></div>
+            <div class="gf-brand-tiles">{% for brand in featured_brands %}
+                <a href="{% url 'product_list' %}?brand={{ brand.pk }}">{% if brand.logo %}
+                    <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" width="140" height="60"
+                         loading="lazy">{% else %}{{ brand.name }}{% endif %}</a>{% endfor %}</div>
+        </section>{% endif %}
+{% endblock %}

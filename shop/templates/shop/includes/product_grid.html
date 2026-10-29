@@ -1,0 +1,3 @@
+{% for product in products %}{% include 'shop/includes/product_card.html' %}{% empty %}
+    <p class="gf-empty-state">No products match this selection. Try another category or clear your
+        filters.</p>{% endfor %}

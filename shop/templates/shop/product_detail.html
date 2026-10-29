@@ -1,107 +1,72 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ product.name }} | Apple Gadgets BD Clone</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        :root { --ag-blue: #0066cc; --ag-gray: #f5f5f7; --ag-black: #1d1d1f; }
-        body { font-family: 'Inter', sans-serif; margin: 0; background: #fff; color: var(--ag-black); }
-
-        /* Navbar & Top-bar (Same as home) */
-        .navbar { display: flex; align-items: center; justify-content: space-between; padding: 15px 8%; border-bottom: 1px solid #e6e6e6; position: sticky; top: 0; background: #fff; z-index: 100; }
-        .brand a { font-size: 22px; font-weight: 800; color: #000; text-decoration: none; }
-
-        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
-
-        /* Product Main Section */
-        .product-main { display: grid; grid-template-columns: 1.2fr 1fr; gap: 50px; margin-bottom: 60px; }
-        
-        .product-gallery { background: var(--ag-gray); border-radius: 20px; padding: 40px; display: flex; align-items: center; justify-content: center; }
-        .product-gallery img { max-width: 100%; height: auto; mix-blend-mode: multiply; }
-
-        .product-info h1 { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
-        .status-badge { background: #e8f5e9; color: #2e7d32; padding: 5px 12px; border-radius: 5px; font-size: 13px; font-weight: 600; display: inline-block; margin-bottom: 20px; }
-        
-        .price-box { font-size: 28px; font-weight: 700; color: var(--ag-blue); margin-bottom: 30px; }
-        
-        .action-btns { display: flex; gap: 15px; margin-top: 30px; }
-        .btn-cart { background: var(--ag-black); color: #fff; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: 0.3s; }
-        .btn-cart:hover { opacity: 0.8; }
-
-        /* Specification Table (Exactly like Apple Gadgets) */
-        .spec-section { margin-top: 80px; }
-        .spec-title { font-size: 24px; font-weight: 700; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 30px; }
-        
-        .spec-table { width: 100%; border-collapse: collapse; }
-        .spec-table tr { border-bottom: 1px solid #f0f0f0; }
-        .spec-table td { padding: 15px 0; font-size: 15px; }
-        .spec-label { width: 30%; color: #86868b; font-weight: 500; }
-        .spec-value { color: #1d1d1f; font-weight: 400; }
-
-        footer { background: #000; color: #fff; padding: 40px 0; text-align: center; margin-top: 100px; }
-    </style>
-</head>
-<body>
-
-<nav class="navbar">
-    <div class="brand"><a href="{% url 'home' %}">GADGETS</a></div>
-    <div style="font-size: 14px; font-weight: 500;">
-        <a href="{% url 'home' %}" style="text-decoration:none; color:#333; margin-right:20px;">Home</a>
-        <a href="{% url 'cart_view' %}" style="text-decoration:none; color:#333;">Cart 🛒</a>
-    </div>
-</nav>
-
-<div class="container">
-    <div class="product-main">
-        <div class="product-gallery">
-            {% if product.image %}
-                <img src="{{ product.image.url }}" alt="{{ product.name }}">
-            {% else %}
-                <img src="{% static 'shop/no-image.png' %}" alt="No image">
-            {% endif %}
+{% extends 'base.html' %}
+{% block title %}{{ product.name }} | GadgetFlow{% endblock %}
+{% block content %}
+    <div class="gf-shell gf-page">
+        <nav class="gf-breadcrumb" aria-label="Breadcrumb"><a href="{% url 'home' %}">Home</a> / <a
+                href="{% url 'product_list' %}?category={{ product.category_id }}">{{ product.category.name }}</a>
+            / {{ product.name }}</nav>
+        <div class="gf-product-detail">
+            <section class="gf-gallery" aria-label="Product images">
+                <div class="gf-main-image">{% if product.image %}
+                    <img id="detail-image" src="{{ product.image.url }}" alt="{{ product.name }}" width="600"
+                         height="600">{% else %}<span>Image coming soon</span>{% endif %}</div>
+                <div class="gf-thumbnails">{% if product.image %}
+                    <a href="{{ product.image.url }}" data-gallery-image="{{ product.image.url }}"
+                       aria-label="Main product image"><img src="{{ product.image.url }}" alt="{{ product.name }}"
+                                                            width="72" height="72"></a>{% endif %}
+                    {% for image in product.gallery.all %}
+                        <a href="{{ image.image.url }}" data-gallery-image="{{ image.image.url }}"
+                           aria-label="View {{ image.alt|default:product.name }}"><img src="{{ image.image.url }}"
+                                                                                       alt="{{ image.alt|default:product.name }}"
+                                                                                       width="72" height="72"
+                                                                                       loading="lazy"></a>{% endfor %}
+                </div>
+            </section>
+            <section class="gf-product-info"><h1>{{ product.name }}</h1>{% if product.brand %}<a class="gf-tag"
+                                                                                                 href="{% url 'product_list' %}?brand={{ product.brand_id }}">{{ product.brand.name }}</a>{% endif %}
+                <p class="gf-detail-price">৳<span data-detail-price>{{ product.selling_price|floatformat:2 }}</span>
+                    <del data-detail-original
+                         {% if not product.discount_percent %}hidden{% endif %}>{{ product.display_original_price|default:'' }}</del>
+                </p>
+                <p class="gf-stock" data-detail-stock>{% if product.has_variants %}Select an option to see stock and
+                    price.{% else %}{{ product.availability }}{% endif %}</p>
+                <p>{{ product.description|linebreaksbr }}</p>
+                <form action="{% url 'add_to_cart' product.pk %}" method="post" data-cart-form class="gf-buy-form">
+                    {% csrf_token %}{% if product.has_variants %}<label for="variant-select">Choose an option</label>
+                        <select name="variant" id="variant-select" required>
+                            <option value="">Select variant</option>{% for variant in product.variants.all %}
+                            <option value="{{ variant.pk }}">{{ variant.option_label }} — ৳{{ variant.price }}{% if variant.sku %} · {{ variant.sku }}{% endif %}
+                                ({{ variant.stock }} available)
+                            </option>{% endfor %}</select>
+                        <noscript><p>Each option lists its exact price and stock. The selected option is priced on the
+                            server.</p></noscript>{% endif %}<label for="detail-quantity">Quantity</label><input
+                        id="detail-quantity" type="number" name="quantity" value="1" min="1"
+                        max="{% if product.has_variants or product.stock is None %}99{% else %}{{ product.stock }}{% endif %}"
+                        required>
+                    <button class="gf-button gf-button-primary" data-detail-cart
+                            {% if not product.can_purchase %}disabled{% endif %}>Add to Cart
+                    </button>
+                    <p class="gf-form-status" role="status"></p></form>
+                <p>SKU: <span data-detail-sku>{% if not product.has_variants %}Not provided{% else %}Choose an option{% endif %}</span></p>
+                {% include 'shop/includes/wishlist_button.html' with show_wishlist_label=True %}
+                {% if product.has_variants or not product.can_purchase %}<details class="gf-stock-alert"><summary>Notify me when an option is back in stock</summary>{% if user.is_authenticated %}<form method="post" action="{% url 'subscribe_stock' product.pk %}" class="gf-form">{% csrf_token %}<label>Email<input type="email" name="email" value="{{ user.email }}" required maxlength="254"></label>{% if product.has_variants %}<label>Out-of-stock option<select name="variant" required><option value="">Choose an option</option>{% for variant in product.variants.all %}{% if variant.stock == 0 %}<option value="{{ variant.pk }}">{{ variant.option_label }}</option>{% endif %}{% endfor %}</select></label>{% endif %}<button class="gf-button gf-button-secondary">Request stock alert</button><p>Email delivery depends on the store’s configured email service. Manage subscriptions in My account.</p></form>{% else %}<p><a href="{% url 'login' %}?next={{ request.path|urlencode }}">Sign in to request a stock alert.</a></p>{% endif %}</details>{% endif %}
+            </section>
         </div>
-
-        <div class="product-info">
-            <span class="status-badge">In Stock</span>
-            <h1>{{ product.name }}</h1>
-            <p style="color: #6e6e73; line-height: 1.6;">{{ product.description|truncatewords:30 }}</p>
-            
-            <div class="price-box">৳{{ product.price }}</div>
-            
-            <div class="action-btns">
-                <a href="{% url 'add_to_cart' product.pk %}" class="btn-cart">Add to Cart</a>
-                <a href="#" style="padding: 15px; color: var(--ag-blue); font-weight: 600; text-decoration: none;">Add to Wishlist</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="spec-section">
-        <h2 class="spec-title">Specification</h2>
-        <table class="spec-table">
-            <tr>
-                <td class="spec-label">Category</td>
-                <td class="spec-value">{{ product.category.name }}</td>
-            </tr>
-            <tr>
-                <td class="spec-label">Model</td>
-                <td class="spec-value">{{ product.name }}</td>
-            </tr>
-            <tr>
-                <td class="spec-label">Full Description</td>
-                <td class="spec-value">{{ product.description }}</td>
-            </tr>
-        </table>
-    </div>
-</div>
-
-<footer>
-    <p>&copy; 2026 Apple Gadgets BD Clone</p>
-</footer>
-
-</body>
-</html>
+        {% if verified_warranty %}<section class="gf-panel gf-section" lang="{{ support_language }}"><h2>{{ support_ui.warranty }}</h2>{% include 'shop/includes/warranty_content.html' with warranty=verified_warranty %}</section>{% endif %}
+        <section class="gf-panel gf-section"><h2>Specifications</h2>{% if product.specifications %}
+            <dl class="gf-specs">{% for key,value in product.specifications.items %}
+                <dt>{{ key }}</dt>
+                <dd>{{ value }}</dd>{% endfor %}</dl>{% else %}
+            <p>Detailed specifications have not been provided for this product.</p>{% endif %}</section>
+        <section class="gf-panel gf-section" id="reviews"><h2>Customer reviews</h2>{% for review in reviews %}
+            <article class="gf-review"><strong>{{ review.user.username }}</strong> <span>{{ review.rating }}/5</span>
+                <p>{{ review.comment|linebreaksbr }}</p><small>{{ review.created_at|date:'d M Y' }}</small>
+            </article>{% empty %}<p>No reviews yet.</p>{% endfor %}{% if user.is_authenticated %}<h3>Your review</h3>
+            <form method="post" class="gf-form">{% csrf_token %}{{ form.as_p }}
+                <button class="gf-button gf-button-primary">Save review</button>
+            </form>{% else %}
+            <a href="{% url 'login' %}?next={{ request.path|urlencode }}">Sign in to write a review</a>{% endif %}
+        </section>
+        {% if related_products %}<section class="gf-section"><h2>More in {{ product.category.name }}</h2><div class="gf-grid">{% include 'shop/includes/product_grid.html' with products=related_products %}</div></section>{% endif %}
+        {% if recently_viewed %}<section class="gf-section"><h2>Recently viewed by you</h2><div class="gf-grid">{% include 'shop/includes/product_grid.html' with products=recently_viewed %}</div></section>{% endif %}
+    </div>{{ variant_data|json_script:'product-variants' }}{% endblock %}

@@ -1,67 +1,18 @@
 {% extends 'base.html' %}
-{% load static %}
-
 {% block content %}
-<div class="min-h-[80vh] flex items-center justify-center bg-[#f8fafc] px-6 py-12">
-    <div class="w-full max-w-2xl">
-
-        <!-- Minimalist Profile Card -->
-        <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-
-            <!-- Top Section: Account Header -->
-            <div class="p-10 md:p-14 text-center border-b border-slate-50">
-                <div class="relative inline-block mb-6">
-                    <!-- User Initial Circle -->
-                    <div class="h-24 w-24 rounded-full bg-slate-900 flex items-center justify-center shadow-lg mx-auto">
-                        <span class="text-3xl font-light text-white tracking-widest">
-                            {{ user.username|slice:":1"|upper }}
-                        </span>
-                    </div>
-                    <!-- Status Indicator -->
-                    <div class="absolute bottom-1 right-1 h-4 w-4 bg-emerald-500 border-4 border-white rounded-full"></div>
-                </div>
-
-                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight uppercase mb-1">
-                    {{ user.username }}
-                </h1>
-                <p class="text-sm font-medium text-slate-400 tracking-wider uppercase mb-8">
-                    {{ user.email|default:"Member since 2026" }}
-                </p>
-
-                <!-- Profile Actions -->
-                <div class="flex flex-wrap justify-center gap-4">
-                    <a href="{% url 'order_history' %}" class="px-8 py-3 bg-slate-900 text-white text-[11px] font-bold uppercase tracking-[0.2em] rounded-full hover:bg-slate-800 transition-all duration-300">
-                        Orders
-                    </a>
-                    <a href="{% url 'cart_view' %}" class="px-8 py-3 bg-white text-slate-900 border border-slate-200 text-[11px] font-bold uppercase tracking-[0.2em] rounded-full hover:border-slate-900 transition-all duration-300">
-                        View Cart
-                    </a>
-                </div>
-            </div>
-
-            <!-- Bottom Section: Account Meta -->
-            <div class="bg-slate-50/50 px-10 py-6 grid grid-cols-2 divide-x divide-slate-100">
-                <div class="text-center px-4">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Membership</p>
-                    <p class="text-sm font-bold text-slate-700">Premium</p>
-                </div>
-                <div class="text-center px-4">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Last Active</p>
-                    <p class="text-sm font-bold text-slate-700">Just Now</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Logout Link -->
-        <div class="mt-8 text-center">
-            <form action="{% url 'logout' %}" method="POST" class="inline">
-                {% csrf_token %}
-                <button type="submit" class="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-[0.3em] transition-colors">
-                    — Secure Sign Out —
-                </button>
+    <div class="gf-shell gf-page gf-narrow">
+        <section class="gf-panel"><h1>Hello, {{ user.username }}.</h1>{% if user.email %}
+            <p>{{ user.email }}</p>{% endif %}<p>Member since {{ user.date_joined|date:'F Y' }}</p>
+            <div class="gf-account-links"><a href="{% url 'order_history' %}">Your orders →</a><a
+                    href="{% url 'wishlist' %}">Your wishlist →</a><a href="{% url 'cart_view' %}">Shopping cart →</a><a
+                    href="{% url 'preorder' %}">Request a preorder →</a></div>
+            <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+                <button class="gf-button gf-button-secondary">Sign out</button>
             </form>
-        </div>
-
-    </div>
-</div>
-{% endblock %}
+        </section>
+        <section class="gf-panel gf-section"><h2>Your recent orders</h2>{% for order in recent_orders %}<p><a href="{% url 'order_detail' order.pk %}">Order #{{ order.pk }} · {{ order.get_status_display }} · ৳{{ order.total_price }}</a></p>{% empty %}<p>You haven’t placed an order yet.</p>{% endfor %}<p><a href="{% url 'wishlist' %}">{{ wishlist_ids|length }} saved products →</a></p></section>
+        <section class="gf-panel gf-section"><h2>Saved addresses</h2>{% for address in addresses %}<article class="gf-address"><h3>{{ address.label }}</h3><p>{{ address.full_name }} · {{ address.phone }}<br>{{ address.address|linebreaksbr }}</p><a href="?edit={{ address.pk }}#address-form">Edit</a><form action="{% url 'delete_address' address.pk %}" method="post">{% csrf_token %}<button class="gf-button gf-button-secondary">Delete</button></form></article>{% empty %}<p>Save an address to use at checkout.</p>{% endfor %}
+        <h3 id="address-form">{% if editing_address %}Edit address{% else %}Add address{% endif %}</h3><form method="post" class="gf-form">{% csrf_token %}{% if editing_address %}<input type="hidden" name="address_id" value="{{ editing_address.pk }}">{% endif %}{{ address_form.as_p }}<button class="gf-button gf-button-primary">Save address</button></form></section>
+        <section class="gf-panel gf-section"><h2>Stock alerts</h2>{% for alert in user.stock_alerts.all %}<article class="gf-address"><p>{{ alert.product.name }}{% if alert.variant %} / {{ alert.variant.option_label }}{% endif %} · {{ alert.email }}</p><p>{% if alert.sent_at %}Email sent {{ alert.sent_at|date:'d M Y, H:i' }}{% elif alert.active %}Waiting for restock{% else %}Cancelled{% endif %}</p>{% if alert.active %}<form method="post" action="{% url 'unsubscribe_stock' alert.pk %}">{% csrf_token %}<button class="gf-button gf-button-secondary">Cancel alert</button></form>{% endif %}</article>{% empty %}<p>No stock alerts requested.</p>{% endfor %}</section>
+        {% if saved_products %}<section class="gf-section"><div class="gf-section-heading"><h2>Saved for later</h2><a href="{% url 'wishlist' %}">Full wishlist →</a></div><div class="gf-grid gf-dashboard-grid">{% include 'shop/includes/product_grid.html' with products=saved_products %}</div></section>{% endif %}
+    </div>{% endblock %}

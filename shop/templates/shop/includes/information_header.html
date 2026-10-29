@@ -1,0 +1,7 @@
+<nav class="gf-breadcrumb" aria-label="Breadcrumb"><a href="{% url 'home' %}">{{ support_ui.home }}</a> / {{ title }}</nav>
+<div class="gf-info-heading">
+    <div><p class="gf-info-kicker">GadgetFlow · {{ support_ui.care }}</p><h1>{{ title }}</h1></div>
+</div>
+{% if staff_preview %}<p class="gf-notice">{{ support_ui.preview }}</p>{% endif %}
+{% if translation_fallback %}<p class="gf-notice">{{ support_ui.fallback }}</p>{% endif %}
+{% if last_updated %}<p class="gf-info-updated">{{ support_ui.updated }}: <time datetime="{{ last_updated|date:'c' }}">{{ last_updated|date:'d M Y' }}</time></p>{% endif %}

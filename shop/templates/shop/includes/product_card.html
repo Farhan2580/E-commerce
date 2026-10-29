@@ -1,0 +1,29 @@
+<article class="gf-card" data-product-id="{{ product.pk }}">
+    <div class="gf-card-media">{% if product.discount_percent %}
+        <span class="gf-discount">Save {{ product.discount_percent }}%</span>{% endif %}<a class="gf-card-image"
+                                                                                           href="{% url 'product_detail' product.pk %}"
+                                                                                           aria-label="View {{ product.name }}">
+        {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" width="320" height="320" loading="lazy"
+                 decoding="async">{% else %}<span class="gf-image-placeholder">Image coming soon</span>{% endif %}</a>
+    </div>
+    <div class="gf-card-tools"><a href="{% url 'quick_view' product.pk %}" data-quick-view>Quick view</a>
+        <form method="post" action="{% url 'compare_toggle' product.pk %}" data-compare-form data-product-id="{{ product.pk }}">{% csrf_token %}<input type="hidden" name="action" value="{% if product.pk in compare_ids %}remove{% else %}add{% endif %}"><button aria-label="Compare {{ product.name }}" aria-pressed="{% if product.pk in compare_ids %}true{% else %}false{% endif %}"><span data-compare-label>{% if product.pk in compare_ids %}Compared{% else %}Compare{% endif %}</span></button></form></div>
+    <div class="gf-card-body"><p class="gf-card-category">{{ product.category.name }}</p>
+        <h3 class="gf-card-title"><a href="{% url 'product_detail' product.pk %}">{{ product.name }}</a></h3>
+        <p class="gf-card-price">{% if product.has_variants %}<small>From </small>{% endif %}
+            ৳{{ product.selling_price|floatformat:2 }}{% if product.discount_percent %}
+                <del>৳{{ product.display_original_price|floatformat:2 }}</del>{% endif %}</p>
+        <p class="gf-stock {% if not product.can_purchase %}gf-unavailable{% endif %}">{{ product.availability }}</p>
+        <div class="gf-card-actions">{% if product.has_variants %}
+            <a class="gf-button gf-button-primary" href="{% url 'product_detail' product.pk %}">Choose
+                options</a>{% else %}
+            <form action="{% url 'add_to_cart' product.pk %}" method="post" data-cart-form>{% csrf_token %}
+                <button class="gf-button gf-button-primary" {% if not product.can_purchase %}disabled{% endif %}>Add to
+                    Cart
+                </button>
+            </form>{% endif %}
+            {% include 'shop/includes/wishlist_button.html' with show_wishlist_label=False %}
+        </div>
+    </div>
+</article>

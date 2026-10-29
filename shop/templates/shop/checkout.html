@@ -1,106 +1,48 @@
 {% extends 'base.html' %}
 {% load static %}
-
+{% block title %}Checkout | GadgetFlow{% endblock %}
 {% block content %}
-<!-- Alpine.js is needed for payment switching -->
-<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-<div class="min-h-screen bg-[#fcfcfd] py-16 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <div class="mb-12 text-center">
-            <h1 class="text-4xl md:text-5xl font-black text-[#0b0f1a] tracking-tighter mb-4 italic uppercase">
-                Secure <span class="text-orange-500">Checkout</span>
-            </h1>
-            <div class="h-1.5 w-20 bg-purple-600 mx-auto mt-4 rounded-full shadow-[0_0_15px_rgba(147,51,234,0.3)]"></div>
+    <div class="gf-shell gf-page"><h1>Checkout</h1>
+        <div class="gf-checkout-layout">
+            <section class="gf-panel"><h2>Delivery & payment details</h2>
+                {% if addresses %}<form action="{% url 'checkout' %}" method="get" class="gf-form"><label>Use a saved address<select name="address">{% for address in addresses %}<option value="{{ address.pk }}">{{ address.label }} — {{ address.full_name }}</option>{% endfor %}</select></label><button class="gf-button gf-button-secondary">Use address</button></form>{% endif %}
+                <form action="{% url 'checkout' %}" method="post" class="gf-form" data-checkout-form>
+                    {% csrf_token %}{{ form.checkout_token }}{{ form.non_field_errors }}
+                            {% for field in form.visible_fields %}{% if field.name == 'payment_method' %}
+                                <fieldset class="gf-payment-methods"><legend>Choose a payment method</legend>
+                                    <div id="id_payment_method">
+                                    {% for method in payment_choices %}
+                                        <label class="gf-payment-card{% if not method.ready %} gf-payment-unavailable{% endif %}">
+                                            <input type="radio" name="payment_method" value="{{ method.code }}" id="payment_{{ method.code }}"
+                                                aria-describedby="payment_help_{{ method.code }}" {% if not method.ready %}disabled{% elif selected_payment == method.code %}checked{% endif %} required>
+                                            {% if method.icon == 'wallet' %}<img class="gf-bkash-brand" src="{% static 'shop/payment-brands/bkash.png' %}" alt="" width="100" height="46">{% else %}{% include 'shop/includes/payment_icon.html' with kind=method.icon %}{% endif %}
+                                            <span><strong>{{ method.name }}</strong>{% if not method.ready %}<small>Currently unavailable</small>{% else %}{% if method.code != 'COD' %}<small>{% if method.code == 'BKASH' %}Verified business account · Store review{% else %}Secure checkout{% endif %}</small>{% endif %}{% endif %}</span>
+                                            {% if method.code == 'CARD' and accepted_card_brands %}<span class="gf-accepted-brands" aria-label="Accepted card brands">{% for brand in accepted_card_brands %}<img src="{% static brand.asset %}" alt="{{ brand.name }}" width="48" height="32">{% endfor %}</span>{% endif %}
+                                        </label>
+                                        <p id="payment_help_{{ method.code }}" data-payment-help="{{ method.code }}" {% if selected_payment != method.code and method.ready %}hidden{% endif %}>
+                                            {% if method.ready %}{{ method.instructions }}{% else %}{{ method.name }} is currently unavailable. Please choose another payment method.{% endif %}
+                                        </p>
+                                    {% endfor %}</div>{{ field.errors }}
+                                </fieldset>
+                            {% elif field.name != 'bkash_number' and field.name != 'trx_id' %}<p>
+                                {{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}
+                                    <small>{{ field.help_text }}</small>{% endif %}</p>{% endif %}{% endfor %}
+                    <p
+                        class="gf-form-status" role="status"></p>
+                    <button class="gf-button gf-button-secondary" name="action" value="preview" formnovalidate>Review coupon & total</button>
+                    <button class="gf-button gf-button-primary" data-place-order data-pay-label="Pay ৳{{ grand_total }}" {% if not payments_available %}disabled data-payments-disabled{% endif %}>{% if selected_payment == 'COD' or selected_payment == 'BKASH' %}Place Order{% else %}Pay ৳{{ grand_total }}{% endif %}</button>
+                </form>
+            </section>
+            <aside class="gf-panel gf-summary"><h2>Review your order</h2>{% for item in cart_items %}
+                <div class="gf-checkout-item"><strong>{{ item.product.name }}</strong>{% if item.variant %}
+                    <small>{{ item.variant.name }}</small>{% endif %}<p>{{ item.qty }} × ৳{{ item.price }}
+                    <strong>৳{{ item.subtotal }}</strong></p>{% if item.error %}
+                    <p class="gf-error">{{ item.error }}</p>{% endif %}</div>{% endfor %}<p>
+                <span>Subtotal</span><strong>৳{{ subtotal }}</strong></p>
+                {% if coupon_error %}<p class="gf-error" role="alert">{{ coupon_error }}</p>{% endif %}{% if coupon_discount %}<p><span>Coupon {{ coupon_code }}</span><strong>−৳{{ coupon_discount }}</strong></p>{% endif %}
+                <p><span>Shipping</span><strong>৳{{ shipping }}</strong></p>{% if savings %}
+                    <p><span>Savings included in item prices</span><strong>৳{{ savings }}</strong></p>{% endif %}<p
+                        class="gf-total"><span>Total payable</span><strong>৳{{ grand_total }}</strong></p><a
+                        href="{% url 'cart_view' %}">Edit cart →</a></aside>
         </div>
-
-        <form method="POST" action="{% url 'checkout' %}" class="grid lg:grid-cols-12 gap-12">
-            {% csrf_token %}
-
-            <!-- Left Column -->
-            <div class="lg:col-span-7 space-y-8">
-
-                <!-- Shipping Info -->
-                <div class="bg-white border border-gray-100 rounded-[35px] p-8 shadow-sm">
-                    <div class="flex items-center gap-4 mb-8">
-                        <div class="h-10 w-1.5 bg-purple-600 rounded-full"></div>
-                        <h2 class="text-2xl font-black text-[#0b0f1a]">Shipping Information</h2>
-                    </div>
-
-                    <div class="grid gap-6">
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Full Name</label>
-                            <input type="text" name="full_name" required placeholder="John Doe"
-                                   class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-purple-600/20 text-[#0b0f1a] font-bold outline-none transition-all">
-                        </div>
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div class="space-y-2">
-                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Email Address</label>
-                                <input type="email" name="email" required placeholder="john@example.com"
-                                       class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-purple-600/20 text-[#0b0f1a] font-bold outline-none">
-                            </div>
-                            <div class="space-y-2">
-                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Phone</label>
-                                <input type="text" name="phone" required placeholder="+880"
-                                       class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-purple-600/20 text-[#0b0f1a] font-bold outline-none">
-                            </div>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Address</label>
-                            <textarea name="shipping_address" rows="3" required placeholder="House, Road, Area..."
-                                      class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-purple-600/20 text-[#0b0f1a] font-bold outline-none"></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payment Options -->
-                {% include 'shop/includes/payment_options.html' %}
-
-            </div>
-
-            <!-- Right Column: Order Summary -->
-            <div class="lg:col-span-5">
-                <div class="sticky top-8 bg-[#0b0f1a] rounded-[45px] p-10 text-white shadow-2xl relative overflow-hidden">
-                    <!-- Decor element -->
-                    <div class="absolute -top-20 -right-20 w-60 h-60 bg-purple-600/10 rounded-full blur-[80px]"></div>
-
-                    <h2 class="text-2xl font-black mb-8 italic uppercase tracking-tighter">Order <span class="text-orange-500">Summary</span></h2>
-
-                    <div class="space-y-6 mb-10 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                        {% for item in cart_items %}
-                        <div class="flex justify-between items-center group">
-                            <div class="flex-1">
-                                <p class="text-sm font-bold truncate group-hover:text-orange-500 transition-colors">{{ item.product.name }}</p>
-                                <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Qty: {{ item.quantity }}</p>
-                            </div>
-                            <p class="text-sm font-black tracking-tighter ml-4">৳{{ item.total_price }}</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-
-                    <div class="pt-8 border-t border-white/10 space-y-4">
-                        <div class="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                            <span>Subtotal</span>
-                            <span class="text-white">৳{{ subtotal }}</span>
-                        </div>
-                        <div class="flex justify-between items-end pt-4 border-t border-white/5">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-orange-500">Total Payable</span>
-                            <span class="text-4xl font-black italic tracking-tighter">৳{{ grand_total }}</span>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full mt-10 py-6 bg-orange-500 rounded-3xl text-white font-black uppercase tracking-widest shadow-[0_20px_40px_rgba(249,115,22,0.3)] hover:bg-white hover:text-[#0b0f1a] transition-all duration-500 transform hover:-translate-y-1 active:scale-95">
-                        Place Order ⚡
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-<style>
-    .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-</style>
-{% endblock %}
+    </div>{% endblock %}

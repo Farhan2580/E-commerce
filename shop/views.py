@@ -1,403 +1,680 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_GET, require_POST
-from .models import Product, Order, OrderItem, Review, Offer, Preorder
-from .forms import CheckoutForm, ReviewForm, PreOrderForm
-from django.contrib.auth.forms import UserCreationForm
+from decimal import Decimal, InvalidOperation
+from uuid import uuid4
+
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
+from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
+from django.db import IntegrityError, OperationalError
+from django.db.models import Q, Min
+from django.db.models.functions import Coalesce
+from django.http import JsonResponse, Http404
+from django import forms
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils import timezone
+from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.cache import never_cache
 
-# Home Page with search and category filter
-def home(request):
-    query = request.GET.get('q', '')
-    category = request.GET.get('category', '')
-    products = Product.objects.all()
+from .forms import AddressForm, CheckoutForm, PreOrderForm, ReviewForm
+from .models import (Banner, Brand, Category, HomeSection, Offer, Order, Preorder,
+                     Product, ProductVariant, Review, SavedAddress, StockAlert, Wishlist)
+from .services import (cart_lines, cart_totals, create_order, normalized_cart,
+                       checkout_totals, comparison_ids, enabled_payment_methods, quantity, set_cart, settings_for_store)
 
-    if query:
-        products = products.filter(name__icontains=query)
-    if category and category != "All":
-        products = products.filter(category__name__iexact=category)
 
-    categories = Product.objects.values_list('category__name', flat=True).distinct()
+def active_offers():
+    now = timezone.now()
+    return Offer.objects.filter(is_active=True).filter(Q(starts_at__isnull=True) | Q(starts_at__lte=now)).filter(Q(ends_at__isnull=True) | Q(ends_at__gt=now)).order_by('position', 'pk')
 
-    return render(request, 'shop/home.html', {
-        'products': products,
-        'categories': categories,
-        'selected_category': category,
-        'search_query': query,
-    })
 
-# Product List Page
-def product_list(request):
-    products = Product.objects.all()
-    return render(request, 'shop/product_list.html', {'products': products})
+def products_query():
+    return Product.objects.select_related('category', 'brand').prefetch_related('variants').annotate(
+        catalog_price=Coalesce(Min('variants__price', filter=Q(variants__stock__gt=0)),
+                               Min('variants__price'), 'price')).order_by('position', '-pk')
 
-# Product Detail Page with Reviews and Review submission
-def product_detail(request, pk):
-    product = get_object_or_404(Product, pk=pk)
-    reviews = product.reviews.order_by('-created_at')
-    form = ReviewForm()
 
-    if request.method == 'POST':
-        if request.user.is_authenticated:
-            form = ReviewForm(request.POST)
-            if form.is_valid():
-                review = form.save(commit=False)
-                review.user = request.user
-                review.product = product
-                review.save()
-                return redirect('product_detail', pk=product.pk)
-        else:
-            return redirect('login')
+def category_ids(category):
+    # Iterative traversal also tolerates old data if it contains an invalid cycle.
+    ids, todo = set(), [category.pk]
+    edges = list(Category.objects.values_list('pk', 'parent_id'))
+    while todo:
+        current = todo.pop()
+        if current in ids:
+            continue
+        ids.add(current)
+        todo.extend(pk for pk, parent in edges if parent == current and pk not in ids)
+    return ids
 
-    return render(request, 'shop/product_detail.html', {
-        'product': product,
-        'reviews': reviews,
-        'form': form,
-    })
 
-# User Signup View
-def signup(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('login')
+def filtered_products(request, category=None):
+    products = products_query()
+    q = request.GET.get('q', '').strip()[:200]
+    if q:
+        products = products.filter(Q(name__icontains=q) | Q(description__icontains=q) | Q(brand__name__icontains=q))
+    category_value = category or request.GET.get('category', '')
+    selected = Category.objects.filter(pk=int(category_value)).first() if str(
+        category_value).isdigit() else Category.objects.filter(name__iexact=category_value).first()
+    if selected:
+        products = products.filter(category_id__in=category_ids(selected))
+    elif category_value and category_value != 'All':
+        products = products.none()
+    brand = request.GET.get('brand', '')
+    if brand.isdigit():
+        products = products.filter(brand_id=brand)
+    offer = request.GET.get('offer', '')
+    if offer.isdigit():
+        products = products.filter(offers__in=active_offers().filter(pk=offer))
+    available = Q(variants__stock__gt=0) | (Q(variants__isnull=True) & (Q(stock__isnull=True) | Q(stock__gt=0)))
+    if request.GET.get('availability') == 'available':
+        products = products.filter(available)
+    elif request.GET.get('availability') == 'out':
+        available_ids = Product.objects.filter(available).values('pk')
+        products = products.exclude(pk__in=available_ids)
+    error = ''
+    for field, lookup in [('min_price', 'catalog_price__gte'), ('max_price', 'catalog_price__lte')]:
+        value = request.GET.get(field, '')
+        if value:
+            try:
+                amount = Decimal(value)
+                if not amount.is_finite() or amount < 0:
+                    raise InvalidOperation
+                products = products.filter(**{lookup: amount})
+            except InvalidOperation:
+                error = 'Enter a valid non-negative price.'
+                products = products.none()
+    sort = request.GET.get('sort', '')
+    ordering = {'price_asc': ('catalog_price', 'pk'), 'price_desc': ('-catalog_price', 'pk'),
+                'name': ('name', 'pk'), 'newest': ('-pk',)}
+    if sort in ordering:
+        products = products.order_by(*ordering[sort])
+    return products, selected, error
+
+
+def catalog_context(request, category=None):
+    products, selected, error = filtered_products(request, category)
+    page = Paginator(products.distinct(), 12).get_page(request.GET.get('page'))
+    params = request.GET.copy()
+    params.pop('page', None)
+    if category:
+        params['category'] = str(selected.pk) if selected else str(category)
+    return {'products': page, 'page_obj': page, 'query_string': params.urlencode(),
+            'categories': Category.objects.all(), 'brands': Brand.objects.all(),
+            'selected_category': str(selected.pk) if selected else '', 'search_query': request.GET.get('q', ''),
+            'filter_error': error, 'selected_brand': request.GET.get('brand', '')}
+
+
+def section_products(section, tab=''):
+    placements = list(section.placements.all())
+    if placements:
+        ids = [p.product_id for p in placements]
+        products = list(products_query().filter(pk__in=ids))
+        products.sort(key=lambda p: ids.index(p.pk))
+    elif section.category_id:
+        products = list(products_query().filter(category_id__in=category_ids(section.category))[:24])
     else:
-        form = UserCreationForm()
+        products = list(products_query().filter(featured=True)[:24])
+    tabs = {p.category_id: p.category for p in products}
+    if str(tab).isdigit():
+        products = [p for p in products if p.category_id == int(tab)]
+    return products[:12], list(tabs.values())
+
+
+@require_GET
+def home(request):
+    context = catalog_context(request)
+    sections = []
+    for section in HomeSection.objects.filter(active=True).select_related('category').prefetch_related('placements'):
+        tab = request.GET.get('tab', '') if request.GET.get('section') == str(section.pk) else ''
+        products, tabs = section_products(section, tab)
+        sections.append({'section': section, 'products': products, 'tabs': tabs, 'selected_tab': tab})
+    context.update(
+        {'banners': Banner.objects.filter(active=True).select_related('product').prefetch_related('product__variants'),
+         'featured_categories': Category.objects.filter(featured=True).prefetch_related('products'),
+         'hero_products': products_query().filter(image__isnull=False).exclude(image='')[:3],
+         'sections': sections,
+         'featured_brands': Brand.objects.filter(featured=True, products__isnull=False).distinct(),
+         'offers': active_offers().prefetch_related('products')})
+    return render(request, 'shop/home.html', context)
+
+
+@require_GET
+def home_section(request, pk):
+    section = get_object_or_404(HomeSection.objects.filter(active=True).prefetch_related('placements'), pk=pk)
+    products, tabs = section_products(section, request.GET.get('category', ''))
+    html = render_to_string('shop/includes/product_grid.html', {'products': products}, request=request)
+    return JsonResponse({'html': html})
+
+
+@require_GET
+def product_list(request):
+    return render(request, 'shop/product_list.html', catalog_context(request))
+
+
+@require_GET
+def quick_view(request, pk):
+    product = get_object_or_404(products_query(), pk=pk)
+    return render(request, 'shop/includes/quick_view.html', {'product': product})
+
+
+def comparison_context(request):
+    ids = comparison_ids(request.session)
+    products = list(products_query().filter(pk__in=ids))
+    products.sort(key=lambda product: ids.index(product.pk))
+    specifications = [product.specifications if isinstance(product.specifications, dict) else {} for product in products]
+    keys = sorted({key for specs in specifications for key in specs})
+    missing = (None, '', [], {})
+    rows = [{'label': key, 'values': [specs.get(key) if specs.get(key) not in missing else 'Not provided'
+                                    for specs in specifications]} for key in keys]
+    return {'products': products, 'rows': rows}
+
+
+def comparison_response(request, error=''):
+    if request.headers.get('Accept') == 'application/json':
+        return JsonResponse({'success': not error, 'error': error, 'ids': comparison_ids(request.session),
+                             'html': render_to_string('shop/includes/compare_content.html', comparison_context(request), request=request)},
+                            status=400 if error else 200)
+    if error:
+        messages.error(request, error)
+    return redirect('compare')
+
+
+@never_cache
+@require_GET
+def compare(request):
+    if request.headers.get('Accept') == 'application/json':
+        return comparison_response(request)
+    return render(request, 'shop/compare.html', comparison_context(request))
+
+
+@require_POST
+def compare_toggle(request, pk):
+    get_object_or_404(Product, pk=pk)
+    ids = comparison_ids(request.session)
+    action = request.POST.get('action', 'toggle')
+    error = ''
+    if action not in {'add', 'remove', 'toggle'}:
+        return comparison_response(request, 'Choose a valid comparison action.')
+    if pk in ids and action != 'add':
+        ids.remove(pk)
+    elif pk not in ids and action != 'remove' and len(ids) < 4:
+        ids.append(pk)
+    elif pk not in ids and action != 'remove':
+        error = 'Compare up to four products. Remove one first.'
+    request.session['compare_ids'] = ids
+    return comparison_response(request, error)
+
+
+@require_POST
+def compare_clear(request):
+    request.session['compare_ids'] = []
+    return comparison_response(request)
+
+
+def cart_state(request):
+    lines = cart_lines(request.session)
+    totals = checkout_totals(lines, request.user, request.session.get('coupon_code', ''))
+    context = {'items': lines, **totals, 'cart_valid': bool(lines) and not any(line['error'] for line in lines)}
+    return {'cart_count': sum(line['qty'] for line in lines), 'subtotal': str(totals['subtotal']),
+            'total': str(totals['grand_total']),
+            'drawer_html': render_to_string('shop/includes/cart_drawer.html', context, request=request),
+            'cart_html': render_to_string('shop/includes/cart_content.html', context, request=request)}
+
+
+@never_cache
+@require_GET
+def cart_drawer(request):
+    if request.headers.get('Accept') == 'application/json':
+        return JsonResponse({'success': True, **cart_state(request)})
+    lines = cart_lines(request.session)
+    return render(request, 'shop/includes/cart_drawer.html', {'items': lines,
+                  'cart_valid': bool(lines) and not any(line['error'] for line in lines),
+                  **checkout_totals(lines, request.user, request.session.get('coupon_code', ''))})
+
+
+@require_POST
+def apply_coupon(request):
+    code = request.POST.get('coupon_code', '').strip().upper()[:40]
+    totals = checkout_totals(cart_lines(request.session), request.user, code)
+    if totals['coupon_error']:
+        messages.error(request, totals['coupon_error'])
+    else:
+        request.session['coupon_code'] = code
+        request.session.pop('checkout_token', None)
+        messages.success(request, 'Coupon applied.' if code else 'Coupon removed.')
+    return redirect('cart_view')
+
+
+def product_detail(request, pk):
+    from .models import ProductWarranty
+    from .support import language_for, warranty_content
+    product = get_object_or_404(products_query().prefetch_related('gallery'), pk=pk)
+    existing = Review.objects.filter(product=product,
+                                     user=request.user).first() if request.user.is_authenticated else None
+    form = ReviewForm(instance=existing)
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            return redirect('login')
+        form = ReviewForm(request.POST, instance=existing)
+        if form.is_valid():
+            Review.objects.update_or_create(product=product, user=request.user, defaults=form.cleaned_data)
+            messages.success(request, 'Your review has been saved.')
+            return redirect('product_detail', pk=pk)
+    variants = [{'id': v.pk, 'name': v.option_label, 'sku': v.sku, 'price': str(v.price), 'stock': v.stock,
+                 'original': str(v.compare_at_price) if v.compare_at_price else ''} for v in product.variants.all()]
+    viewed = [int(value) for value in request.session.get('recently_viewed', []) if str(value).isdigit()][:12]
+    recent = list(products_query().filter(pk__in=viewed).exclude(pk=pk))
+    recent.sort(key=lambda item: viewed.index(item.pk))
+    request.session['recently_viewed'] = [pk] + [value for value in viewed if value != pk][:11]
+    warranty = ProductWarranty.objects.filter(product=product, is_verified=True).select_related('product').first()
+    return render(request, 'shop/product_detail.html', {'product': product, 'form': form,
+                                                        'reviews': product.reviews.select_related('user'),
+                                                        'recently_viewed': recent[:4],
+                                                        'related_products': products_query().filter(category=product.category).exclude(pk=pk)[:4],
+                                                        'verified_warranty': warranty_content(warranty, language_for(request)) if warranty else None,
+                                                        'variant_data': variants})
+
+
+def signup(request):
+    form = UserCreationForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Your account is ready. Sign in to continue.')
+        return redirect('login')
     return render(request, 'shop/signup.html', {'form': form})
 
-# Cart Management
+
+def register_view(request):
+    return signup(request)
+
+
+def cart_response(request, success=True, error='', status=200):
+    if request.headers.get('Accept') == 'application/json':
+        return JsonResponse({'success': success, 'error': error, **cart_state(request)}, status=status)
+    if error:
+        messages.error(request, error)
+    elif success:
+        messages.success(request, 'Cart updated.')
+    target = request.POST.get('next', '')
+    return redirect(target if target and url_has_allowed_host_and_scheme(target, {request.get_host()}) else 'cart_view')
+
+
+@require_POST
 def add_to_cart(request, pk):
-    cart = request.session.get('cart', {})
-    cart[str(pk)] = cart.get(str(pk), 0) + 1
-    request.session['cart'] = cart
-    return redirect('cart_view')
+    product = get_object_or_404(products_query(), pk=pk)
+    try:
+        amount = quantity(request.POST.get('quantity', '1'))
+        variant_id = request.POST.get('variant', '')
+        variant = next((v for v in product.variants.all() if str(v.pk) == variant_id), None)
+        if product.has_variants and not variant:
+            raise ValidationError('Choose a valid product variant.')
+        if variant_id and not variant:
+            raise ValidationError('This variant does not belong to this product.')
+        key = f'{pk}:{variant.pk}' if variant else str(pk)
+        cart = normalized_cart(request.session)
+        new_qty = quantity(str(cart.get(key, 0) + amount))
+        item = variant or product
+        if item.stock is not None and new_qty > item.stock:
+            raise ValidationError(f'Only {item.stock} available. Your cart has not changed.')
+        cart[key] = new_qty
+        set_cart(request.session, cart)
+    except ValidationError as exc:
+        return cart_response(request, False, ' '.join(exc.messages), 400)
+    return cart_response(request)
 
+
+@require_POST
 def remove_from_cart(request, pk):
-    cart = request.session.get('cart', {})
-    if str(pk) in cart:
-        del cart[str(pk)]
-    request.session['cart'] = cart
-    return redirect('cart_view')
+    cart = normalized_cart(request.session)
+    key = request.POST.get('key', str(pk))
+    if key.split(':')[0] != str(pk):
+        return cart_response(request, False, 'Invalid cart item.', 400)
+    cart.pop(key, None)
+    set_cart(request.session, cart)
+    return cart_response(request)
 
+
+@require_GET
 def cart_view(request):
-    cart = request.session.get('cart', {})
-    items, total = [], 0
-    for pk, qty in cart.items():
-        try:
-            product = get_object_or_404(Product, pk=pk)
-            subtotal = product.price * qty
-            items.append({'product': product, 'qty': qty, 'subtotal': subtotal})
-            total += subtotal
-        except:
-            continue
-    return render(request, 'shop/cart.html', {'items': items, 'total': total})
-
-def cart_count(request):
-    cart = request.session.get('cart', {})
-    # কার্টে থাকা সকল প্রোডাক্টের পরিমাণের যোগফল
-    count = sum(cart.values()) if cart else 0
-    return {'cart_count': count}
+    lines = cart_lines(request.session)
+    return render(request, 'shop/cart.html', {'items': lines, **checkout_totals(lines, request.user, request.session.get('coupon_code', ''))})
 
 
+@require_POST
 def update_cart(request):
-    if request.method == 'POST':
-        cart = request.session.get('cart', {})
+    candidate = normalized_cart(request.session)
+    try:
+        for key in list(candidate):
+            field = 'qty_' + key
+            if field in request.POST:
+                amount = quantity(request.POST[field], allow_zero=True)
+                if amount:
+                    candidate[key] = amount
+                else:
+                    del candidate[key]
+        cart_lines({'cart': candidate}, strict=True)
+        set_cart(request.session, candidate)
+    except ValidationError as exc:
+        return cart_response(request, False, ' '.join(exc.messages), 400)
+    return cart_response(request)
 
-        for key, value in request.POST.items():
-            if key.startswith('qty_'):
-                product_id = key.replace('qty_', '')
-                try:
-                    new_qty = int(value)
-                    if new_qty > 0:
-                        cart[product_id] = new_qty
-                    else:
-                        cart.pop(product_id, None)
-                except ValueError:
-                    continue
 
-        request.session['cart'] = cart
-        request.session.modified = True
-
-    return redirect('cart_view')
-
+@require_POST
 def clear_cart(request):
-    request.session['cart'] = {}
-    return redirect('cart_view')
+    set_cart(request.session, {})
+    return cart_response(request)
+
 
 @login_required
 def checkout(request):
-    cart = request.session.get('cart', {})
-
-    if not cart and request.method == "GET":
-        messages.warning(request, "Your cart is empty!")
-        return redirect('product_list')
-
-    if request.method == 'POST':
-        full_name = request.POST.get('full_name')
-        email = request.POST.get('email')
-        shipping_address = request.POST.get('shipping_address')
-        phone = request.POST.get('phone')
-        # পেমেন্ট মেথডটি রিসিভ করা হচ্ছে
-        payment_method = request.POST.get('payment_method', 'COD')
-
-        # ১. নতুন অর্ডার তৈরি
-        order = Order.objects.create(
-            user=request.user,
-            full_name=full_name,
-            email=email,
-            address=shipping_address,
-            phone=phone,
-            payment_method=payment_method, # মডেল আপডেট করার পর এটি কাজ করবে
-            total_price=0
-        )
-
-        subtotal = 0
-        for key, value in cart.items():
-            try:
-                product = Product.objects.get(id=key)
-                qty = value['quantity'] if isinstance(value, dict) else value
-                item_total = product.price * qty
-                subtotal += item_total
-
-                OrderItem.objects.create(
-                    order=order,
-                    product=product,
-                    quantity=qty,
-                    price=product.price
-                )
-            except Product.DoesNotExist:
-                continue
-
-        # ২. টোটাল প্রাইজ আপডেট ও সেভ
-        order.total_price = subtotal
-        order.save()
-
-        # ৩. সেশন ক্লিয়ার করা
-        request.session['cart'] = {}
-        request.session.modified = True
-
-        messages.success(request, "Order placed successfully!")
-        return redirect('order_success_with_id', order_id=order.id)
-
-    # GET লজিক
-    cart_items = []
-    grand_total = 0
-    for key, value in cart.items():
+    initial = {'full_name': request.user.get_full_name(), 'email': request.user.email,
+               'coupon_code': request.session.get('coupon_code', '')}
+    initial.update(request.session.get('checkout_shipping', {}))
+    initial.setdefault('payment_method', 'COD' if settings_for_store().cod_enabled else '')
+    if request.method == 'GET' and request.GET.get('address'):
+        if not request.GET['address'].isdigit():
+            raise Http404
+        saved = get_object_or_404(SavedAddress, pk=request.GET['address'], user=request.user)
+        initial.update(full_name=saved.full_name, phone=saved.phone, address=saved.address)
+    data = request.POST.copy() if request.method == 'POST' else None
+    if data is not None:
+        request.session['checkout_shipping'] = {key: data.get(key, '')[:limit] for key, limit in
+            [('full_name', 100), ('email', 254), ('address', 2000), ('phone', 20), ('payment_method', 20)]}
+    if data is not None and 'shipping_address' in data and 'address' not in data:
+        data['address'] = data['shipping_address']
+    if data is not None and data.get('payment_method') in {'COD', 'CARD', 'ONLINE_BKASH'}:
+        data['bkash_number'] = ''
+        data['trx_id'] = ''
+    if request.method == 'GET':
+        request.session.setdefault('checkout_token', str(uuid4()))
+    initial['checkout_token'] = request.session.get('checkout_token', '')
+    form = CheckoutForm(data, initial=initial)
+    form.fields['payment_method'].choices = enabled_payment_methods()
+    from django import forms as django_forms
+    form.fields['payment_method'].widget = django_forms.RadioSelect()
+    form.fields['payment_method'].widget.choices = form.fields['payment_method'].choices
+    if not settings_for_store().bkash_number:
+        form.fields.pop('bkash_number')
+        form.fields.pop('trx_id')
+    status = 200
+    if request.method == 'POST' and form.is_valid() and request.POST.get('action') != 'preview':
         try:
-            product = Product.objects.get(id=key)
-            qty = value['quantity'] if isinstance(value, dict) else value
-            item_total = product.price * qty
-            grand_total += item_total
-            cart_items.append({
-                'product': product,
-                'quantity': qty,
-                'total_price': item_total,
-            })
-        except Product.DoesNotExist:
-            continue
+            order = create_order(request.user, request.session, form.cleaned_data)
+        except (ValidationError, IntegrityError, OperationalError) as exc:
+            # A simultaneous submission may have won the token reservation.
+            previous = Order.objects.filter(user=request.user,
+                                            checkout_token=form.cleaned_data['checkout_token']).first()
+            if previous:
+                if request.session.get('checkout_token') == str(previous.checkout_token):
+                    request.session['cart'] = {}
+                    request.session.pop('coupon_code', None)
+                return redirect('order_success_with_id', order_id=previous.pk)
+            form.add_error(None, ' '.join(exc.messages) if isinstance(exc,
+                                                                      ValidationError) else 'Checkout is busy. Please retry with this same form.')
+            status = 400 if isinstance(exc, ValidationError) else 409
+        else:
+            if request.session.get('checkout_token') == str(order.checkout_token):
+                request.session['cart'] = {}
+                request.session.pop('coupon_code', None)
+            if order.payment_method in {'CARD', 'ONLINE_BKASH'}:
+                from .payments import initiate
+                try:
+                    url = initiate(order.payment_attempt.pk)
+                except (OperationalError, IntegrityError):
+                    url = ''
+                if url:
+                    return redirect(url)
+                messages.warning(request, 'Your order was saved, but hosted payment could not be opened. Check its payment status before paying again.')
+            return redirect('order_success_with_id', order_id=order.pk)
+    elif request.method == 'POST' and request.POST.get('action') != 'preview':
+        status = 400
+    lines = cart_lines(request.session)
+    if not lines and request.method == 'GET':
+        messages.info(request, 'Add a product before checking out.')
+        return redirect('product_list')
+    coupon_code = data.get('coupon_code', '') if data is not None else initial['coupon_code']
+    from .payments import method_ready, accepted_card_brands
+    store = settings_for_store()
+    bkash_code = 'ONLINE_BKASH' if method_ready('ONLINE_BKASH') else 'BKASH'
+    selected = data.get('payment_method', '') if data is not None else initial.get('payment_method', '')
+    methods = [
+        {'code': 'COD', 'name': 'Cash on Delivery', 'icon': 'cash', 'ready': settings_for_store().cod_enabled,
+         'instructions': 'Pay the courier when your order arrives. Your order stays unpaid until the store records collection.'},
+        {'code': bkash_code, 'name': 'bKash', 'icon': 'wallet', 'ready': method_ready('ONLINE_BKASH') or store.manual_bkash_ready,
+         'instructions': 'Continue to the provider’s secure checkout.' if bkash_code == 'ONLINE_BKASH' else 'Place your order to see the verified receiving details, exact amount and payment reference. Your payment will need store verification.'},
+        {'code': 'CARD', 'name': 'Card', 'icon': 'card', 'ready': method_ready('CARD'),
+         'instructions': 'Pay securely on the provider’s page. Enter your card details only there.'},
+    ]
+    return render(request, 'shop/checkout.html', {'form': form, 'cart_items': lines, 'addresses': request.user.addresses.all(),
+                                                'payment_choices': methods, 'selected_payment': selected,
+                                                'accepted_card_brands': accepted_card_brands() if method_ready('CARD') else [],
+                                                'payments_available': any(method['ready'] for method in methods),
+                                                'card_ready': 'CARD' in dict(enabled_payment_methods()),
+                                                'bkash_ready': 'ONLINE_BKASH' in dict(enabled_payment_methods()),
+                                                **checkout_totals(lines, request.user, coupon_code)},
+                  status=status)
 
-    context = {
-        'cart_items': cart_items,
-        'subtotal': grand_total,
-        'grand_total': grand_total,
-    }
-    return render(request, 'shop/checkout.html', context)
 
-
+@login_required
+@require_GET
 def order_success(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
-    user_order_count = Order.objects.filter(user=request.user).count()
-
-    return render(request, 'shop/order_success.html', {
-        'order': order,
-        'user_order_count': user_order_count
-    })
+    order = get_object_or_404(Order.objects.prefetch_related('items'), pk=order_id, user=request.user)
+    return render(request, 'shop/order_success.html', {'order': order, **manual_payment_context(order)})
 
 
-# Offers Page
+def manual_payment_context(order):
+    from .forms import ManualReferenceForm
+    from django.utils import timezone
+    store = settings_for_store()
+    attempt = order.payment_attempt
+    return {'manual_reference_form': ManualReferenceForm(),
+            'manual_payment_available': bool(attempt and attempt.provider == 'manual_bkash'
+                and store.manual_bkash_ready and store.bkash_number == attempt.manual_receiver
+                and not order.inventory_released and attempt.expires_at > timezone.now())}
+
+
+@login_required
+@require_GET
+def order_detail(request, order_id):
+    order = get_object_or_404(Order.objects.prefetch_related('items'), pk=order_id, user=request.user)
+    return render(request, 'shop/order_detail.html', {'order': order, 'items': order.items.all(), **manual_payment_context(order)})
+
+
+@login_required
+@require_GET
+def order_history(request):
+    return render(request, 'shop/order_history.html', {
+        'orders': Order.objects.filter(user=request.user).prefetch_related('items').order_by('-date_ordered'),
+        'preorders': Preorder.objects.filter(user=request.user)})
+
+
+def my_orders(request):
+    return order_history(request)
+
+
+@require_GET
 def offers(request):
-    active_offers = Offer.objects.filter(is_active=True).order_by('-created_at')
-    return render(request, 'shop/offers.html', {'offers': active_offers})
+    return render(request, 'shop/offers.html',
+                  {'offers': active_offers().prefetch_related('products')})
 
-# Preorder View
+
 @login_required
 def preorder(request):
-    if request.method == 'POST':
-        form = PreOrderForm(request.POST, request.FILES)
-        if form.is_valid():
-            preorder = form.save(commit=False)
-            preorder.user = request.user
-            preorder.save()
-            messages.success(request, "✅ Preorder placed successfully!")
-            return redirect('order_history')
-    else:
-        form = PreOrderForm()
+    form = PreOrderForm(request.POST or None, request.FILES or None)
+    if request.method == 'POST' and form.is_valid():
+        entry = form.save(commit=False)
+        entry.user = request.user
+        entry.save()
+        messages.success(request, 'Your preorder request has been received.')
+        return redirect('order_history')
     return render(request, 'shop/preorder.html', {'form': form})
 
-# Order History
-def my_orders(request):
-    # 'created_at' এর বদলে 'date_ordered' ব্যবহার করুন
-    orders_list = Order.objects.filter(user=request.user).order_by('-date_ordered')
 
-    return render(request, 'shop/order_history.html', {'orders': orders_list})
-
-@login_required
-def order_detail(request, order_id):
-    order = get_object_or_404(Order, pk=order_id, user=request.user)
-    items = order.items.all()
-    return render(request, 'shop/order_detail.html', {'order': order, 'items': items})
-
-@login_required
-def order_history(request):
-    orders = Order.objects.filter(user=request.user)
-
-    # PreOrder টেবিল না থাকলে যেন এরর না দেয়, তাই এটি ট্রাই-ক্যাপচার এর মধ্যে রাখুন
-    try:
-        preorders = PreOrder.objects.filter(user=request.user)
-    except:
-        preorders = []  # টেবিল না থাকলে খালি লিস্ট পাঠাবে, সাইট ক্র্যাশ করবে না
-
-    return render(request, 'shop/order_history.html', {
-        'orders': orders,
-        'preorders': preorders
-    })
+@require_GET
+def preorder_thanks(request):
+    return render(request, 'shop/preorder_thanks.html')
 
 
-# shop/views.py
-def place_order(request):
-    if request.method == 'POST':
-        # ... অর্ডার সেভ করার লজিক ...
-        # অর্ডার সফল হলে:
-        return redirect('order_success') # urls.py এ এই নাম থাকতে হবে
-
-# AJAX Product Search
 @require_GET
 def ajax_products(request):
-    q = request.GET.get('q', '')
-    sort = request.GET.get('sort', '')
-    products = Product.objects.all()
+    products, selected, error = filtered_products(request)
+    return JsonResponse({'products': [{'id': p.pk, 'name': p.name, 'price': str(p.selling_price),
+                                       'url': reverse('product_detail', args=[p.pk]),
+                                       'image': p.image.url if p.image else '',
+                                       'availability': p.availability} for p in products[:8]], 'error': error})
 
-    if q:
-        products = products.filter(name__icontains=q)
-    if sort == 'price_asc':
-        products = products.order_by('price')
-    elif sort == 'price_desc':
-        products = products.order_by('-price')
 
-    products_data = []
-    for p in products:
-        products_data.append({
-            'id': p.id,
-            'name': p.name,
-            'price': str(p.price),
-            'image': getattr(p.image, 'url', ''),
-        })
-
-    return JsonResponse({'products': products_data})
-
-# AJAX Review Submit
 @login_required
 @require_POST
 def ajax_submit_review(request, pk):
     product = get_object_or_404(Product, pk=pk)
-    try:
-        rating = int(request.POST.get('rating', 0))
-    except (ValueError, TypeError):
-        return JsonResponse({'success': False, 'error': 'Invalid rating format'})
-    comment = request.POST.get('comment', '').strip()
-
-    if rating < 1 or rating > 5 or not comment:
-        return JsonResponse({'success': False, 'error': 'Invalid rating or comment'})
-
-    review, created = Review.objects.update_or_create(
-        product=product,
-        user=request.user,
-        defaults={'rating': rating, 'comment': comment}
-    )
-
-    total_reviews = Review.objects.filter(product=product).count()
-    distinct_users = Review.objects.filter(product=product).values('user').distinct().count()
-
-    return JsonResponse({
-        'success': True,
-        'review': {
-            'user': request.user.username,
-            'rating': review.rating,
-            'comment': review.comment,
-            'created_at': review.created_at.strftime('%B %d, %Y %I:%M %p')
-        },
-        'summary': f"This product has {total_reviews} review(s) from {distinct_users} user(s)."
-    })
-
-# Preorder Thank You Page
-def preorder_thanks(request):
-    return render(request, 'shop/preorder_thanks.html')  # ✅ fixed path
+    form = ReviewForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+    review, created = Review.objects.update_or_create(product=product, user=request.user, defaults=form.cleaned_data)
+    return JsonResponse(
+        {'success': True, 'review': {'user': request.user.username, 'rating': review.rating, 'comment': review.comment,
+                                     'created_at': review.created_at.isoformat()},
+         'summary': f'{product.reviews.count()} review(s)'})
 
 
-#new navbar
+def legacy_category(request, names):
+    category = Category.objects.filter(name__in=names).first()
+    return render(request, 'shop/product_list.html',
+                  catalog_context(request, category.pk if category else '__missing__'))
+
 
 def laptop_desktop(request):
-    products = Product.objects.filter(category__name__in=['Laptop', 'Laptop & Desktop'])
-    return render(request, 'shop/laptop_desktop.html', {'products': products})
+    return legacy_category(request, ['Laptop', 'Laptop & Desktop'])
+
 
 def phones_tablets(request):
-    products = Product.objects.filter(category__name='Phones & Tablets')
-    return render(request, 'shop/phones_tablets.html', {'products': products})
+    return legacy_category(request, ['Phones & Tablets'])
+
 
 def sound_equipment(request):
-    products = Product.objects.filter(category__name='Sound Equipment')
-    context = {'products': products}
-    return render(request, 'shop/sound_equipment.html', context)
+    return legacy_category(request, ['Sound Equipment'])
 
 
 def power_accessories(request):
+    return legacy_category(request, ['Power'])
 
-    products = Product.objects.filter(category__name='Power')
-
-    context = {
-        'products': products,
-    }
-    return render(request, 'shop/power_accessories.html', context)
-
-# shop/views.py
-# shop/views.py
 
 def fitness_wearable(request):
-    # 'Watch' jodi apnar category-r nam hoy, tobe eita use korun
-    # Category name-ti admin panel theke check kore exact namti ekhane din
-    products = Product.objects.filter(category__name__icontains='Watch')
-
-    # Jodi category name 'Fitness' hoy, tobe:
-    # products = Product.objects.filter(category__name__icontains='Fitness')
-
-    return render(request, 'shop/fitness_wearable.html', {'products': products})
+    return legacy_category(request, ['Watch', 'Fitness', 'Fitness & Wearable'])
 
 
 def smart_electronics(request):
-    # আপনার অ্যাডমিন প্যানেলে ক্যাটাগরির নাম 'Smart Tech' থাকলে এটি কাজ করবে
-    products = Product.objects.filter(category__name='Smart Tech')
+    return legacy_category(request, ['Smart Tech'])
 
-    context = {
-        'products': products,
-    }
-    return render(request, 'shop/smart_electronics.html', context)
-
-# Registration View (Register URL এর জন্য)
-
-def register_view(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Registration successful! You can now login.")
-            return redirect('login')
-    else:
-        form = UserCreationForm()
-    # এখানে 'shop/signup.html' এর বদলে 'shop/register.html' দিন
-    return render(request, 'shop/register.html', {'form': form})
 
 @login_required
 def profile_view(request):
-    return render(request, 'shop/profile.html')
+    instance = None
+    address_id = request.POST.get('address_id') if request.method == 'POST' else request.GET.get('edit')
+    if address_id:
+        if not address_id.isdigit():
+            raise Http404
+        instance = get_object_or_404(SavedAddress, pk=address_id, user=request.user)
+    form = AddressForm(request.POST if request.method == 'POST' else None, instance=instance)
+    if request.method == 'POST' and form.is_valid():
+        address = form.save(commit=False)
+        address.user = request.user
+        address.save()
+        messages.success(request, 'Address saved.')
+        return redirect('profile')
+    return render(request, 'shop/profile.html', {'address_form': form, 'editing_address': instance,
+                                               'addresses': request.user.addresses.all(),
+                                               'saved_products': products_query().filter(wishlist__user=request.user)[:4],
+                                               'recent_orders': request.user.orders.order_by('-date_ordered')[:5]})
+
+
+@login_required
+@require_POST
+def subscribe_stock(request, pk):
+    product = get_object_or_404(products_query(), pk=pk)
+    variant = None
+    try:
+        email = forms.EmailField().clean(request.POST.get('email', ''))
+        variant_id = request.POST.get('variant', '')
+        if variant_id:
+            if not variant_id.isdigit():
+                raise ValidationError('Select a valid option.')
+            variant = get_object_or_404(ProductVariant, pk=variant_id, product=product)
+        if product.has_variants and not variant:
+            raise ValidationError('Select the option you want to track.')
+        item = variant or product
+        if item.stock is None or item.stock > 0:
+            raise ValidationError('This item is already available to order.')
+        StockAlert.objects.update_or_create(user=request.user, product=product, variant=variant,
+                                           defaults={'email': email, 'active': True, 'sent_at': None})
+        messages.success(request, 'Stock alert saved. Email delivery requires the store’s email service to be configured.')
+    except ValidationError as exc:
+        messages.error(request, ' '.join(exc.messages))
+    return redirect('product_detail', pk=pk)
+
+
+@login_required
+@require_POST
+def unsubscribe_stock(request, pk):
+    alert = get_object_or_404(StockAlert, pk=pk, user=request.user)
+    alert.active = False
+    alert.save(update_fields=['active'])
+    messages.success(request, 'Stock alert cancelled.')
+    return redirect('profile')
+
+
+@login_required
+@require_POST
+def delete_address(request, pk):
+    get_object_or_404(SavedAddress, pk=pk, user=request.user).delete()
+    messages.success(request, 'Address removed.')
+    return redirect('profile')
+
+
+@never_cache
+@require_GET
+def wishlist(request):
+    products = products_query().filter(wishlist__user=request.user) if request.user.is_authenticated else Product.objects.none()
+    if request.headers.get('Accept') == 'application/json':
+        ids = list(Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True)) if request.user.is_authenticated else []
+        result = {'success': True, 'wishlist_ids': ids}
+        if request.GET.get('cards') == '1':
+            result['html'] = render_to_string('shop/includes/product_grid.html', {'products': products}, request=request) if ids else ''
+        return JsonResponse(result)
+    return render(request, 'shop/wishlist.html', {'products': products})
+
+
+@require_POST
+def toggle_wishlist(request, pk):
+    if not request.user.is_authenticated:
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({'success': False, 'login_url': reverse('login') + '?next=' + reverse('wishlist')}, status=401)
+        return redirect(reverse('login') + '?next=' + reverse('wishlist'))
+    product = get_object_or_404(Product, pk=pk)
+    action = request.POST.get('action', 'toggle')
+    if action not in {'save', 'remove', 'toggle'}:
+        return JsonResponse({'success': False, 'error': 'Choose a valid wishlist action.'}, status=400)
+    if action == 'remove':
+        Wishlist.objects.filter(user=request.user, product=product).delete()
+        saved = False
+    else:
+        entry, created = Wishlist.objects.get_or_create(user=request.user, product=product)
+        saved = True
+        if action == 'toggle' and not created:
+            entry.delete()
+            saved = False
+    if request.headers.get('Accept') == 'application/json':
+        ids = list(Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True))
+        return JsonResponse({'success': True, 'saved': saved, 'product_id': product.pk,
+                             'wishlist_ids': ids, 'wishlist_count': len(ids)})
+    messages.success(request, 'Saved to wishlist.' if saved else 'Removed from wishlist.')
+    return redirect('wishlist')
+
+
+def policy(request, slug):
+    from .support_views import information
+    return information(request, slug)

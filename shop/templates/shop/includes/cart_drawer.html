@@ -1,0 +1,29 @@
+{% for item in items %}
+<article class="gf-drawer-item" data-cart-key="{{ item.key }}">
+    {% if item.image_url %}<img src="{{ item.image_url }}" alt="{{ item.product.name }}{% if item.variant %} — {{ item.variant.option_label }}{% endif %}" width="64" height="64">{% else %}<span class="gf-drawer-image-placeholder">No image</span>{% endif %}
+    <div>
+        <h3>{% if item.product %}<a href="{% url 'product_detail' item.product.pk %}">{{ item.product.name }}</a>{% else %}Unavailable product{% endif %}</h3>
+        {% if item.variant %}<small>{{ item.variant.option_label }}</small>{% if item.variant.sku %}<small>SKU: {{ item.variant.sku }}</small>{% endif %}{% endif %}
+        <p>৳{{ item.price|floatformat:2 }} each</p>
+        {% if item.error %}<p class="gf-error" role="alert">{{ item.error }}</p>{% endif %}
+        <form method="post" action="{% url 'update_cart' %}" data-cart-change class="gf-inline-form">{% csrf_token %}
+            <label for="drawer-qty-{{ item.key }}">Quantity</label>
+            <div class="gf-quantity-control">
+                <button type="button" data-quantity-step="-1" aria-label="Decrease quantity of {{ item.product.name }}">−</button>
+                <input id="drawer-qty-{{ item.key }}" type="number" name="qty_{{ item.key }}" min="0" max="{{ item.stock_limit }}" value="{{ item.qty }}" aria-label="Quantity for {{ item.product.name }}{% if item.variant %}, {{ item.variant.option_label }}{% endif %}" required>
+                <button type="button" data-quantity-step="1" aria-label="Increase quantity of {{ item.product.name }}" {% if item.qty >= item.stock_limit %}disabled{% endif %}>+</button>
+            </div>
+            <button type="submit" class="gf-button gf-button-secondary">Update</button>
+        </form>
+        <form method="post" action="{% url 'remove_from_cart' item.product_id %}" data-cart-change class="gf-remove-form">{% csrf_token %}<input type="hidden" name="key" value="{{ item.key }}"><button aria-label="Remove {{ item.product.name }} from cart">Remove</button></form>
+    </div>
+    <strong>৳{{ item.subtotal|floatformat:2 }}</strong>
+</article>
+{% empty %}
+<div class="gf-drawer-empty"><span aria-hidden="true">♡</span><h3>Your bag is empty.</h3><p>Find your next upgrade.</p><a class="gf-button gf-button-primary" href="{% url 'product_list' %}">Explore products</a></div>
+{% endfor %}
+<div class="gf-drawer-footer">
+    <div class="gf-drawer-totals"><p>Subtotal <strong>৳{{ subtotal|floatformat:2 }}</strong></p><p>Shipping <strong>৳{{ shipping|floatformat:2 }}</strong></p>{% if coupon_discount %}<p>Coupon {{ coupon_code }} <strong>−৳{{ coupon_discount|floatformat:2 }}</strong></p>{% endif %}{% if coupon_error %}<p class="gf-error">{{ coupon_error }}</p>{% endif %}<p class="gf-drawer-grand-total">Total <strong data-drawer-total>৳{{ grand_total|floatformat:2 }}</strong></p></div>
+    {% if cart_valid %}<a class="gf-button gf-button-primary" href="{% url 'checkout' %}">Continue to checkout</a>{% elif items %}<p class="gf-error">Update unavailable items before checking out.</p>{% endif %}
+    <a class="gf-button gf-button-secondary" href="{% url 'cart_view' %}">View full cart</a>
+</div>

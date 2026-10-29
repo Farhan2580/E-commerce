@@ -1,0 +1,17 @@
+<section class="gf-notice" aria-label="bKash payment">
+    {% if order.payment_status == 'pending' and manual_payment_available %}
+        <h2>Pay with bKash</h2>
+        <p>{{ order.payment_attempt.manual_instructions|linebreaksbr }}</p>
+        <p>Receiving business account: <strong data-copy-value>{{ order.payment_attempt.manual_receiver }}</strong>
+            <button type="button" class="gf-button gf-button-secondary" data-copy-receiver>Copy number</button><span data-copy-status role="status"></span></p>
+        <p>Exact order amount: <strong>৳{{ order.total_price }}</strong></p>
+        <p>Order reference: <strong>GF{{ order.pk }}</strong></p>
+        <p>Include this order reference with your payment. Complete payment before {{ order.payment_attempt.expires_at|date:'d M Y, H:i' }}.</p>
+        <p>Check the receiving business name in bKash before paying. Never share your PIN or OTP here.</p>
+        <form method="post" action="{% url 'manual_payment_reference' order.payment_attempt.pk %}" class="gf-form" data-payment-action>
+            {% csrf_token %}{{ manual_reference_form.as_p }}<button class="gf-button gf-button-primary">Submit reference for verification</button>
+        </form>
+    {% elif order.payment_status == 'manual_review' %}<p role="status">Awaiting verification. Your reference was saved; the store will check its merchant records before confirming payment.</p>
+    {% elif order.payment_status == 'paid' %}<p>Payment verified by the store.</p>
+    {% else %}<p>This payment is currently unavailable. Contact the store before making another payment.</p>{% endif %}
+</section>

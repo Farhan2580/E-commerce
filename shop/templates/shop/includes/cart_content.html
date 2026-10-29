@@ -1,0 +1,46 @@
+<div class="gf-shell gf-page"><h1>Shopping cart</h1>{% if items %}
+        <div class="gf-checkout-layout">
+            <section class="gf-panel">{% for item in items %}
+                <article class="gf-cart-row" data-cart-key="{{ item.key }}">
+                    <div>{% if item.image_url %}
+                        <img src="{{ item.image_url }}" alt="{{ item.product.name }}" width="90"
+                             height="90">{% endif %}</div>
+                    <div><h2>{% if item.product %}
+                        <a href="{% url 'product_detail' item.product.pk %}">{{ item.product.name }}</a>{% else %}
+                        Unavailable product{% endif %}</h2>{% if item.variant %}
+                        <p>{{ item.variant.option_label }}</p>{% endif %}<p>৳{{ item.price }} each</p>{% if item.error %}
+                        <p class="gf-error" role="alert">{{ item.error }}</p>{% endif %}
+                        <form action="{% url 'update_cart' %}" method="post"
+                              class="gf-inline-form" data-cart-change>{% csrf_token %}<label
+                                for="qty-{{ forloop.counter }}">Quantity</label><input id="qty-{{ forloop.counter }}"
+                                                                                       name="qty_{{ item.key }}"
+                                                                                       type="number" min="0" max="{{ item.stock_limit }}"
+                                                                                       value="{{ item.qty }}" required>
+                            <button class="gf-button gf-button-secondary">Update</button>
+                        </form>
+                        <form action="{% url 'remove_from_cart' item.product_id %}" method="post"
+                              data-remove-line="{{ item.key }}" data-cart-change class="gf-remove-form">{% csrf_token %}<input name="key"
+                                                                                                              value="{{ item.key }}"
+                                                                                                              type="hidden">
+                            <button>Remove</button>
+                        </form>
+                    </div>
+                    <strong>৳{{ item.subtotal }}</strong></article>{% endfor %}
+                <form action="{% url 'clear_cart' %}" method="post" data-cart-change>{% csrf_token %}
+                    <button class="gf-button gf-button-secondary">Clear cart</button>
+                </form>
+            </section>
+            <aside class="gf-panel gf-summary"><h2>Order summary</h2>
+                <form action="{% url 'apply_coupon' %}" method="post" class="gf-form">{% csrf_token %}<label>Coupon code<input name="coupon_code" value="{{ coupon_code }}" maxlength="40"></label><button class="gf-button gf-button-secondary">Apply / remove coupon</button><small>Leave blank to remove.</small></form>
+                {% if coupon_error %}<p class="gf-error" role="alert">{{ coupon_error }}</p>{% endif %}
+                {% if coupon_discount %}<p><span>Coupon {{ coupon_code }}</span><strong>−৳{{ coupon_discount }}</strong></p>{% endif %}
+                <p><span>Subtotal</span><strong>৳{{ subtotal }}</strong></p>
+                <p><span>Shipping</span><strong>৳{{ shipping }}</strong></p>{% if savings %}
+                    <p><span>You save</span><strong>৳{{ savings }}</strong></p>{% endif %}<p class="gf-total"><span>Total</span><strong>৳{{ grand_total }}</strong>
+                </p><a class="gf-button gf-button-primary" href="{% url 'checkout' %}">Continue to checkout</a><a
+                        href="{% url 'product_list' %}">Continue shopping →</a></aside>
+        </div>{% else %}
+        <div class="gf-empty-state"><h2>Your cart is empty.</h2>
+            <p>Discover something you’ll love.</p><a class="gf-button gf-button-primary"
+                                                     href="{% url 'product_list' %}">Explore products</a>
+        </div>{% endif %}</div>

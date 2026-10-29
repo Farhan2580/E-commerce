@@ -6,7 +6,11 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'djangoProject13.settings')
+    # The local development server serves uploaded media explicitly, even with
+    # debug pages disabled. WSGI/ASGI and all other commands keep base settings.
+    default_settings = ('djangoProject13.development' if len(sys.argv) > 1 and sys.argv[1] == 'runserver'
+                        else 'djangoProject13.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', default_settings)
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

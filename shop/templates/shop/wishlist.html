@@ -1,0 +1,14 @@
+﻿{% extends 'base.html' %}
+{% block title %}Your wishlist | GadgetFlow{% endblock %}
+{% block content %}
+<section class="gf-shell gf-page">
+    <div class="gf-section-heading"><h1>Your wishlist</h1>{% if user.is_authenticated %}<span><span data-wishlist-count>{{ wishlist_ids|length }}</span> saved</span>{% endif %}</div>
+    {% if user.is_authenticated %}
+        <p>Saved to your account, ready whenever you return. Use the filled heart to remove an item.</p>
+        <div class="gf-grid" data-wishlist-grid>{% for product in products %}{% include 'shop/includes/product_card.html' %}{% endfor %}</div>
+        <div class="gf-empty-state" data-wishlist-empty {% if products %}hidden{% endif %}><h2>Your wishlist is empty.</h2><p>Save your favourites with the heart on any product.</p><a class="gf-button gf-button-primary" href="{% url 'product_list' %}">Explore products</a></div>
+    {% else %}
+        <div class="gf-empty-state"><h2>Keep your favourites together.</h2><p>Sign in to save products to your account and find them on your next visit.</p><a class="gf-button gf-button-primary" href="{% url 'login' %}?next={{ request.path|urlencode }}">Sign in to your wishlist</a></div>
+    {% endif %}
+</section>
+{% endblock %}

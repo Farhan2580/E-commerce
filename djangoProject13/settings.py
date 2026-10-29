@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,10 +21,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-1&@-_fr%xrlt84vf-afa5#w)65-uiln5&oo!g3s#2uk0as8t#1'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-1&@-_fr%xrlt84vf-afa5#w)65-uiln5&oo!g3s#2uk0as8t#1')
+
+# Email is intentionally disabled for stock-alert delivery until SMTP is configured.
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', '1') == '1'
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', '0') == '1'
+EMAIL_TIMEOUT = 15
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '')
+STOREFRONT_URL = os.environ.get('STOREFRONT_URL', 'http://127.0.0.1:8000').rstrip('/')
+STOCK_ALERT_EMAIL_READY = bool(EMAIL_HOST and DEFAULT_FROM_EMAIL)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.environ.get('DJANGO_DEBUG', '0') == '1'
 
 ALLOWED_HOSTS = ['*']
 
@@ -43,6 +57,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -108,6 +123,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
+LANGUAGES = [('en', 'English')]
 
 TIME_ZONE = 'UTC'
 
@@ -119,12 +135,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 import os
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'shop/static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Serve collected assets with DEBUG off; keep uploaded media on default storage.
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+}
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGIN_URL = '/accounts/login/'
-DEBUG = True
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -133,5 +154,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 
-import os
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# Sandbox only. Live endpoints are deliberately not implemented.
+SSLCOMMERZ_STORE_ID = os.environ.get('SSLCOMMERZ_STORE_ID', '')
+SSLCOMMERZ_STORE_PASSWORD = os.environ.get('SSLCOMMERZ_STORE_PASSWORD', '')
+SSLCOMMERZ_CARD_ENABLED = os.environ.get('SSLCOMMERZ_CARD_ENABLED', '0') == '1'
+# List only brands the provider has activated for this sandbox merchant.
+SSLCOMMERZ_CARD_BRANDS = tuple(value.strip().lower() for value in os.environ.get('SSLCOMMERZ_CARD_BRANDS', '').split(',') if value.strip())
+SSLCOMMERZ_BKASH_ENABLED = os.environ.get('SSLCOMMERZ_BKASH_ENABLED', '0') == '1'
+PAYMENT_PUBLIC_URL = os.environ.get('PAYMENT_PUBLIC_URL', '').rstrip('/')
