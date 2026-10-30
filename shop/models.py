@@ -43,6 +43,27 @@ class Category(models.Model):
         return self.name
 
 
+class NavigationItem(models.Model):
+    label = models.CharField(max_length=80)
+    hero_image = models.ImageField(upload_to='collection_banners/', blank=True)
+    page_title = models.CharField(max_length=160, blank=True)
+    introduction = models.TextField(blank=True, help_text='Approved English collection introduction. No HTML.')
+    category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.PROTECT)
+    brand = models.ForeignKey('Brand', null=True, blank=True, on_delete=models.PROTECT)
+    visible = models.BooleanField(default=True)
+    position = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['position', 'pk']
+
+    def clean(self):
+        if not self.category_id and not self.brand_id:
+            raise ValidationError('Choose a category or brand for this menu link.')
+
+    def __str__(self):
+        return self.label
+
+
 class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
     name = models.CharField(max_length=200)
@@ -92,6 +113,11 @@ class Product(models.Model):
     @property
     def display_original_price(self):
         return self.pricing_item.compare_at_price
+
+    @property
+    def discount_amount(self):
+        item = self.pricing_item
+        return max((item.compare_at_price or item.price) - item.price, Decimal('0'))
 
     @property
     def availability(self):
@@ -295,6 +321,7 @@ class ProductVariant(models.Model):
 
 
 class ProductImage(models.Model):
+    purpose = models.CharField(max_length=20, default='gallery', choices=[('gallery', 'Product gallery'), ('description', 'Description image')])
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='gallery')
     image = models.ImageField(upload_to='product_gallery/')
     alt = models.CharField(max_length=200, blank=True)
@@ -492,7 +519,10 @@ class InformationPage(models.Model):
              ('shipping', 'Shipping & Delivery'), ('returns', 'Returns & Refunds'),
              ('terms', 'Terms & Conditions'), ('privacy', 'Privacy Policy'),
              ('payments', 'Payment Methods'), ('cookies', 'Cookie Policy'),
-             ('about', 'About Us'), ('warranty', 'Warranty & Exchange')]
+             ('about', 'About Us'), ('warranty', 'Warranty & Exchange'),
+             ('exchange', 'Exchange Policy'), ('preorder-policy', 'Preorder Policy'),
+             ('refund', 'Refund Policy'), ('return', 'Return Policy'),
+             ('corporate', 'Corporate'), ('blog', 'Blog'), ('press', 'Press Coverage'), ('careers', 'Careers')]
     slug = models.SlugField(unique=True, choices=SLUGS)
     title_en = models.CharField(max_length=160)
     title_bn = models.CharField(max_length=160, blank=True)
@@ -563,7 +593,8 @@ class FAQ(models.Model):
 
 
 class BusinessLink(models.Model):
-    kind = models.CharField(max_length=20, choices=[('whatsapp', 'WhatsApp'), ('messenger', 'Messenger'), ('map', 'Map'), ('social', 'Social profile')])
+    image = models.ImageField(upload_to='business_profiles/', blank=True, help_text='Optional real support contact portrait for the WhatsApp shortcut.')
+    kind = models.CharField(max_length=20, choices=[('whatsapp', 'WhatsApp'), ('messenger', 'Messenger'), ('map', 'Map'), ('social', 'Social profile'), ('app_store', 'App Store'), ('google_play', 'Google Play')])
     label_en = models.CharField(max_length=100)
     label_bn = models.CharField(max_length=100, blank=True)
     url = models.URLField(max_length=500, validators=[validate_public_https])
@@ -576,6 +607,36 @@ class BusinessLink(models.Model):
 
     def __str__(self):
         return self.label_en
+
+
+class Outlet(models.Model):
+    name = models.CharField(max_length=120)
+    address = models.TextField()
+    hours = models.CharField(max_length=200, blank=True)
+    map_url = models.URLField(max_length=500, validators=[validate_public_https])
+    visible = models.BooleanField(default=False, help_text='Publish only verified outlet information.')
+    position = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['position', 'pk']
+
+    def __str__(self):
+        return self.name
+
+
+class FooterGroup(models.Model):
+    title = models.CharField(max_length=100)
+    visible = models.BooleanField(default=True)
+    position = models.PositiveIntegerField(default=0)
+    categories = models.ManyToManyField(Category, blank=True)
+    brands = models.ManyToManyField(Brand, blank=True)
+    collections = models.ManyToManyField(HomeSection, blank=True, help_text='Explicitly curated collections, including Trending or Best-selling. No sales ranking is inferred.')
+
+    class Meta:
+        ordering = ['position', 'pk']
+
+    def __str__(self):
+        return self.title
 
 
 class ProductWarranty(models.Model):

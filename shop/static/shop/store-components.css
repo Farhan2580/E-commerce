@@ -2206,3 +2206,20 @@ td small {
 .gf-accepted-brands { display: flex; gap: .5rem; margin-left: auto; flex-wrap: wrap; }
 .gf-accepted-brands img { width: 48px; height: 32px; object-fit: contain; background: #fff; padding: 3px; border-radius: 3px; }
 @media (max-width: 420px) { #id_payment_method .gf-payment-card { flex-wrap: wrap; } .gf-accepted-brands { margin-left: 0; } }
+
+/* Category brand dropdowns: actual catalog filters, keyboard and touch friendly. */
+.gf-category-menu { gap:2px; }
+.gf-category-menu > a { min-height:44px; display:flex; align-items:center; }
+.gf-category-menu details summary { width:30px; min-height:44px; display:flex; align-items:center; justify-content:center; }
+.gf-category-menu details[open] summary svg { transform:rotate(180deg); }
+.gf-category-menu:has(details[open]) > a, .gf-category-menu details[open] summary { color:var(--orange-dark); }
+.gf-category-menu details > div { z-index:110; width:205px; min-width:205px; max-height:min(600px,70dvh); overflow-y:auto; border-radius:14px; padding:6px; background:var(--paper); box-shadow:0 14px 36px #18223020; }
+.gf-category-menu details a { min-height:44px; border-radius:7px; padding:10px 12px; }
+.gf-category-menu details a:hover, .gf-category-menu details a:focus-visible { background:var(--sky); color:var(--orange-dark); }
+.gf-category-menu summary:focus-visible { outline:2px solid var(--orange); outline-offset:2px; border-radius:6px; }
+.gf-mobile-brand-group summary { min-height:44px; display:flex; align-items:center; padding:10px 16px; font-weight:600; }
+.gf-mobile-brand-group summary::after { content:'+'; margin-left:auto; }
+.gf-mobile-brand-group[open] summary::after { content:'−'; }
+
+/* Keep the requested thirteen primary options on one row at desktop widths. */
+@media(min-width:1101px) { .gf-categories > .gf-shell { flex-wrap:nowrap; justify-content:space-between; gap:4px; } .gf-category-menu { font-size:12px; white-space:nowrap; } .gf-category-menu details summary { width:22px; } .gf-category-menu:nth-last-child(-n+3) details > div { left:auto; right:0; } }

@@ -12,8 +12,8 @@
     <div class="gf-card-body"><p class="gf-card-category">{{ product.category.name }}</p>
         <h3 class="gf-card-title"><a href="{% url 'product_detail' product.pk %}">{{ product.name }}</a></h3>
         <p class="gf-card-price">{% if product.has_variants %}<small>From </small>{% endif %}
-            ৳{{ product.selling_price|floatformat:2 }}{% if product.discount_percent %}
-                <del>৳{{ product.display_original_price|floatformat:2 }}</del>{% endif %}</p>
+            ৳{{ product.selling_price|floatformat:'-2g' }}{% if product.discount_percent %}
+                <span class="gf-price-comparison"><del>৳{{ product.display_original_price|floatformat:'-2g' }}</del><small class="gf-saving-amount">৳{{ product.discount_amount|floatformat:'-2g' }} OFF</small></span>{% endif %}</p>
         <p class="gf-stock {% if not product.can_purchase %}gf-unavailable{% endif %}">{{ product.availability }}</p>
         <div class="gf-card-actions">{% if product.has_variants %}
             <a class="gf-button gf-button-primary" href="{% url 'product_detail' product.pk %}">Choose

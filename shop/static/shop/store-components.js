@@ -391,32 +391,34 @@
         }
     }));
 
-    document.querySelectorAll('[data-gallery-image]').forEach(link => link.addEventListener('click', event => {
-        event.preventDefault();
-        let main = document.querySelector('#detail-image');
-        if (!main) {
-            main = document.createElement('img');
-            main.id = 'detail-image';
-            document.querySelector('.gf-main-image').replaceChildren(main);
-        }
-        main.src = link.dataset.galleryImage;
-        main.alt = link.querySelector('img').alt;
-    }));
     const select = document.querySelector('#variant-select');
     if (select) {
         const variants = JSON.parse(document.querySelector('#product-variants').textContent);
         const form = select.closest('form');
         const button = form.querySelector('[data-detail-cart]');
         const qty = form.querySelector('[name="quantity"]');
+        const money = value => new Intl.NumberFormat('en-US', {maximumFractionDigits:2}).format(Number(value));
         const update = () => {
             const variant = variants.find(variant => String(variant.id) === select.value);
             button.disabled = !variant || variant.stock === 0;
-            if (!variant) return;
-            document.querySelector('[data-detail-price]').textContent = variant.price;
-            document.querySelector('[data-detail-sku]').textContent = variant.sku || 'Not provided';
+            const price = document.querySelector('[data-detail-price]');
             const original = document.querySelector('[data-detail-original]');
+            document.querySelectorAll('[data-variant-choice]').forEach(choice => choice.setAttribute('aria-pressed', String(choice.dataset.variantChoice === select.value)));
+            if (!variant) {
+                price.textContent = money(price.dataset.basePrice);
+                original.hidden = !Number(original.dataset.baseOriginal) || Number(original.dataset.baseOriginal) <= Number(price.dataset.basePrice);
+                original.textContent = '৳' + money(original.dataset.baseOriginal || 0);
+                document.querySelector('[data-detail-sku]').textContent = 'Choose an option';
+                document.querySelector('[data-detail-stock]').textContent = 'Select an option to see stock and price.';
+                qty.max = 99;
+                document.dispatchEvent(new CustomEvent('gf-product-image', {detail:{url:form.dataset.defaultImage}}));
+                return;
+            }
+            price.textContent = money(variant.price);
+            document.querySelector('[data-detail-sku]').textContent = variant.sku || 'Not provided';
             original.hidden = !variant.original || Number(variant.original) <= Number(variant.price);
-            original.textContent = '৳' + variant.original;
+            original.textContent = '৳' + money(variant.original || 0);
+            document.dispatchEvent(new CustomEvent('gf-product-image', {detail:{url:variant.image || form.dataset.defaultImage}}));
             document.querySelector('[data-detail-stock]').textContent = variant.stock ? variant.stock + ' available' : 'Out of stock';
             qty.max = Math.min(99, variant.stock);
             if (variant.stock && Number(qty.value) > variant.stock) qty.value = Math.min(99, variant.stock);
@@ -425,4 +427,28 @@
         form.addEventListener('cart-complete', update);
         update();
     }
+})();
+
+(() => {
+    const menus = [...document.querySelectorAll('.gf-category-menu')];
+    const closeOthers = current => menus.forEach(menu => {
+        const details = menu.querySelector('details');
+        if (details && details !== current) details.open = false;
+    });
+    menus.forEach(menu => {
+        const details = menu.querySelector('details');
+        if (!details) return;
+        menu.addEventListener('pointerenter', () => {
+            if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+            closeOthers(details);
+            details.open = true;
+        });
+        menu.addEventListener('pointerleave', () => {
+            if (matchMedia('(hover: hover) and (pointer: fine)').matches && !menu.contains(document.activeElement)) details.open = false;
+        });
+        menu.addEventListener('focusout', event => {
+            if (!menu.contains(event.relatedTarget)) details.open = false;
+        });
+        details.querySelector('summary').addEventListener('click', () => closeOthers(details));
+    });
 })();

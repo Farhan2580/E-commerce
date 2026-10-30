@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% block title %}Our Outlets | GadgetFlow{% endblock %}
+{% block content %}<section class="gf-shell gf-information"><h1>Our Outlets</h1>
+{% for outlet in outlets %}<article class="gf-panel"><h2>{{ outlet.name }}</h2><p>{{ outlet.address|linebreaksbr }}</p>{% if outlet.hours %}<p>{{ outlet.hours }}</p>{% endif %}<a class="gf-button gf-button-secondary" href="{{ outlet.map_url }}" target="_blank" rel="noopener noreferrer">View map<span class="gf-sr-only"> (opens in a new tab)</span></a></article>{% empty %}<p>No outlets are currently published. <a href="{% url 'product_list' %}">Browse online</a>.</p>{% endfor %}</section>{% endblock %}

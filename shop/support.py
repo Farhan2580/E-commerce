@@ -120,8 +120,12 @@ def support_context(request, store=None):
     language = language_for(request)
     footer = {'care': [], 'policies': [], 'company': []}
     public_slugs = set()
+    public_pages = []
     for page in InformationPage.objects.filter(status='published').prefetch_related('sections'):
         if page_is_public(page):
+            # Footer links require actual English content (or a working service).
+            if page.slug in OPERATIONAL_PAGES or page.body_en.strip() or any(s.body_en.strip() for s in page.sections.all()):
+                public_pages.append(page)
             public_slugs.add(page.slug)
             url = reverse('track_order') if page.slug == 'tracking' else reverse('policy', args=[page.slug])
             footer[page.footer_group].append({'title': localized(page, 'title', language), 'url': url})
@@ -132,9 +136,11 @@ def support_context(request, store=None):
                  else reverse('policy', args=[slug])} for slug in slugs if slug in public_slugs]
     footer['care'] = links(['contact', 'tracking', 'faqs', 'payments', 'shipping', 'returns', 'warranty'])
     footer['company'] = links(['about', 'terms', 'privacy', 'cookies'])
-    return {'store': public_store(store, language), 'support_language': language, 'support_ui': UI[language],
+    from .footer import footer_context
+    business = business_links('en')
+    return {**footer_context(public_pages, business), 'store': public_store(store, language), 'support_language': language, 'support_ui': UI[language],
             'information_footer': footer, 'information_public_slugs': public_slugs,
-            'footer_social_links': [link for link in business_links('en') if link['kind'] == 'social' and link['label']],
+            'footer_social_links': [link for link in business if link['kind'] == 'social' and link['label']],
             'footer_payment_badges': footer_payment_badges(store)}
 
 
@@ -160,7 +166,8 @@ def business_links(language):
             validate_public_https(link.url)
         except ValidationError:
             continue
-        links.append({'label': localized(link, 'label', language), 'url': link.url, 'kind': link.kind, 'updated_at': link.updated_at})
+        links.append({'label': localized(link, 'label', language), 'url': link.url, 'kind': link.kind, 'updated_at': link.updated_at,
+                      'image_url': link.image.url if link.image else ''})
     return links
 
 

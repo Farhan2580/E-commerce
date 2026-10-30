@@ -19,6 +19,25 @@ class StylesheetLinks(HTMLParser):
 
 
 class CollectedStaticTests(SimpleTestCase):
+    @override_settings(DEBUG=False, WHITENOISE_USE_FINDERS=True, WHITENOISE_AUTOREFRESH=True)
+    def test_local_css_and_js_without_collected_assets(self):
+        with TemporaryDirectory() as directory, self.settings(STATIC_ROOT=directory):
+            client = Client()
+            for name in ('store-components', 'premium', 'footer'):
+                for extension in ('css', 'js'):
+                    with self.subTest(name=name, extension=extension):
+                        response = client.get(f'/static/shop/{name}.{extension}')
+                        self.assertEqual(response.status_code, 200)
+                        content_type = response['Content-Type'].split(';')[0]
+                        if extension == 'css':
+                            self.assertEqual(content_type, 'text/css')
+                        else:
+                            self.assertIn(content_type, ('text/javascript', 'application/javascript'))
+                        body = b''.join(response.streaming_content)
+                        self.assertTrue(body)
+                        self.assertNotIn(b'<!doctype html', body.lower())
+                        response.close()
+
     @override_settings(DEBUG=False, WHITENOISE_USE_FINDERS=False, WHITENOISE_AUTOREFRESH=False)
     def test_actual_storefront_stylesheets_are_css_with_debug_off(self):
         with TemporaryDirectory() as directory, self.settings(STATIC_ROOT=directory):

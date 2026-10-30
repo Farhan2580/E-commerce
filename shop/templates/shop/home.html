@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
+<div class="gf-home-sections">
     <h1 class="gf-sr-only">GadgetFlow — tech and everyday essentials</h1>
     <div class="gf-shell gf-home-top">
         <section class="gf-promo-layout" aria-label="GadgetFlow promotions">
@@ -47,18 +48,16 @@
                     </div>{% endif %}
             </div>
         </section>
-        <nav class="gf-quick-links" aria-label="Shopping shortcuts"><a href="{% url 'product_list' %}">▦ Browse the
-            catalog</a><a href="{% url 'offers' %}">％ Current offers</a><a href="{% url 'preorder' %}">＋ Request a
-            preorder</a><a href="{% url 'order_history' %}">▤ Your orders</a></nav>
+        {% include 'shop/includes/service_strip.html' %}
     </div>
-    <section class="gf-shell gf-section" aria-labelledby="category-heading">
+    <section class="gf-shell gf-section gf-featured-categories" aria-labelledby="category-heading">
         <div class="gf-section-heading"><h2 id="category-heading">Featured <span>Categories</span></h2><a
                 href="{% url 'product_list' %}">See all products →</a></div>
         <div class="gf-category-tiles">{% for category in featured_categories %}
             <a href="{% url 'product_list' %}?category={{ category.pk }}">{% if category.image %}
-                <img src="{{ category.image.url }}" alt="" width="96" height="96" loading="lazy">
+                <img src="{{ category.image.url }}" alt="" width="40" height="40" loading="lazy">
                 {% else %}{% with category.products.first as item %}{% if item.image %}
-                    <img src="{{ item.image.url }}" alt="" width="96" height="96" loading="lazy">{% else %}
+                    <img src="{{ item.image.url }}" alt="" width="40" height="40" loading="lazy">{% else %}
                     <span class="gf-category-symbol" aria-hidden="true">▦</span>{% endif %}{% endwith %}{% endif %}
                 <span>{{ category.name }}</span></a>{% endfor %}</div>
     </section>
@@ -69,10 +68,10 @@
             <div class="gf-grid">{% include 'shop/includes/product_grid.html' %}</div>
             {% include 'shop/includes/pagination.html' %}</section>{% endif %}
     {% for entry in sections %}
-        <section class="gf-shell gf-section" id="section-{{ entry.section.pk }}" data-product-section>
-            <div class="gf-section-heading"><h2>{{ entry.section.title }}</h2><a href="
+        <section class="gf-shell gf-section gf-product-slider" id="section-{{ entry.section.pk }}" data-product-section>
+            <div class="gf-section-heading"><h2>{% include 'shop/includes/section_title.html' with title=entry.section.title %}</h2><div class="gf-slider-actions"><a href="
                     {% url 'product_list' %}{% if entry.section.category %}?category={{ entry.section.category.pk }}{% endif %}">View
-                all →</a></div>
+                all →</a><div class="gf-slider-controls" hidden><button type="button" data-products-prev aria-label="Previous products in {{ entry.section.title }}" aria-controls="products-{{ entry.section.pk }}">{% include 'shop/includes/slider_arrow.html' with direction='previous' %}</button><button type="button" data-products-next aria-label="Next products in {{ entry.section.title }}" aria-controls="products-{{ entry.section.pk }}">{% include 'shop/includes/slider_arrow.html' with direction='next' %}</button></div></div></div>
             <div class="gf-section-tabs" aria-label="{{ entry.section.title }} categories"><a
                     href="?section={{ entry.section.pk }}#section-{{ entry.section.pk }}"
                     data-section-tab="{% url 'home_section' entry.section.pk %}"
@@ -83,7 +82,7 @@
                        {% if entry.selected_tab == category.pk|stringformat:'s' %}aria-current="true"{% endif %}>{{ category.name }}</a>{% endfor %}
             </div>
             <p class="gf-section-status gf-sr-only" role="status"></p>
-            <div class="gf-grid"
+            <div class="gf-grid gf-product-rail" id="products-{{ entry.section.pk }}" tabindex="0" role="region" aria-label="{{ entry.section.title }} products"
                  data-section-grid>{% include 'shop/includes/product_grid.html' with products=entry.products %}</div>
         </section>{% empty %}
         <section class="gf-shell gf-section">
@@ -104,4 +103,5 @@
                     <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" width="140" height="60"
                          loading="lazy">{% else %}{{ brand.name }}{% endif %}</a>{% endfor %}</div>
         </section>{% endif %}
+</div>
 {% endblock %}

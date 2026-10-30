@@ -50,7 +50,7 @@ def category_ids(category):
     return ids
 
 
-def filtered_products(request, category=None):
+def filtered_products(request, category=None, include_scope=False):
     products = products_query()
     q = request.GET.get('q', '').strip()[:200]
     if q:
@@ -68,6 +68,11 @@ def filtered_products(request, category=None):
     offer = request.GET.get('offer', '')
     if offer.isdigit():
         products = products.filter(offers__in=active_offers().filter(pk=offer))
+    scope = products
+    from .catalog import catalog_facets, apply_facets
+    facets = catalog_facets(scope, request.GET) if include_scope or any(
+        key.startswith(('option_', 'spec_')) for key in request.GET) else []
+    products = apply_facets(products, facets, request.GET)
     available = Q(variants__stock__gt=0) | (Q(variants__isnull=True) & (Q(stock__isnull=True) | Q(stock__gt=0)))
     if request.GET.get('availability') == 'available':
         products = products.filter(available)
@@ -91,17 +96,27 @@ def filtered_products(request, category=None):
                 'name': ('name', 'pk'), 'newest': ('-pk',)}
     if sort in ordering:
         products = products.order_by(*ordering[sort])
+    if include_scope:
+        return products, selected, error, scope, facets
     return products, selected, error
 
 
 def catalog_context(request, category=None):
-    products, selected, error = filtered_products(request, category)
+    products, selected, error, scope, facets = filtered_products(request, category, include_scope=True)
     page = Paginator(products.distinct(), 12).get_page(request.GET.get('page'))
     params = request.GET.copy()
     params.pop('page', None)
+    allowed_params = {'q', 'category', 'brand', 'min_price', 'max_price', 'availability', 'sort', 'offer'}
+    for key in list(params):
+        if key not in allowed_params and not key.startswith(('option_', 'spec_')):
+            params.pop(key)
     if category:
         params['category'] = str(selected.pk) if selected else str(category)
+    from .catalog import collection_presentation
     return {'products': page, 'page_obj': page, 'query_string': params.urlencode(),
+            'collection': collection_presentation(request, selected, scope), 'filter_facets': facets,
+            'page_numbers': list(page.paginator.get_elided_page_range(page.number, on_each_side=1, on_ends=1)),
+            'sort_parameters': [(key, value) for key, values in params.lists() for value in values if key != 'sort'],
             'categories': Category.objects.all(), 'brands': Brand.objects.all(),
             'selected_category': str(selected.pk) if selected else '', 'search_query': request.GET.get('q', ''),
             'filter_error': error, 'selected_brand': request.GET.get('brand', '')}
@@ -264,7 +279,16 @@ def product_detail(request, pk):
             messages.success(request, 'Your review has been saved.')
             return redirect('product_detail', pk=pk)
     variants = [{'id': v.pk, 'name': v.option_label, 'sku': v.sku, 'price': str(v.price), 'stock': v.stock,
+                 'image': v.image.url if v.image else '',
                  'original': str(v.compare_at_price) if v.compare_at_price else ''} for v in product.variants.all()]
+    gallery_images, seen_images = [], set()
+    sources = [(product.image, product.name)]
+    sources += [(image.image, image.alt or product.name) for image in product.gallery.all() if image.purpose == 'gallery']
+    sources += [(variant.image, variant.option_label) for variant in product.variants.all()]
+    for file, alt in sources:
+        if file and file.url not in seen_images:
+            seen_images.add(file.url)
+            gallery_images.append({'url': file.url, 'alt': alt})
     viewed = [int(value) for value in request.session.get('recently_viewed', []) if str(value).isdigit()][:12]
     recent = list(products_query().filter(pk__in=viewed).exclude(pk=pk))
     recent.sort(key=lambda item: viewed.index(item.pk))
@@ -280,6 +304,8 @@ def product_detail(request, pk):
     reviews = product.reviews.select_related('user').annotate(
         verified_purchase=Exists(qualifying_purchase))
     return render(request, 'shop/product_detail.html', {'product': product, 'form': form,
+                                                        'gallery_images': gallery_images,
+                                                        'description_images': [image for image in product.gallery.all() if image.purpose == 'description'],
                                                         'reviews': reviews,
                                                         'recently_viewed': recent[:4],
                                                         'related_products': products_query().filter(category=product.category).exclude(pk=pk)[:4],

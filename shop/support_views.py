@@ -16,6 +16,11 @@ from .support import (UI, allow_submission, business_links, faq_answer, form_non
                       localized, page_content, page_is_public, payment_cards, support_token, warranty_content)
 
 
+def outlets(request):
+    from .footer import public_outlets
+    return render(request, 'shop/outlets.html', {'outlets': public_outlets()})
+
+
 def get_page(request, slug):
     page = get_object_or_404(InformationPage.objects.prefetch_related('sections'), slug=slug)
     preview = request.GET.get('preview') == '1' and request.user.is_staff and request.user.has_perm('shop.view_informationpage')

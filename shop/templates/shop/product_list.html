@@ -1,49 +1,37 @@
 {% extends 'base.html' %}
-{% block title %}Shop products | GadgetFlow{% endblock %}
+{% block title %}{{ collection.title }} | GadgetFlow{% endblock %}
 {% block content %}
-    <div class="gf-shell gf-page">
-        <nav class="gf-breadcrumb" aria-label="Breadcrumb"><a href="{% url 'home' %}">Home</a> / Products</nav>
-        <div class="gf-section-heading"><h1>{% if search_query %}Results for “{{ search_query }}”{% else %}Shop
-            products{% endif %}</h1><span>{{ page_obj.paginator.count }} products</span></div>
-        <div class="gf-catalog-layout">
-            <aside class="gf-filter-panel"><h2>Filter products</h2>
-                <form action="{% url 'product_list' %}" method="get"><label>Search<input name="q"
-                                                                                         value="{{ search_query }}"
-                                                                                         type="search"
-                                                                                         placeholder="Product or brand"></label><label>Category<select
-                        name="category">
-                    <option value="">All categories</option>{% for category in categories %}
-                    <option value="{{ category.pk }}"
-                            {% if selected_category == category.pk|stringformat:'s' %}selected{% endif %}>{{ category.name }}</option>{% endfor %}
-                </select></label><label>Brand<select name="brand">
-                    <option value="">All brands</option>{% for brand in brands %}
-                    <option value="{{ brand.pk }}"
-                            {% if selected_brand == brand.pk|stringformat:'s' %}selected{% endif %}>{{ brand.name }}</option>{% endfor %}
-                </select></label>
-                    <fieldset>
-                        <legend>Price range (৳)</legend>
-                        <label>Minimum<input type="number" min="0" step="0.01" name="min_price"
-                                             value="{{ request.GET.min_price }}"></label><label>Maximum<input
-                            type="number" min="0" step="0.01" name="max_price"
-                            value="{{ request.GET.max_price }}"></label></fieldset>
-                    <label>Availability<select name="availability"><option value="">All products</option><option value="available" {% if request.GET.availability == 'available' %}selected{% endif %}>Available to order</option><option value="out" {% if request.GET.availability == 'out' %}selected{% endif %}>Out of stock</option></select></label>
-                    <label>Sort by<select name="sort">
-                        <option value="">Recommended</option>
-                        <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest</option>
-                        <option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Price: low
-                            to high
-                        </option>
-                        <option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Price:
-                            high to low
-                        </option>
-                        <option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>Name</option>
-                    </select></label>{% if request.GET.offer %}
-                        <input name="offer" type="hidden" value="{{ request.GET.offer }}">{% endif %}
-                    <button class="gf-button gf-button-primary">Apply filters</button>
-                    <a href="{% url 'product_list' %}">Clear filters</a></form>
-            </aside>
-            <div>{% if filter_error %}<p class="gf-notice error" role="alert">{{ filter_error }}</p>{% endif %}
-                <div class="gf-grid gf-catalog-grid">{% include 'shop/includes/product_grid.html' %}</div>
-                {% include 'shop/includes/pagination.html' %}</div>
+<div class="gf-shell gf-page gf-collection-page">
+    <section class="gf-collection-hero" aria-label="{{ collection.label }} collection">
+        {% if collection.banner %}<img class="gf-collection-banner" src="{{ collection.banner }}" alt="{{ collection.label }}" width="1440" height="320" fetchpriority="high">
+        {% else %}<div class="gf-collection-hero-copy"><p>GadgetFlow collections</p><h2>{% include 'shop/includes/section_title.html' with title=collection.title %}</h2><p>Discover. Compare. Choose.</p></div>
+        {% if collection.products %}<div class="gf-collection-hero-products" aria-hidden="true">{% for product in collection.products %}<img src="{{ product.image.url }}" alt="" width="180" height="180" decoding="async">{% endfor %}</div>{% endif %}{% endif %}
+    </section>
+    <nav class="gf-breadcrumb" aria-label="Breadcrumb"><a href="{% url 'home' %}">Home</a><span aria-hidden="true"> / </span><a href="{% url 'product_list' %}">Products</a>{% if collection.label != 'All Products' %}<span aria-hidden="true"> / </span><span aria-current="page">{{ collection.label }}</span>{% endif %}</nav>
+    <header class="gf-collection-heading"><h1>{% if search_query %}Results for “{{ search_query }}”{% else %}{{ collection.title }}{% endif %}</h1><p>{{ collection.intro|linebreaksbr }}</p></header>
+    <div class="gf-catalog-layout">
+        <details class="gf-filter-panel gf-collection-filters" open>
+            <summary>Filters <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+            <form action="{% url 'product_list' %}" method="get" id="collection-filters">
+                <details class="gf-filter-group" open><summary>Search</summary><label><span class="gf-sr-only">Search products</span><input name="q" type="search" placeholder="Search products" value="{{ search_query }}"></label></details>
+                <details class="gf-filter-group" open><summary>Price Range (৳)</summary><div class="gf-price-inputs"><label>Minimum<input type="number" min="0" step="0.01" name="min_price" value="{{ request.GET.min_price }}" placeholder="No minimum"></label><label>Maximum<input type="number" min="0" step="0.01" name="max_price" value="{{ request.GET.max_price }}" placeholder="No maximum"></label></div></details>
+                <details class="gf-filter-group" open><summary>Availability</summary><label><span class="gf-sr-only">Availability</span><select name="availability"><option value="">All products</option><option value="available" {% if request.GET.availability == 'available' %}selected{% endif %}>Exclude out of stock</option><option value="out" {% if request.GET.availability == 'out' %}selected{% endif %}>Out of stock</option></select></label></details>
+                <details class="gf-filter-group" open><summary>Categories</summary><label><span class="gf-sr-only">Category</span><select name="category"><option value="">All categories</option>{% for category in categories %}<option value="{{ category.pk }}" {% if selected_category == category.pk|stringformat:'s' %}selected{% endif %}>{{ category.name }}</option>{% endfor %}</select></label></details>
+                <details class="gf-filter-group" open><summary>Brands</summary><label><span class="gf-sr-only">Brand</span><select name="brand"><option value="">All brands</option>{% for brand in brands %}<option value="{{ brand.pk }}" {% if selected_brand == brand.pk|stringformat:'s' %}selected{% endif %}>{{ brand.name }}</option>{% endfor %}</select></label></details>
+                {% for facet in filter_facets %}<details class="gf-filter-group" open><summary>{{ facet.label }}</summary>{% if facet.options|length > 6 %}<input type="search" placeholder="Search {{ facet.label }}" aria-label="Search {{ facet.label }} filter options" data-facet-search>{% endif %}<div class="gf-filter-options">{% for option in facet.options %}<label class="gf-filter-checkbox"><input type="checkbox" name="{{ facet.param }}" value="{{ option.value }}" {% if option.checked %}checked{% endif %}><span>{{ option.value }}</span></label>{% endfor %}</div></details>{% endfor %}
+                <input name="sort" type="hidden" value="{{ request.GET.sort }}">{% if request.GET.offer %}<input name="offer" type="hidden" value="{{ request.GET.offer }}">{% endif %}
+                <div class="gf-filter-actions"><button class="gf-button gf-button-primary">Apply filters</button><a class="gf-button gf-button-secondary" href="{{ collection.clear_url }}">Reset filters</a><a href="{% url 'product_list' %}">Browse all products</a></div>
+            </form>
+        </details>
+        <div class="gf-collection-results">
+            <div class="gf-catalog-toolbar"><p>Showing <strong>{{ page_obj.paginator.count }} item{{ page_obj.paginator.count|pluralize }}</strong>{% if page_obj.paginator.count %}<span> · {{ page_obj.start_index }}–{{ page_obj.end_index }}</span>{% endif %}</p>
+                <form action="{% url 'product_list' %}" method="get">{% for key,value in sort_parameters %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}<label for="collection-sort" class="gf-sr-only">Sort products</label><select id="collection-sort" name="sort"><option value="">Recommended</option><option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest</option><option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Price: low to high</option><option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Price: high to low</option><option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>Name</option></select><button class="gf-button gf-button-secondary" type="submit">Sort</button></form>
+            </div>
+            {% if filter_error %}<p class="gf-notice error" role="alert">{{ filter_error }}</p>{% endif %}
+            <div class="gf-grid gf-catalog-grid">{% include 'shop/includes/product_grid.html' %}</div>
+            {% if not page_obj.paginator.count %}<p class="gf-collection-empty">Try adjusting the filters or <a href="{{ collection.clear_url }}">reset this collection</a>. <a href="{% url 'product_list' %}">Browse the full catalog</a>.</p>{% endif %}
+            {% include 'shop/includes/pagination.html' %}
         </div>
-    </div>{% endblock %}
+    </div>
+</div>
+{% endblock %}

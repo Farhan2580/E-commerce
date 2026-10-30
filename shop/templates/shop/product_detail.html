@@ -1,48 +1,38 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}{{ product.name }} | GadgetFlow{% endblock %}
 {% block content %}
-    <div class="gf-shell gf-page">
+    <div class="gf-shell gf-page gf-product-page">
         <nav class="gf-breadcrumb" aria-label="Breadcrumb"><a href="{% url 'home' %}">Home</a> / <a
                 href="{% url 'product_list' %}?category={{ product.category_id }}">{{ product.category.name }}</a>
             / {{ product.name }}</nav>
         <div class="gf-product-detail">
             <section class="gf-gallery" aria-label="Product images">
-                <div class="gf-main-image">{% if product.image %}
-                    <img id="detail-image" src="{{ product.image.url }}" alt="{{ product.name }}" width="600"
-                         height="600">{% else %}<span>Image coming soon</span>{% endif %}</div>
-                <div class="gf-thumbnails">{% if product.image %}
-                    <a href="{{ product.image.url }}" data-gallery-image="{{ product.image.url }}"
-                       aria-label="Main product image"><img src="{{ product.image.url }}" alt="{{ product.name }}"
-                                                            width="72" height="72"></a>{% endif %}
-                    {% for image in product.gallery.all %}
-                        <a href="{{ image.image.url }}" data-gallery-image="{{ image.image.url }}"
-                           aria-label="View {{ image.alt|default:product.name }}"><img src="{{ image.image.url }}"
-                                                                                       alt="{{ image.alt|default:product.name }}"
-                                                                                       width="72" height="72"
-                                                                                       loading="lazy"></a>{% endfor %}
-                </div>
+                <div class="gf-main-image">{% if gallery_images %}<a href="{{ gallery_images.0.url }}" data-gallery-zoom aria-label="Enlarge {{ product.name }} image"><img id="detail-image" src="{{ gallery_images.0.url }}" alt="{{ gallery_images.0.alt }}" width="600" height="600" fetchpriority="high"></a>{% else %}<span>Image coming soon</span>{% endif %}</div>
+                {% if gallery_images %}<div class="gf-gallery-toolbar"><span data-gallery-counter aria-live="polite">1 / {{ gallery_images|length }}</span><span>Click image to enlarge</span></div>
+                <div class="gf-thumbnails" aria-label="Choose product image">{% for image in gallery_images %}<a href="{{ image.url }}" data-gallery-image="{{ image.url }}" {% if forloop.first %}aria-current="true"{% endif %} aria-label="View product image {{ forloop.counter }}: {{ image.alt }}"><img src="{{ image.url }}" alt="{{ image.alt }}" width="80" height="80" loading="lazy"></a>{% endfor %}</div>{% endif %}
             </section>
-            <section class="gf-product-info"><h1>{{ product.name }}</h1>{% if product.brand %}<a class="gf-tag"
-                                                                                                 href="{% url 'product_list' %}?brand={{ product.brand_id }}">{{ product.brand.name }}</a>{% endif %}
-                <p class="gf-detail-price">৳<span data-detail-price>{{ product.selling_price|floatformat:2 }}</span>
+            <section class="gf-product-info">{% if product.brand %}<a class="gf-tag"
+                                                                                                 href="{% url 'product_list' %}?brand={{ product.brand_id }}">{{ product.brand.name }}</a>{% endif %}<h1>{{ product.name }}</h1>
+                <p class="gf-detail-price">৳<span data-detail-price data-base-price="{{ product.selling_price }}">{{ product.selling_price|floatformat:'-2g' }}</span>
                     <del data-detail-original
-                         {% if not product.discount_percent %}hidden{% endif %}>{{ product.display_original_price|default:'' }}</del>
+                         data-base-original="{{ product.display_original_price|default:'' }}" {% if not product.discount_percent %}hidden{% endif %}>৳{{ product.display_original_price|floatformat:'-2g' }}</del>
                 </p>
                 <p class="gf-stock" data-detail-stock>{% if product.has_variants %}Select an option to see stock and
                     price.{% else %}{{ product.availability }}{% endif %}</p>
-                <p>{{ product.description|linebreaksbr }}</p>
-                <form action="{% url 'add_to_cart' product.pk %}" method="post" data-cart-form class="gf-buy-form">
+                <form action="{% url 'add_to_cart' product.pk %}" method="post" data-cart-form class="gf-buy-form" data-default-image="{{ gallery_images.0.url }}">
                     {% csrf_token %}{% if product.has_variants %}<label for="variant-select">Choose an option</label>
                         <select name="variant" id="variant-select" required>
                             <option value="">Select variant</option>{% for variant in product.variants.all %}
                             <option value="{{ variant.pk }}">{{ variant.option_label }} — ৳{{ variant.price }}{% if variant.sku %} · {{ variant.sku }}{% endif %}
                                 ({{ variant.stock }} available)
                             </option>{% endfor %}</select>
+                        <div class="gf-variant-choices" hidden aria-label="Available product variants">{% for variant in product.variants.all %}<button type="button" data-variant-choice="{{ variant.pk }}" aria-pressed="false">{{ variant.option_label }}</button>{% endfor %}</div>
                         <noscript><p>Each option lists its exact price and stock. The selected option is priced on the
-                            server.</p></noscript>{% endif %}<label for="detail-quantity">Quantity</label><input
+                            server.</p></noscript>{% endif %}<label for="detail-quantity">Quantity</label><div class="gf-detail-quantity"><button type="button" data-detail-quantity-step="-1" aria-label="Decrease quantity" hidden>−</button><input
                         id="detail-quantity" type="number" name="quantity" value="1" min="1"
                         max="{% if product.has_variants or product.stock is None %}99{% else %}{{ product.stock }}{% endif %}"
-                        required>
+                        required><button type="button" data-detail-quantity-step="1" aria-label="Increase quantity" hidden>+</button></div>
                     <button class="gf-button gf-button-primary" data-detail-cart
                             {% if not product.can_purchase %}disabled{% endif %}>Add to Cart
                     </button>
@@ -52,8 +42,10 @@
                 {% if product.has_variants or not product.can_purchase %}<details class="gf-stock-alert"><summary>Notify me when an option is back in stock</summary>{% if user.is_authenticated %}<form method="post" action="{% url 'subscribe_stock' product.pk %}" class="gf-form">{% csrf_token %}<label>Email<input type="email" name="email" value="{{ user.email }}" required maxlength="254"></label>{% if product.has_variants %}<label>Out-of-stock option<select name="variant" required><option value="">Choose an option</option>{% for variant in product.variants.all %}{% if variant.stock == 0 %}<option value="{{ variant.pk }}">{{ variant.option_label }}</option>{% endif %}{% endfor %}</select></label>{% endif %}<button class="gf-button gf-button-secondary">Request stock alert</button><p>Email delivery depends on the store’s configured email service. Manage subscriptions in My account.</p></form>{% else %}<p><a href="{% url 'login' %}?next={{ request.path|urlencode }}">Sign in to request a stock alert.</a></p>{% endif %}</details>{% endif %}
             </section>
         </div>
-        {% if verified_warranty %}<section class="gf-panel gf-section" lang="{{ support_language }}"><h2>{{ support_ui.warranty }}</h2>{% include 'shop/includes/warranty_content.html' with warranty=verified_warranty %}</section>{% endif %}
-        <section class="gf-panel gf-section"><h2>Specifications</h2>{% if product.specifications %}
+        <nav class="gf-detail-navigation" aria-label="Product information"><a href="#specifications">Specifications</a><a href="#description">Description</a>{% if verified_warranty %}<a href="#warranty">Warranty</a>{% endif %}<a href="#reviews">Reviews</a></nav>
+        <section class="gf-panel gf-section" id="description"><h2>Description</h2>{% if product.description %}<p>{{ product.description|linebreaksbr }}</p>{% else %}<p>A detailed description has not been provided yet.</p>{% endif %}{% for image in description_images %}<figure class="gf-description-image"><img src="{{ image.image.url }}" alt="{{ image.alt|default:product.name }}" loading="lazy" decoding="async">{% if image.alt %}<figcaption>{{ image.alt }}</figcaption>{% endif %}</figure>{% endfor %}</section>
+        {% if verified_warranty %}<section class="gf-panel gf-section" id="warranty" lang="{{ support_language }}"><h2>{{ support_ui.warranty }}</h2>{% include 'shop/includes/warranty_content.html' with warranty=verified_warranty %}</section>{% endif %}
+        <section class="gf-panel gf-section" id="specifications"><h2>Specifications</h2>{% if product.specifications %}
             <dl class="gf-specs">{% for key,value in product.specifications.items %}
                 <dt>{{ key }}</dt>
                 <dd>{{ value }}</dd>{% endfor %}</dl>{% else %}
@@ -69,4 +61,7 @@
         </section>
         {% if related_products %}<section class="gf-section"><h2>More in {{ product.category.name }}</h2><div class="gf-grid">{% include 'shop/includes/product_grid.html' with products=related_products %}</div></section>{% endif %}
         {% if recently_viewed %}<section class="gf-section"><h2>Recently viewed by you</h2><div class="gf-grid">{% include 'shop/includes/product_grid.html' with products=recently_viewed %}</div></section>{% endif %}
-    </div>{{ variant_data|json_script:'product-variants' }}{% endblock %}
+    </div>{{ variant_data|json_script:'product-variants' }}
+    {% if gallery_images %}<dialog class="gf-image-viewer" id="gf-image-viewer" aria-label="{{ product.name }} image viewer"><div class="gf-image-viewer-heading"><span data-viewer-counter aria-live="polite"></span><button type="button" data-close-viewer aria-label="Close image viewer">×</button></div><div class="gf-image-viewer-stage"><button type="button" data-viewer-prev aria-label="Previous image" {% if gallery_images|length < 2 %}hidden{% endif %}>‹</button><img src="{{ gallery_images.0.url }}" alt="{{ gallery_images.0.alt }}" width="900" height="700"><button type="button" data-viewer-next aria-label="Next image" {% if gallery_images|length < 2 %}hidden{% endif %}>›</button></div></dialog>{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{% static 'shop/product-gallery.js' %}" defer></script>{% endblock %}

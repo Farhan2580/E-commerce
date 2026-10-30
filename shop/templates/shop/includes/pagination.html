@@ -1,5 +1,5 @@
-﻿{% if page_obj.has_other_pages %}
+{% if page_obj.has_other_pages %}
     <nav class="gf-pagination" aria-label="Product pages">{% if page_obj.has_previous %}
         <a href="?{{ query_string }}&page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}
-        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}
+        {% if page_numbers %}{% for number in page_numbers %}{% if number == '…' %}<span aria-hidden="true">…</span>{% elif number == page_obj.number %}<span aria-current="page">{{ number }}</span>{% else %}<a href="?{{ query_string }}&page={{ number }}" aria-label="Page {{ number }}">{{ number }}</a>{% endif %}{% endfor %}{% else %}<span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>{% endif %}{% if page_obj.has_next %}
             <a href="?{{ query_string }}&page={{ page_obj.next_page_number }}">Next →</a>{% endif %}</nav>{% endif %}

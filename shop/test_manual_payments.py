@@ -48,6 +48,10 @@ class ManualPaymentTests(TestCase):
         self.staff = User.objects.get(pk=self.staff.pk)
 
     def test_requested_numbers_do_not_enable_or_leak_destinations(self):
+        # Keep the private receiver distinct from the explicitly public support
+        # phone displayed in the footer; still assert no receiver leaks anywhere.
+        self.store.bkash_number = '01711111111'
+        self.store.save()
         self.assertFalse(self.store.manual_bkash_ready)
         self.assertNotIn('BKASH', dict(enabled_payment_methods(self.store)))
         session = self.client.session

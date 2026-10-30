@@ -1,42 +1,35 @@
-﻿{% load static %}
-<footer class="gf-footer gf-footer-refresh" lang="en">
-    <div class="gf-shell gf-footer-grid">
+{% load static %}
+<footer class="gf-footer gf-footer-refresh" lang="en" aria-label="GadgetFlow footer">
+    <div class="gf-shell gf-footer-grid {% if not footer_outlets %}gf-footer-grid--no-outlets{% endif %}">
         <div class="gf-footer-brand">
-            <a class="gf-brand" href="{% url 'home' %}">Gadget<span>Flow</span></a>
-            <p>Tech and everyday essentials.</p>
-            {% if store.phone %}<a href="tel:{{ store.phone }}">{{ store.phone }}</a>{% endif %}
-            {% if store.email %}<a href="mailto:{{ store.email }}">{{ store.email }}</a>{% endif %}
+            <a class="gf-brand" href="{% url 'home' %}" aria-label="GadgetFlow home">Gadget<span>Flow</span></a>
+            <p>{{ store.tagline|default:'Tech and everyday essentials.' }}</p>
+            <dl class="gf-footer-contact">
+                <div><dt><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 3 3 5-3 2c1 3 3 5 6 6l2-3 5 3v3c0 2-2 3-4 2C9 20 4 15 3 7c-1-2 0-4 2-4Z"/></svg>Phone Number</dt><dd><a href="tel:{{ store.phone|default:'01300972969' }}">{{ store.phone|default:'01300972969' }}</a></dd></div>
+                {% if store.email %}<div><dt><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg>Email Address</dt><dd><a href="mailto:{{ store.email }}">{{ store.email }}</a></dd></div>{% endif %}
+            </dl>
             {% if store.address %}<p>{{ store.address|linebreaksbr }}</p>{% endif %}
-            {% if footer_social_links %}<nav class="gf-footer-social" aria-label="Social profiles">{% for link in footer_social_links %}<a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }} <span class="gf-visually-hidden">(opens in a new tab)</span></a>{% endfor %}</nav>{% endif %}
+            {% if footer_apps %}<nav class="gf-footer-apps" aria-label="GadgetFlow apps">{% for link in footer_apps %}<a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }} <span class="gf-sr-only">(opens in a new tab)</span></a>{% endfor %}</nav>{% endif %}
         </div>
-        <details class="gf-footer-section" open>
-            <summary>Customer Care</summary>
-            <nav aria-label="Customer Care"><ul class="gf-footer-links">{% for link in information_footer.care %}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{% endfor %}</ul></nav>
-        </details>
-        <details class="gf-footer-section" open>
-            <summary>Company</summary>
-            <nav aria-label="Company"><ul class="gf-footer-links">
-                {% for link in information_footer.company %}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{% endfor %}
-                <li><a href="{% url 'offers' %}">Offers &amp; Deals</a></li>
-                <li><a href="{% url 'preorder' %}">Request a Preorder</a></li>
-            </ul></nav>
-        </details>
-        <details class="gf-footer-section" open>
-            <summary>My Account</summary>
-            <nav aria-label="My Account"><ul class="gf-footer-links">
-                <li><a href="{% url 'profile' %}">Account Details</a></li>
-                <li><a href="{% url 'order_history' %}">Order History</a></li>
-                <li><a href="{% url 'wishlist' %}">Wishlist</a></li>
-                <li><a href="{% url 'cart_view' %}">Shopping Cart</a></li>
-                <li><a href="{% url 'product_list' %}">All Products</a></li>
-            </ul></nav>
-        </details>
+        {% if footer_outlets %}<details class="gf-footer-section" open><summary>Location</summary><nav aria-label="Outlets"><ul class="gf-footer-links gf-outlet-links">{% for outlet in footer_outlets|slice:':3' %}<li><a href="{{ outlet.map_url }}" target="_blank" rel="noopener noreferrer"><strong>{{ outlet.name }}</strong><span>{{ outlet.address }}</span>{% if outlet.hours %}<small>{{ outlet.hours }}</small>{% endif %}<span class="gf-sr-only">(opens in a new tab)</span></a></li>{% endfor %}<li><a class="gf-footer-accent" href="{% url 'outlets' %}">See All Outlets &rarr;</a></li></ul></nav></details>{% endif %}
+        <details class="gf-footer-section" open><summary>About and Support</summary><nav aria-label="About and Support"><ul class="gf-footer-links">{% for link in footer_support %}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{% endfor %}</ul></nav></details>
+        {% if footer_policies %}<details class="gf-footer-section" open><summary>Policy</summary><nav aria-label="Policies"><ul class="gf-footer-links">{% for link in footer_policies %}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{% endfor %}</ul></nav></details>{% endif %}
     </div>
-    {% if footer_payment_badges %}<div class="gf-shell gf-footer-payments"><strong>We accept</strong><ul aria-label="Enabled payment methods">
-        {% for badge in footer_payment_badges %}<li class="gf-footer-payment">
-            {% if badge.asset %}<img src="{% static badge.asset %}" alt="{{ badge.name }}" width="64" height="32">{% else %}<strong>{{ badge.short }}</strong><span>{{ badge.name }}</span>{% endif %}
-            {% if badge.test_only %}<small>Sandbox · test-only</small>{% endif %}
-        </li>{% endfor %}
-    </ul></div>{% endif %}
-    <div class="gf-shell gf-footer-bottom"><span>&copy; {% now 'Y' %} GadgetFlow.</span><span>Developed by Farhan Labib.</span></div>
+    <div class="gf-shell gf-footer-account"><nav aria-label="Account shortcuts"><a href="{% url 'profile' %}">Account Details</a><a href="{% url 'order_history' %}">Order History</a><a href="{% url 'wishlist' %}">Wishlist</a><a href="{% url 'cart_view' %}">Shopping Cart</a><a href="{% url 'product_list' %}">All Products</a></nav></div>
+    <div class="gf-shell gf-footer-bottom">
+        <div><p>&copy; {% now 'Y' %} GadgetFlow. All rights reserved.</p><p>Developed by Farhan Labib.</p></div>
+        {% if footer_profiles or footer_whatsapp %}<nav class="gf-footer-social" aria-label="Social profiles">
+            {% if footer_whatsapp %}<a class="gf-whatsapp" href="{{ footer_whatsapp.url }}" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp (opens in a new tab)">{% include 'shop/includes/social_icon.html' with icon='whatsapp' %}<span>WhatsApp</span></a>{% endif %}
+            {% for link in footer_profiles %}<a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ link.label }} (opens in a new tab)" title="{{ link.label }}">{% include 'shop/includes/social_icon.html' with icon=link.icon %}<span class="gf-sr-only">{{ link.label }}</span></a>{% endfor %}
+        </nav>{% endif %}
+    </div>
+    {% if footer_payment_badges %}<div class="gf-shell gf-footer-payments"><strong>We accept</strong><ul aria-label="Enabled payment methods">{% for badge in footer_payment_badges %}<li class="gf-footer-payment">{% if badge.asset %}<img src="{% static badge.asset %}" alt="{{ badge.name }}" width="64" height="32" loading="lazy">{% else %}<strong>{{ badge.short }}</strong><span>{{ badge.name }}</span>{% endif %}{% if badge.test_only %}<small>Sandbox · test-only</small>{% endif %}</li>{% endfor %}</ul></div>{% endif %}
+    {% if footer_directory %}<div class="gf-footer-directory"><div class="gf-shell gf-directory-grid">{% for group in footer_directory %}<details class="gf-footer-section" open><summary>{{ group.title }}</summary><nav aria-label="{{ group.title }}"><ul class="gf-footer-links">{% for link in group.links %}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{% endfor %}</ul></nav></details>{% endfor %}</div></div>{% endif %}
 </footer>
+{% if footer_whatsapp %}<aside class="gf-whatsapp-shortcut" aria-label="WhatsApp support">
+    <button type="button" class="gf-whatsapp-dismiss" aria-label="Dismiss WhatsApp shortcut">&times;</button>
+    <a href="{{ footer_whatsapp.url }}" target="_blank" rel="noopener noreferrer" aria-label="Chat with GadgetFlow on WhatsApp (opens in a new tab)">
+        <span class="gf-whatsapp-message">How can we help?<small>Chat on WhatsApp</small></span>
+        <span class="gf-whatsapp-avatar">{% if footer_whatsapp.image_url %}<img src="{{ footer_whatsapp.image_url }}" alt="GadgetFlow support contact" width="56" height="56">{% else %}{% include 'shop/includes/social_icon.html' with icon='whatsapp' %}{% endif %}</span>
+    </a>
+</aside>{% endif %}

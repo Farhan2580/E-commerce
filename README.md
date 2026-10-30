@@ -6,11 +6,17 @@ For the current premium storefront, local startup, coupon rules, stock-alert ema
 
 For the English-only information/support pages, draft publishing, contact messages, private order tracking and missing business setup, see [INFORMATION_SUPPORT.md](INFORMATION_SUPPORT.md). Existing Bangla content is retained in staff-editable database fields for future use.
 
-Static assets are served by WhiteNoise with `DEBUG=False`. Run `manage.py collectstatic --noinput`
-with the project interpreter before starting the server and after CSS/JS changes in this mode;
-restart the server after collection. Include this command in any future deployment build.
-Keep `DJANGO_DEBUG=0` on public hosts. Local development may explicitly use `DJANGO_DEBUG=1`
-to serve source assets through Django's development server. Uploads remain separate from static assets.
+Production static assets are served by WhiteNoise with `DEBUG=False`. Run
+`manage.py collectstatic --noinput` in production builds and restart after collection.
+Keep `DJANGO_DEBUG=0` on public hosts. Local `djangoProject13.development` settings
+enable WhiteNoise source-file discovery and refresh, so CSS/JS work with debug off
+without collecting files. Uploads remain separate from static assets.
+
+With the recreated local environment, start from the repository root:
+
+```powershell
+& '.\.venv-new\Scripts\python.exe' manage.py runserver 127.0.0.1:8000 --settings=djangoProject13.development
+```
 
 `manage.py runserver` now selects `djangoProject13.development` by default, which
 serves existing uploads from `media/` to loopback clients with debug pages still

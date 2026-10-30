@@ -15,21 +15,32 @@
         try { localStorage.setItem('gf-theme-v2', theme); } catch (_) {}
         syncTheme();
     });
-    document.addEventListener('pointermove', event => {
-        if (reduced.matches || !fine.matches) return;
-        const card = event.target.closest('.gf-card, .gf-banner:not(.gf-banner-upload)');
-        if (!card) return;
+    let hoverFrame = 0;
+    let hoverPoint = null;
+    const paintHover = () => {
+        hoverFrame = 0;
+        if (!hoverPoint || reduced.matches || !fine.matches) return;
+        const {card, clientX, clientY} = hoverPoint;
         const box = card.getBoundingClientRect();
-        const x = (event.clientX - box.left) / box.width - .5;
-        const y = (event.clientY - box.top) / box.height - .5;
+        if (!box.width || !box.height) return;
+        const x = (clientX - box.left) / box.width - .5;
+        const y = (clientY - box.top) / box.height - .5;
         card.style.setProperty('--lx', `${(x + .5) * 100}%`);
         card.style.setProperty('--ly', `${(y + .5) * 100}%`);
         card.style.setProperty('--px', `${x * 10}px`);
         card.style.setProperty('--py', `${y * 8}px`);
+    };
+    document.addEventListener('pointermove', event => {
+        if (reduced.matches || !fine.matches) return;
+        const card = event.target.closest('.gf-card, .gf-banner:not(.gf-banner-upload)');
+        if (!card) return;
+        hoverPoint = {card, clientX:event.clientX, clientY:event.clientY};
+        if (!hoverFrame) hoverFrame = requestAnimationFrame(paintHover);
     }, {passive: true});
     document.addEventListener('pointerout', event => {
         const card = event.target.closest('.gf-card, .gf-banner');
         if (!card || card.contains(event.relatedTarget)) return;
+        if (hoverPoint?.card === card) hoverPoint = null;
         ['--px', '--py', '--lx', '--ly'].forEach(key => card.style.removeProperty(key));
     });
     const seen = new WeakSet();
@@ -270,4 +281,46 @@
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden && (drawer.open || document.querySelector('[data-cart-page]'))) loadDrawer(false);
     });
+})();
+
+(() => {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    document.querySelectorAll('.gf-product-slider').forEach(section => {
+        const rail = section.querySelector('.gf-product-rail');
+        const controls = section.querySelector('.gf-slider-controls');
+        if (!rail || !controls) return;
+        const previous = controls.querySelector('[data-products-prev]');
+        const next = controls.querySelector('[data-products-next]');
+        const update = () => {
+            const last = rail.scrollWidth - rail.clientWidth;
+            controls.hidden = last <= 2;
+            previous.disabled = rail.scrollLeft <= 2;
+            next.disabled = rail.scrollLeft >= last - 2;
+        };
+        const move = direction => rail.scrollBy({left:direction * (rail.querySelector('.gf-card')?.getBoundingClientRect().width + 18 || rail.clientWidth), behavior:reduced.matches ? 'instant' : 'smooth'});
+        previous.addEventListener('click', () => move(-1));
+        next.addEventListener('click', () => move(1));
+        rail.addEventListener('scroll', update, {passive:true});
+        new MutationObserver(() => { rail.scrollLeft = 0; update(); }).observe(rail, {childList:true});
+        if ('ResizeObserver' in window) new ResizeObserver(update).observe(rail);
+        else window.addEventListener('resize', update);
+        update();
+    });
+})();
+
+(() => {
+    const filters = document.querySelector('.gf-collection-filters');
+    if (filters) {
+        const small = matchMedia('(max-width:900px)');
+        const update = () => { filters.open = !small.matches; };
+        small.addEventListener('change', update);
+        update();
+        document.querySelectorAll('[data-facet-search]').forEach(input => input.addEventListener('input', () => {
+            const query = input.value.toLowerCase().trim();
+            input.closest('.gf-filter-group').querySelectorAll('.gf-filter-checkbox').forEach(label => {
+                label.hidden = !label.textContent.toLowerCase().includes(query);
+            });
+        }));
+    }
+    document.querySelector('#collection-sort')?.addEventListener('change', event => event.target.form.requestSubmit());
 })();

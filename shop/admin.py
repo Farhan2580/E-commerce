@@ -10,6 +10,29 @@ from django.db import transaction
 from django.core.exceptions import PermissionDenied
 from .models import PaymentAttempt
 from . import manual_payment_admin  # Register audited manual payment review.
+from .models import Outlet, FooterGroup
+from .models import NavigationItem
+
+
+@admin.register(NavigationItem)
+class NavigationItemAdmin(admin.ModelAdmin):
+    list_display = ('label', 'category', 'brand', 'visible', 'position')
+    list_editable = ('visible', 'position')
+    list_filter = ('visible',)
+
+
+@admin.register(Outlet)
+class OutletAdmin(admin.ModelAdmin):
+    list_display = ('name', 'visible', 'position')
+    list_editable = ('visible', 'position')
+    search_fields = ('name', 'address')
+
+
+@admin.register(FooterGroup)
+class FooterGroupAdmin(admin.ModelAdmin):
+    list_display = ('title', 'visible', 'position')
+    list_editable = ('visible', 'position')
+    filter_horizontal = ('categories', 'brands', 'collections')
 
 
 class PaymentAttemptInline(admin.TabularInline):
@@ -44,6 +67,7 @@ class VariantInline(admin.TabularInline):
 class ImageInline(admin.TabularInline):
     model = ProductImage
     extra = 0
+    fields = ('image', 'alt', 'purpose', 'position')
 
 
 class WarrantyInline(admin.StackedInline):
@@ -52,7 +76,31 @@ class WarrantyInline(admin.StackedInline):
     max_num = 1
 
 
+class MultipleImageInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleImageField(forms.ImageField):
+    def clean(self, data, initial=None):
+        if not data:
+            return []
+        files = list(data) if isinstance(data, (list, tuple)) else [data]
+        if len(files) > 20:
+            raise forms.ValidationError('Choose up to 20 images per upload.')
+        result = []
+        for file in files:
+            if file.size > 10 * 1024 * 1024:
+                raise forms.ValidationError('Each image must be 10 MB or smaller.')
+            image = super().clean(file, initial)
+            if image.image.format not in {'JPEG', 'PNG', 'WEBP', 'GIF'}:
+                raise forms.ValidationError('Use JPEG, PNG, WebP or GIF images.')
+            result.append(image)
+        return result
+
+
 class ProductAdminForm(forms.ModelForm):
+    gallery_uploads = MultipleImageField(required=False, widget=MultipleImageInput,
+        label='Upload gallery images', help_text='Select multiple images at once (up to 20, 10 MB each). JPEG, PNG, WebP or GIF. Existing images are preserved. Edit captions, order and purpose below under Product images.')
     class Meta:
         model = Product
         fields = '__all__'
@@ -79,6 +127,23 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('name', 'description')
     list_editable = ('featured', 'position')
     inlines = [VariantInline, ImageInline, WarrantyInline]
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if not request.user.has_perm('shop.add_productimage'):
+            form.base_fields.pop('gallery_uploads', None)
+        return form
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        uploads = form.cleaned_data.get('gallery_uploads', [])
+        if uploads and not request.user.has_perm('shop.add_productimage'):
+            raise PermissionDenied
+        from django.db.models import Max
+        last = form.instance.gallery.aggregate(last=Max('position'))['last']
+        for offset, image in enumerate(uploads, start=1):
+            ProductImage.objects.create(product=form.instance, image=image, alt=form.instance.name,
+                                        position=(last if last is not None else -1) + offset)
 
 
 @admin.register(Category)

@@ -5,6 +5,7 @@ from . import payment_views
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
+    path('outlets/', support_views.outlets, name='outlets'),
     path('payments/manual/<uuid:attempt_id>/', payment_views.manual_reference, name='manual_payment_reference'),
     path('payments/retry/<uuid:attempt_id>/', payment_views.retry, name='payment_retry'),
     path('payments/start/<uuid:attempt_id>/', payment_views.start, name='payment_start'),
