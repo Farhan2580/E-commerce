@@ -8,7 +8,7 @@ from urllib.error import HTTPError
 from PIL import Image
 from django.apps import apps
 from django.conf import settings
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db.models import ImageField
 
 
@@ -19,6 +19,7 @@ class Command(BaseCommand):
         parser.add_argument('--category-id', type=int)
         parser.add_argument('--http', action='store_true')
         parser.add_argument('--origin', help='Public origin for testing relative media URLs, e.g. https://your-app.onrender.com')
+        parser.add_argument('--fail-on-error', action='store_true', help='Exit nonzero for missing/unreadable files, failed HTTP checks, or an empty selection.')
 
     def handle(self, *args, **options):
         rows = []
@@ -76,3 +77,7 @@ class Command(BaseCommand):
             'media_url': settings.MEDIA_URL,
             'backend': settings.STORAGES['default']['BACKEND'],
         }, 'images': rows}, indent=2))
+        if options['fail_on_error'] and (not rows or any(
+                not row.get('readable_image') or (options['http'] and not row.get('http_valid_image'))
+                for row in rows)):
+            raise CommandError('Media verification failed; inspect the JSON report above.')

@@ -306,3 +306,32 @@ image URL privately from Admin, inspect it with an HTTP client and validate imag
 bytes. Also check the homepage category HTML uses this key. Featured/root category
 visibility is separate from file storage; a category not selected for display will
 not appear merely because it has an image.
+
+## Release verification (strict exit statuses)
+
+The existing S3 code only activates when Render's actual process environment sets
+`MEDIA_STORAGE=s3`; pushing this repository does not supply credentials or transfer
+media. No image recovery is complete until the production bucket and original
+objects have been verified. Keep `DJANGO_DEBUG=0`.
+
+Use these checks as release gates after configuring persistent storage:
+
+```sh
+python manage.py check --deploy --tag files
+python manage.py inspect_media --http --fail-on-error --origin https://farhan-gadgetflow.onrender.com
+python tools/verify_media_http.py https://farhan-gadgetflow.onrender.com --extra-url /media/categories/ACTUAL_NEW_UPLOAD_NAME.png
+```
+
+`--fail-on-error` makes missing/unreadable originals, failed image HTTP checks and
+empty category selections fail the command. The HTTP tool now checks the offers
+page too and accepts repeatable `--extra-url` arguments for actual new Admin uploads.
+Do not use the example upload filename literally. Repeat these checks with the
+SAME category key after redeployment to prove persistence. Preserve reports outside
+version control, including timestamps and deployment commit IDs. A valid local
+upload or successful GitHub push does not prove a Render rollout or durable storage.
+
+The commit for this release must exclude local database, .env files, credentials,
+and unrelated uploaded files. Store secrets directly in Render/storage settings.
+GitHub commit/check status is not a Render deployment status unless the Render
+integration explicitly reports it. When dashboard/API access is unavailable,
+report the deployment as unverified and the live HTTP results as observed.

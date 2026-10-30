@@ -138,6 +138,20 @@ class LocalMediaTests(TestCase):
         self.assertEqual(rows[0]['url_without_signature'], self.category.image.url)
         self.assertTrue(rows[0]['readable_image'])
 
+    def test_strict_diagnostic_fails_for_missing_category_or_original(self):
+        from django.core.management import call_command, CommandError
+        from io import StringIO
+        with self.assertRaises(CommandError):
+            call_command('inspect_media', category_id=999999, fail_on_error=True, stdout=StringIO())
+        self.category.image.storage.delete(self.category.image.name)
+        with self.assertRaises(CommandError):
+            call_command('inspect_media', category_id=self.category.pk, fail_on_error=True, stdout=StringIO())
+
+    def test_strict_diagnostic_succeeds_for_readable_category(self):
+        from django.core.management import call_command
+        from io import StringIO
+        call_command('inspect_media', category_id=self.category.pk, fail_on_error=True, stdout=StringIO())
+
 
 class ProductionMediaChecks(TestCase):
     def test_render_filesystem_is_rejected_by_deployment_check(self):

@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from html.parser import HTMLParser
 from io import BytesIO
 import json
+import argparse
 import sys
 from urllib.parse import urljoin
 from urllib.request import urlopen
@@ -42,14 +43,20 @@ def inspect(url):
 
 
 if __name__ == '__main__':
-    origin = sys.argv[1].rstrip('/')
+    arguments = argparse.ArgumentParser(description=__doc__)
+    arguments.add_argument('origin')
+    arguments.add_argument('--extra-url', action='append', default=[],
+                           help='Include the actual newly uploaded category URL; repeat for other uploads.')
+    args = arguments.parse_args()
+    origin = args.origin.rstrip('/')
     pages = {}
-    for path in ['/', '/products/', '/product/1/']:
+    for path in ['/', '/products/', '/product/1/', '/offers/']:
         parser = Sources()
         with urlopen(origin + path, timeout=60) as response:
             parser.feed(response.read().decode())
         pages[path] = list(dict.fromkeys(urljoin(origin + path, src) for src in parser.images))
     pages['exact_legacy_paths'] = [origin + path for path in EXACT_MEDIA_PATHS]
+    pages['additional_uploads'] = [urljoin(origin + '/', url) for url in args.extra_url]
     urls = list(dict.fromkeys(url for values in pages.values() for url in values))
     with ThreadPoolExecutor(max_workers=6) as pool:
         results = list(pool.map(inspect, urls))
