@@ -1,6 +1,28 @@
 ﻿# Production media recovery on Render
 
-Prepared locally; nothing pushed, deployed, or uploaded to remote storage.
+Storage integration, recovery instructions, and historical verification results.
+The dated preparation notes below are not proof of a current production deployment.
+
+## Release status (2026-10-30)
+
+Media verification commit `599c08e` was pushed to repository branch `master`.
+All 115 Django tests and `check --deploy --tag files` passed before the push.
+The commit changes only media diagnostics, tests, the HTTP verifier and these
+instructions; the earlier S3 integration was already present on remote master.
+No database, credential, .env or uploaded-image files were included in the new commit.
+
+GitHub exposes no Render deployment/check status for this commit. Render API,
+dashboard/session access, service ID, bucket configuration and storage credentials
+are unavailable in this execution environment. The push is confirmed; a Render
+deployment is not confirmed. The first post-push HTTP audit still returned 404 HTML
+for all 14 distinct storefront image URLs. All 16 currently referenced local
+originals passed the local file audit; no remote transfer was attempted.
+
+To complete recovery, provide secure Render service access, configure/reuse the
+bucket and scoped credentials below, back up surviving production-only uploads,
+transfer originals without overwrites, deploy master, and verify live new uploads
+and persistence across redeployment. Do not claim this issue resolved based on
+the push alone.
 
 ## Observed failure (2026-10-30)
 
