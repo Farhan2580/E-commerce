@@ -145,6 +145,31 @@ STORAGES = {
 }
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Uploads are independent of WhiteNoise/collectstatic. Enable on Render only
+# after originals have been copied to the matching object keys.
+MEDIA_STORAGE = os.environ.get('MEDIA_STORAGE', 'filesystem')
+if MEDIA_STORAGE == 's3':
+    from django.core.exceptions import ImproperlyConfigured
+    if not os.environ.get('AWS_STORAGE_BUCKET_NAME'):
+        raise ImproperlyConfigured('MEDIA_STORAGE=s3 requires AWS_STORAGE_BUCKET_NAME')
+    STORAGES['default'] = {
+        'BACKEND': 'storages.backends.s3.S3Storage',
+        'OPTIONS': {
+            'bucket_name': os.environ['AWS_STORAGE_BUCKET_NAME'],
+            'region_name': os.environ.get('AWS_S3_REGION_NAME', 'us-east-1'),
+            'endpoint_url': os.environ.get('AWS_S3_ENDPOINT_URL') or None,
+            'custom_domain': os.environ.get('AWS_S3_CUSTOM_DOMAIN') or None,
+            'location': os.environ.get('AWS_MEDIA_LOCATION', 'media').strip('/'),
+            'default_acl': None,
+            'file_overwrite': False,
+            'querystring_auth': os.environ.get('AWS_QUERYSTRING_AUTH', '1') == '1',
+            'signature_version': 's3v4',
+            'addressing_style': os.environ.get('AWS_S3_ADDRESSING_STYLE', 'auto'),
+        },
+    }
+elif MEDIA_STORAGE != 'filesystem':
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured('MEDIA_STORAGE must be filesystem or s3')
 LOGIN_URL = '/accounts/login/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

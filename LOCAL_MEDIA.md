@@ -1,5 +1,9 @@
 # Verified local media repair
 
+For the separate live Render failure, durable object-storage setup and original
+image transfer procedure, see [PRODUCTION_MEDIA.md](PRODUCTION_MEDIA.md).
+The local success below does not mean production media is working.
+
 The actual rendered homepage referenced:
 
 `http://127.0.0.1:8000/media/products/gallery-7.jpg`

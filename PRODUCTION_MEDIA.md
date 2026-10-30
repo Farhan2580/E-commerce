@@ -1,0 +1,161 @@
+﻿# Production media recovery on Render
+
+Prepared locally; nothing pushed, deployed, or uploaded to remote storage.
+
+## Observed failure (2026-10-30)
+
+The live homepage at https://farhan-gadgetflow.onrender.com/ references
+https://farhan-gadgetflow.onrender.com/media/products/gallery-7.jpg.
+An actual GET returned **404**, `text/html; charset=utf-8`, not image bytes.
+All 14 distinct homepage media URLs returned 404. A second read-only HTTP audit
+covered `/`, `/products/`, and `/product/1/`; see the verification procedure below.
+
+The matching LOCAL record is Product #1, Royal Enfield, `image` =
+`products/gallery-7.jpg`. Its local original `media/products/gallery-7.jpg`
+is a valid JPEG. All 15 nonempty local ImageField references have valid originals;
+there are no missing originals among those references (22 files exist in media).
+Category and product-linked hero banner fallbacks reuse product image fields;
+they do not need new placeholder uploads. Templates already use storage-backed URLs.
+
+Checked-in production settings previously selected `FileSystemStorage`,
+`MEDIA_ROOT=BASE_DIR/media`, `MEDIA_URL=/media/`. WhiteNoise handles static assets,
+while the production URL configuration deliberately has no upload route with
+DEBUG off. A media file can therefore exist on Render and still return 404.
+This is a confirmed serving/configuration mismatch, not proof files were lost.
+
+No Render API/dashboard/SSH connection, production database, or storage credentials
+were available. No AWS/MEDIA/CLOUDINARY/RENDER variable names were present in this
+local process. Actual Render runtime environment variables, mount configuration,
+and on-server file existence remain unverified. Local DB matching does not prove
+production DB equality. Render's default filesystem is ephemeral, so missing files
+could also have been lost on restart or never transferred; distinguish with the
+production inventory before recovery. Do not expose secrets when collecting it.
+
+## Integration
+
+`MEDIA_STORAGE=s3` selects django-storages' S3 backend for uploads only.
+WhiteNoise/static storage stays unchanged. No model changes, development routes,
+DEBUG changes, payment changes, image renames, or database writes are involved.
+New uploads use unique filenames instead of overwriting prior objects.
+
+Works with AWS S3 and compatible providers such as R2. If Render already has a
+provider, reuse its bucket/endpoint and existing object-key prefix. Do not change
+providers or prefixes without inventorying existing keys first.
+
+## Operator setup (not performed)
+
+1. Back up the production database and any surviving uploads. In Render Shell,
+   run `python manage.py shell` and inspect only these nonsecret values:
+   `settings.DEBUG`, `settings.MEDIA_ROOT`, `settings.MEDIA_URL`,
+   `settings.STORAGES['default']['BACKEND']`. Inspect environment variable NAMES
+   and storage/mount details in the dashboard; never print access keys/passwords.
+   Inspect `Product.objects.get(pk=1).image.name` and whether its storage reports
+   `.exists(name)`. Export the production image-field inventory to compare names
+   with local originals. Do not replace the production DB with the local SQLite DB.
+2. Provision or reuse an S3-compatible bucket and credentials scoped to that bucket.
+   Enable bucket versioning/backups where supported. The uploader needs List/Get/Put
+   access for the media prefix. The provider must support conditional PutObject
+   (`If-None-Match: *`); if it does not, do not bypass that safeguard.
+3. Install `requirements.txt` locally and in the Render build. Configure the local
+   transfer process using environment variables from `.env.example`:
+
+   ```text
+   MEDIA_STORAGE=s3
+   AWS_STORAGE_BUCKET_NAME=<bucket>
+   AWS_ACCESS_KEY_ID=<secret in environment>
+   AWS_SECRET_ACCESS_KEY=<secret in environment>
+   AWS_S3_REGION_NAME=<bucket region; auto for R2>
+   AWS_S3_ENDPOINT_URL=<HTTPS S3-compatible API endpoint; empty for AWS S3>
+   AWS_S3_ADDRESSING_STYLE=auto
+   AWS_MEDIA_LOCATION=media
+   AWS_QUERYSTRING_AUTH=1
+   AWS_S3_CUSTOM_DOMAIN=
+   DJANGO_DEBUG=0
+   ```
+
+   The project does NOT automatically load `.env`. Export variables into the process
+   or set them in Render's Environment panel. Do not commit credentials.
+   Private buckets use signed image URLs by default. For public media behind a CDN,
+   configure a read-only public origin/CDN, set `AWS_S3_CUSTOM_DOMAIN` to its hostname
+   (no scheme/path), and `AWS_QUERYSTRING_AUTH=0`. Unsigned custom-domain URLs require
+   actual public read access. Never make a mixed private/customer-document bucket public.
+   Restrict bucket/CDN content to uploaded media and preserve MIME types.
+4. Audit local originals first:
+
+   ```sh
+   python manage.py transfer_media --source /absolute/path/to/original/media
+   ```
+
+   It prints model, primary key, field, key, SHA-256 and validity. Compare to the
+   PRODUCTION inventory, including uploads made after this local database snapshot.
+   Missing keys are reported precisely; restore them from backups or obtain the
+   original files. No substituted or generated images are used.
+5. With authorized storage access, transfer originals once:
+
+   ```sh
+   python manage.py transfer_media --source /absolute/path/to/original/media --upload
+   ```
+
+   A record key `products/gallery-7.jpg` becomes object key
+   `media/products/gallery-7.jpg` with the default prefix. Existing identical files
+   are skipped. Conflicting bytes are reported and never replaced; the command exits
+   nonzero. Conditional writes prevent overwrite races and silent key renaming.
+   The command never updates DB fields. Preserve the seven unreferenced local files
+   in the backup too; this command transfers referenced originals, not arbitrary files.
+6. After successful transfer and key comparison, set the same storage configuration
+   on Render and deploy the prepared code when approved. Retain the current start
+   command/production database. Normal `collectstatic --noinput` remains a static
+   build step, not a media migration. Do not enable DEBUG or add Django media routes.
+7. Verify rendered banner, category tile, catalog card and detail image URLs now use
+   the bucket/CDN (signed URLs if private) and return 200 image bytes. The old app
+   `/media/...` URLs are not automatically redirected by this integration; freshly
+   rendered `.image.url` values point at object storage. If legacy media URLs need
+   retention, configure explicit redirects at the edge after inventorying their keys.
+   Test a new Admin upload, restart/redeploy, then verify both old and new images.
+
+## Verification
+
+```sh
+python manage.py check
+python manage.py test shop --noinput
+python tools/verify_media_http.py http://127.0.0.1:8000
+python tools/verify_media_http.py https://farhan-gadgetflow.onrender.com
+```
+
+The HTTP tool fetches every img URL rendered by home/catalog/Product #1 detail,
+checks status, and decodes bytes with Pillow. It exits nonzero for broken images.
+For a different production product ID, adjust the detail path in the tool.
+Local existing media tests additionally exercise real category, hero, card and
+product detail uploads through storage and HTTP; production tests confirm no
+Django upload-serving route exists. Transfer tests cover missing originals,
+exact object keys and non-overwriting conflict behavior with mocked S3 responses.
+They do not prove connectivity to an unconfigured bucket.
+
+## Alternative: persistent disk
+
+If object storage is unavailable, use a paid Render persistent disk mounted at
+`/var/data`, a filesystem upload root beneath it, and a production web server
+(such as nginx) serving only that uploads directory. That alternative still needs
+web-server/storage configuration and original-file transfer; it is not implemented
+by selecting filesystem mode here. Render's disk alone does not serve HTTP files.
+Keep database persistence separate; the current checked-in SQLite setting also
+requires its own durable production arrangement. No database configuration was
+changed as part of this media repair.
+
+References:
+- https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html
+- https://render.com/docs/disks
+
+### Results from this preparation
+
+- `manage.py check`: passed; also passed with isolated S3 configuration and dummy
+  credentials (URL construction only, no remote storage access).
+- Full suite: 107 tests passed.
+- Actual local HTTP audit: 14/14 unique image URLs returned valid image bytes.
+- Actual live HTTP audit: 0/14 unique image URLs valid; all returned 404. Home,
+  catalog and Product #1 detail rendered 14, 11 and 2 image references respectively.
+- S3 URLs preserve `/media/products/gallery-7.jpg` with the default prefix;
+  signatures are enabled and overwrite is disabled.
+- No remote upload, push or deployment was performed. No production credentials,
+  mount inspection, or remote file listing was available. Live recovery remains
+  pending storage setup, production inventory comparison, transfer and deployment.
