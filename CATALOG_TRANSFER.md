@@ -1,5 +1,8 @@
 # Scoped catalog transfer: prepared, not applied to production
 
+For the fresh live comparison, guarded WhatsApp transfer, private combined package,
+visibility findings and current verification, see [WHATSAPP_TRANSFER.md](WHATSAPP_TRANSFER.md).
+
 ## Verified source and production observations
 
 At task start, remote master was `b2e3fe758987cc6e67a630b9219184a8e0a1d0f4` (verified).

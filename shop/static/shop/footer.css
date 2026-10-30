@@ -103,8 +103,13 @@
 .gf-whatsapp-avatar svg { width:30px; height:30px; }
 .gf-whatsapp-dismiss { position:absolute; left:0; top:-38px; width:44px; height:44px; border:0; border-radius:50%; color:#182230; background:#fff; cursor:pointer; font-size:23px; z-index:1; }
 .gf-whatsapp-shortcut a:focus-visible, .gf-whatsapp-dismiss:focus-visible { outline:3px solid #ff7a18; outline-offset:4px; }
-.gf-has-whatsapp .gf-compare-bar { bottom:100px; }
-@media(max-width:640px) { .gf-whatsapp-shortcut { bottom:calc(80px + env(safe-area-inset-bottom)); right:12px; max-width:calc(100vw - 24px); } .gf-has-whatsapp .gf-compare-bar { bottom:calc(160px + env(safe-area-inset-bottom)); } }
+.gf-has-whatsapp .gf-compare-bar { bottom:150px; }
+@media(max-width:640px) { .gf-whatsapp-shortcut { bottom:calc(80px + env(safe-area-inset-bottom)); right:12px; max-width:calc(100vw - 24px); } .gf-has-whatsapp .gf-compare-bar { bottom:calc(210px + env(safe-area-inset-bottom)); } }
+/* Leave purchase forms and open dialogs unobstructed, including their close controls. */
+.gf-purchase-visible .gf-whatsapp-shortcut,
+.gf-purchase-visible .gf-compare-bar,
+body:has(dialog[open]) .gf-whatsapp-shortcut,
+body:has(dialog[open]) .gf-compare-bar { display:none; }
 .gf-footer-refresh .gf-footer-social .gf-whatsapp { width:44px; height:44px; padding:10px; border-radius:50%; gap:0; background:#128c4a; border-color:#128c4a; color:#fff; }
 .gf-footer-refresh .gf-footer-social .gf-whatsapp > span { display:none; }
 .gf-footer-refresh .gf-footer-social .gf-whatsapp:hover { background:#0e713b; border-color:#0e713b; color:#fff; }

@@ -3,6 +3,7 @@ from urllib.parse import urlencode, urlsplit
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from .models import FooterGroup, Outlet, validate_public_https
+from .whatsapp import whatsapp_url
 
 
 def public_outlets():
@@ -49,7 +50,12 @@ def footer_context(pages, business):
         host = urlsplit(link['url']).hostname or ''
         host = host.removeprefix('www.')
         if link['kind'] == 'whatsapp' and host in {'wa.me', 'api.whatsapp.com', 'web.whatsapp.com'}:
-            whatsapp = link
+            try:
+                destination = whatsapp_url(link['url'])
+            except ValueError:
+                destination = None
+            if destination and whatsapp is None:
+                whatsapp = {**link, 'url': destination}
         elif link['kind'] == 'social':
             social.append({**link, 'icon': hosts.get(host, 'link')})
         elif link['kind'] in {'app_store', 'google_play'} and host in {'apps.apple.com', 'play.google.com'}:

@@ -14,18 +14,14 @@
     shortcut?.querySelector('.gf-whatsapp-dismiss')?.addEventListener('click', () => {
         shortcut.hidden = true;
         document.body.classList.remove('gf-has-whatsapp');
+        document.querySelector('.gf-compare-bar a, a.gf-compare-bar, .gf-brand')?.focus();
     });
-    // Move the floating comparison shortcut into the document while the footer is visible.
-    const footer = document.querySelector('.gf-footer-refresh');
-    const comparison = document.querySelector('.gf-compare-bar');
-    if (footer && comparison && 'IntersectionObserver' in window) {
-        // Keep the in-flow control inside the footer, rather than creating a
-        // separate light page section underneath it when it stops floating.
-        footer.appendChild(comparison);
+    const purchase = document.querySelector('.gf-buy-form');
+    if (purchase && 'IntersectionObserver' in window) {
         new IntersectionObserver(entries => {
-            comparison.style.position = entries[0].isIntersecting ? 'static' : '';
-            comparison.style.width = entries[0].isIntersecting ? 'fit-content' : '';
-            comparison.style.margin = entries[0].isIntersecting ? (mobile.matches ? '16px auto 90px' : '16px auto 0') : '';
-        }).observe(footer);
+            document.body.classList.toggle('gf-purchase-visible', entries[0].isIntersecting);
+        }).observe(purchase);
     }
+    // Both shortcuts remain in the same fixed stack even when the footer enters
+    // the viewport; moving comparison into flow can collide with the portrait.
 })();
