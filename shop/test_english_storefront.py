@@ -3,9 +3,22 @@ from django.test import TestCase
 from django.urls import reverse
 from .forms import SupportForm
 from .models import Category, Product, InformationPage, InformationSection, FAQ, Order
+from .services import settings_for_store
+from .support import faq_answer, payment_cards
 
 
 class EnglishStorefrontTests(TestCase):
+    def test_payment_helpers_ignore_legacy_bangla_argument(self):
+        store = settings_for_store()
+        store.cod_enabled = True
+        store.save()
+        cards = payment_cards(store, 'bn')
+        cod = next(card for card in cards if card['code'] == 'COD')
+        self.assertEqual(cod['title'], 'Cash on Delivery')
+        self.assertEqual(cod['instructions'], 'Select Cash on Delivery at checkout when it is enabled.')
+        faq = FAQ(answer_source='payments')
+        self.assertIn('Cash on Delivery: Select Cash on Delivery', faq_answer(faq, store, 'bn'))
+
     def setUp(self):
         self.user = User.objects.create_user('english-customer', email='customer@example.test')
         category = Category.objects.create(name='English navigation test')

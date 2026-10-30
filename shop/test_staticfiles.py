@@ -25,7 +25,7 @@ class CollectedStaticTests(SimpleTestCase):
             call_command('collectstatic', interactive=False, verbosity=0)
             links = StylesheetLinks()
             links.feed(render_to_string('shop/includes/store_assets.html'))
-            self.assertEqual(len(links.paths), 2)
+            self.assertEqual(len(links.paths), 3)
             client = Client()
             for path in links.paths:
                 with self.subTest(path=path):

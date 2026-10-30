@@ -1,31 +1,42 @@
-<footer class="gf-footer" lang="{{ support_language }}">
-    <div class="gf-shell gf-footer-grid {% if not information_footer.policies %}gf-footer-grid--compact{% endif %}">
-        <div><a class="gf-brand" href="{% url 'home' %}">Gadget<span>Flow</span></a>
-            <p>{{ store.tagline }}</p>{% if store.address %}<p>{{ store.address|linebreaksbr }}</p>{% endif %}
-            {% if store.phone %}<a href="tel:{{ store.phone }}">{{ store.phone }}</a>{% endif %}{% if store.email %}
-                <a href="mailto:{{ store.email }}">{{ store.email }}</a>{% endif %}</div>
-        <nav class="gf-footer-care" aria-labelledby="footer-care-heading">
-            <h3 id="footer-care-heading">{{ support_ui.care }}</h3>
-            <ul class="gf-footer-links">{% for link in information_footer.care %}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{% endfor %}</ul>
-        </nav>
-        {% if information_footer.policies %}<nav aria-labelledby="footer-policies-heading">
-            <h3 id="footer-policies-heading">{{ support_ui.policies }}</h3>
-            <ul class="gf-footer-links">{% for link in information_footer.policies %}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{% endfor %}</ul>
-        </nav>{% endif %}
-        <nav aria-labelledby="footer-account-heading">
-            <h3 id="footer-account-heading">{{ support_ui.company }}</h3>
-            <ul class="gf-footer-links">
+﻿{% load static %}
+<footer class="gf-footer gf-footer-refresh" lang="en">
+    <div class="gf-shell gf-footer-grid">
+        <div class="gf-footer-brand">
+            <a class="gf-brand" href="{% url 'home' %}">Gadget<span>Flow</span></a>
+            <p>Tech and everyday essentials.</p>
+            {% if store.phone %}<a href="tel:{{ store.phone }}">{{ store.phone }}</a>{% endif %}
+            {% if store.email %}<a href="mailto:{{ store.email }}">{{ store.email }}</a>{% endif %}
+            {% if store.address %}<p>{{ store.address|linebreaksbr }}</p>{% endif %}
+            {% if footer_social_links %}<nav class="gf-footer-social" aria-label="Social profiles">{% for link in footer_social_links %}<a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }} <span class="gf-visually-hidden">(opens in a new tab)</span></a>{% endfor %}</nav>{% endif %}
+        </div>
+        <details class="gf-footer-section" open>
+            <summary>Customer Care</summary>
+            <nav aria-label="Customer Care"><ul class="gf-footer-links">{% for link in information_footer.care %}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{% endfor %}</ul></nav>
+        </details>
+        <details class="gf-footer-section" open>
+            <summary>Company</summary>
+            <nav aria-label="Company"><ul class="gf-footer-links">
                 {% for link in information_footer.company %}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{% endfor %}
-                <li><a href="{% url 'profile' %}">{{ support_ui.account }}</a></li>
-                <li><a href="{% url 'order_history' %}">{{ support_ui.orders }}</a></li>
-                <li><a href="{% url 'wishlist' %}">{{ support_ui.wishlist }}</a></li>
-                <li><a href="{% url 'cart_view' %}">{{ support_ui.cart }}</a></li>
-                <li><a href="{% url 'product_list' %}">{{ support_ui.catalog }}</a></li>
-                <li><a href="{% url 'offers' %}">{{ support_ui.offers }}</a></li>
-                <li><a href="{% url 'preorder' %}">{{ support_ui.preorder }}</a></li>
-            </ul>
-            {% if store.cod_enabled or store.bkash_number %}<p>{% if store.cod_enabled %}{{ support_ui.cod }}{% endif %}{% if store.bkash_number %}<br>{{ support_ui.bkash }}{% endif %}</p>{% endif %}
-        </nav>
+                <li><a href="{% url 'offers' %}">Offers &amp; Deals</a></li>
+                <li><a href="{% url 'preorder' %}">Request a Preorder</a></li>
+            </ul></nav>
+        </details>
+        <details class="gf-footer-section" open>
+            <summary>My Account</summary>
+            <nav aria-label="My Account"><ul class="gf-footer-links">
+                <li><a href="{% url 'profile' %}">Account Details</a></li>
+                <li><a href="{% url 'order_history' %}">Order History</a></li>
+                <li><a href="{% url 'wishlist' %}">Wishlist</a></li>
+                <li><a href="{% url 'cart_view' %}">Shopping Cart</a></li>
+                <li><a href="{% url 'product_list' %}">All Products</a></li>
+            </ul></nav>
+        </details>
     </div>
-    <div class="gf-shell gf-footer-bottom">© {% now 'Y' %} GadgetFlow. <span>Developed by Farhan Labib.</span></div>
+    {% if footer_payment_badges %}<div class="gf-shell gf-footer-payments"><strong>We accept</strong><ul aria-label="Enabled payment methods">
+        {% for badge in footer_payment_badges %}<li class="gf-footer-payment">
+            {% if badge.asset %}<img src="{% static badge.asset %}" alt="{{ badge.name }}" width="64" height="32">{% else %}<strong>{{ badge.short }}</strong><span>{{ badge.name }}</span>{% endif %}
+            {% if badge.test_only %}<small>Sandbox · test-only</small>{% endif %}
+        </li>{% endfor %}
+    </ul></div>{% endif %}
+    <div class="gf-shell gf-footer-bottom"><span>&copy; {% now 'Y' %} GadgetFlow.</span><span>Developed by Farhan Labib.</span></div>
 </footer>

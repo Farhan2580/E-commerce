@@ -125,8 +125,32 @@ def support_context(request, store=None):
             public_slugs.add(page.slug)
             url = reverse('track_order') if page.slug == 'tracking' else reverse('policy', args=[page.slug])
             footer[page.footer_group].append({'title': localized(page, 'title', language), 'url': url})
+    labels = dict(InformationPage.SLUGS)
+    labels.update(shipping='Shipping Policy', returns='Returns & Refund Policy', warranty='Warranty Policy')
+    def links(slugs):
+        return [{'title': labels[slug], 'url': reverse('track_order') if slug == 'tracking'
+                 else reverse('policy', args=[slug])} for slug in slugs if slug in public_slugs]
+    footer['care'] = links(['contact', 'tracking', 'faqs', 'payments', 'shipping', 'returns', 'warranty'])
+    footer['company'] = links(['about', 'terms', 'privacy', 'cookies'])
     return {'store': public_store(store, language), 'support_language': language, 'support_ui': UI[language],
-            'information_footer': footer, 'information_public_slugs': public_slugs}
+            'information_footer': footer, 'information_public_slugs': public_slugs,
+            'footer_social_links': [link for link in business_links('en') if link['kind'] == 'social' and link['label']],
+            'footer_payment_badges': footer_payment_badges(store)}
+
+
+def footer_payment_badges(store):
+    from .payments import accepted_card_brands
+    methods = dict(enabled_payment_methods(store))
+    badges = []
+    if 'COD' in methods:
+        badges.append({'name': 'Cash on Delivery', 'short': 'COD'})
+    if 'BKASH' in methods:
+        badges.append({'name': 'bKash', 'asset': 'shop/payment-brands/bkash.png'})
+    if 'ONLINE_BKASH' in methods:
+        badges.append({'name': 'bKash', 'asset': 'shop/payment-brands/bkash.png', 'test_only': True})
+    if 'CARD' in methods:
+        badges.extend({**brand, 'test_only': True} for brand in accepted_card_brands())
+    return badges
 
 
 def business_links(language):
@@ -143,31 +167,30 @@ def business_links(language):
 def page_content(page, language):
     language = 'en'
     sections = []
-    fallback = language == 'bn' and bool(page.body_en) and not page.body_bn
     updated = page.updated_at
     for section in page.sections.all():
         if not section.body_en.strip():
             continue
         sections.append({'heading': localized(section, 'heading', language), 'body': localized(section, 'body', language),
-                         'language': 'en' if language == 'bn' and not section.body_bn else language})
-        fallback |= language == 'bn' and bool(section.body_en) and not section.body_bn
+                         'language': language})
         updated = max(updated, section.updated_at)
     body = localized(page, 'body', language)
     if not body.strip() and page.body_bn.strip():
         body = 'English content is not available yet. Please contact the store for details.'
     return {'page': page, 'title': localized(page, 'title', language), 'page_body': body,
-            'information_sections': sections, 'translation_fallback': fallback, 'last_updated': updated,
+            'information_sections': sections, 'translation_fallback': False, 'last_updated': updated,
             'document_language': language}
 
 
 def payment_cards(store, language):
-    ui = UI[language]
+    ui = UI['en']
     return [{'code': code, 'title': ui['cod'] if code == 'COD' else ('Card' if code == 'CARD' else ui['bkash']),
              'instructions': ui['cod_help'] if code == 'COD' else (store.bkash_manual_instructions if code == 'BKASH' else 'Pay securely on the provider’s checkout page.'),
              'number': store.bkash_number if code == 'BKASH' else ''} for code, _ in enabled_payment_methods(store)]
 
 
 def faq_answer(faq, store, language):
+    language = 'en'
     ui = UI[language]
     if faq.answer_source == 'payments':
         cards = payment_cards(store, language)
