@@ -197,3 +197,112 @@ unknown/unsafe keys. Django checks pass with S3 settings; all three exact URL
 paths resolve to the storage compatibility handler in that mode. A fresh live
 GET of each of the three exact URLs still returned 404 `text/html; charset=utf-8`.
 No upload/deployment was performed; production recovery is still pending.
+
+## New category uploads: production diagnosis and release gate
+
+`Category.image` uses `upload_to='categories/'`. Category Admin saves that ImageField
+through default storage; the homepage renders `category.image.url`, not a hardcoded
+static path. The same default storage handles Product, Banner and Offer images.
+No template rewrite or collectstatic step can make a local upload durable on Render.
+
+The public HTML inspected during this follow-up contained no `/media/categories/`
+image URL. The local database also had no nonempty Category.image reference.
+Therefore the customer's newly uploaded production category could not be identified
+from public HTML or the local snapshot. Its exact production PK, filename, existence
+and restart persistence cannot honestly be asserted without production diagnostics.
+
+After making the prepared code available to an operator, use Render Shell:
+
+```sh
+python manage.py inspect_media --category-id ACTUAL_CATEGORY_ID --http
+# Or inspect all product/category/banner/offer/gallery/logo fields:
+python manage.py inspect_media --http
+```
+
+This is read-only: it reports the DB key, backend, filesystem path or bucket object
+key, storage existence, actual decoded file readability, URL (without signatures),
+and optional final HTTP status/image validation. It prints no credentials.
+An empty image list means the selected category has no saved image or does not exist.
+For the current filesystem configuration, `--http` reports a relative URL; test that
+path against the live host separately and compare its response to local readability.
+
+Interpretation:
+- Readable filesystem file + live 404: upload saved, but production media is unserved.
+- Filesystem file absent: missing file; use Render logs/backups to distinguish never
+  transferred from lost on restart. A 404 alone cannot distinguish these histories.
+- S3 exists/readable + HTTP 403: inspect signed-URL settings, CDN/public access policy.
+- Wrong DB key: compare original file and exact key; do not rewrite all records.
+- HTTP 500: inspect Render logs and storage credentials/backend errors.
+
+The new deploy-only `shop.E001` check rejects Render filesystem mode. Add this to
+the Render build/predeployment checks after installing requirements:
+
+```sh
+python manage.py check --deploy --tag files
+```
+
+Set `MEDIA_STORAGE=s3` explicitly in Render and configure the bucket, scoped
+Get/Put/List credentials, region, endpoint (if compatible provider), prefix and
+private signed URLs as described above. `.env.example` is documentation only;
+Render must receive actual environment variables. This integration is already
+prepared locally; it has not been activated on the live service.
+
+Before switching, recover any category uploads still in the existing Render
+MEDIA_ROOT and back them up with exact relative names. Compare the production
+DB inventory against local originals, then run `transfer_media --source ... --upload`
+with storage access. Local originals do not include any production-only new category
+uploads. Never replace those with product images or placeholders.
+
+After deployment, upload a category image in Admin, record its `inspect_media`
+output and rendered homepage src, confirm final HTTP 200/image bytes, restart or
+redeploy the service, and repeat the same checks. This persistence verification
+requires operator access and was not performed here. S3 stores media independently
+of the Render instance. A new local FileSystemStorage object can verify local
+persistence but cannot demonstrate Render persistence.
+
+### Comparing the local configuration to Render
+
+Local `runserver` selects `djangoProject13.development`, whose URL configuration
+serves `/media/` only to loopback clients. WSGI on Render selects base settings;
+with filesystem storage and DEBUG off it has no such file-serving route. Thus
+identical saved database paths can work in PyCharm and fail in production without
+any template or Admin upload defect. The deployment's actual environment still
+must be inspected to confirm which backend is running.
+
+The diagnostic can now test relative media URLs against the live host while reading
+the production file, and prints only nonsecret configuration values:
+
+```sh
+python manage.py inspect_media --category-id CATEGORY_ID --http --origin https://farhan-gadgetflow.onrender.com
+```
+
+Run this IN Render Shell against the live DB, not locally against the local DB.
+The command does not need storage write access. Preserve its output, repeat after
+restart, and compare file readability and HTTP results. Local execution cannot
+confirm production file existence.
+
+If this command has not been deployed yet, the operator can inspect the existing
+code in Render Shell without deploying using `python manage.py shell`, then:
+
+```python
+from django.conf import settings
+from shop.models import Category
+print(settings.DEBUG, settings.MEDIA_ROOT, settings.MEDIA_URL)
+print(settings.STORAGES['default']['BACKEND'])
+print(list(Category.objects.exclude(image='').values('id', 'name', 'image')))
+c = Category.objects.get(pk=CATEGORY_ID)
+print(c.image.name, c.image.storage.__class__.__name__)
+print('exists:', c.image.storage.exists(c.image.name))
+from PIL import Image
+with c.image.open('rb') as original:
+    Image.open(original).verify()
+from urllib.parse import urlsplit, urlunsplit
+parts = urlsplit(c.image.url)
+print(urlunsplit(parts._replace(query='', fragment='')))
+```
+
+Do not share credentials or signed URL query strings. After copying the actual
+image URL privately from Admin, inspect it with an HTTP client and validate image
+bytes. Also check the homepage category HTML uses this key. Featured/root category
+visibility is separate from file storage; a category not selected for display will
+not appear merely because it has an image.

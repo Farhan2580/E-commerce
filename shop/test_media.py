@@ -98,3 +98,52 @@ class LocalMediaTests(TestCase):
         with self.assertRaises(Resolver404):
             resolve(self.product.image.url)
         self.assertEqual(self.client.get(self.product.image.url).status_code, 404)
+
+    def test_category_admin_upload_uses_saved_storage_url_and_reads_after_reopen(self):
+        admin = User.objects.create_superuser('category-upload-admin', 'category@example.test', 'test-password')
+        self.client.force_login(admin)
+        response = self.client.post(reverse('admin:shop_category_change', args=[self.category.pk]), {
+            'name': self.category.name, 'parent': '', 'featured': 'on', 'position': '0',
+            'image': SimpleUploadedFile('new-category-original.png', self.png, 'image/png'), '_save': 'Save',
+        }, HTTP_HOST='localhost')
+        self.assertEqual(response.status_code, 302)
+        self.category.refresh_from_db()
+        self.assertTrue(self.category.image.name.startswith('categories/new-category-original'))
+        self.assertTrue(self.category.image.storage.exists(self.category.image.name))
+        # A fresh storage object reads the persisted bytes, rather than upload memory.
+        from django.core.files.storage import FileSystemStorage
+        reopened = FileSystemStorage(location=self.directory.name)
+        with reopened.open(self.category.image.name) as handle:
+            self.assertEqual(handle.read(), self.png)
+        self.assertContains(self.client.get(reverse('home'), HTTP_HOST='localhost'), self.category.image.url)
+        self.assert_image(self.category.image.url, self.png)
+
+    def test_offer_upload_uses_same_storage_and_valid_http_bytes(self):
+        from .models import Offer
+        offer = Offer.objects.create(title='Real media offer', is_active=True)
+        offer.image.save('original-offer.png', SimpleUploadedFile('original-offer.png', self.png, 'image/png'))
+        response = self.client.get(reverse('offers'), HTTP_HOST='localhost')
+        self.assertContains(response, offer.image.url)
+        self.assert_image(offer.image.url, self.png)
+
+    def test_category_storage_diagnostic_traces_saved_key_and_readability(self):
+        from django.core.management import call_command
+        from io import StringIO
+        import json
+        output = StringIO()
+        call_command('inspect_media', category_id=self.category.pk, stdout=output)
+        rows = json.loads(output.getvalue())['images']
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['key'], self.category.image.name)
+        self.assertEqual(rows[0]['url_without_signature'], self.category.image.url)
+        self.assertTrue(rows[0]['readable_image'])
+
+
+class ProductionMediaChecks(TestCase):
+    def test_render_filesystem_is_rejected_by_deployment_check(self):
+        from unittest.mock import patch
+        from .checks import production_media_storage
+        with patch.dict('os.environ', {'RENDER': 'true'}), override_settings(MEDIA_STORAGE='filesystem'):
+            self.assertEqual([error.id for error in production_media_storage(None)], ['shop.E001'])
+        with patch.dict('os.environ', {'RENDER': 'true'}), override_settings(MEDIA_STORAGE='s3'):
+            self.assertEqual(production_media_storage(None), [])
