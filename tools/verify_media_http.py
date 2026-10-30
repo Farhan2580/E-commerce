@@ -9,6 +9,12 @@ from urllib.request import urlopen
 from urllib.error import HTTPError
 from PIL import Image
 
+EXACT_MEDIA_PATHS = [
+    '/media/products/gallery-7.jpg',
+    '/media/product_images/asus.webp',
+    '/media/offers/Macbook-Offer-Banner-5750.jpg',
+]
+
 
 class Sources(HTMLParser):
     def __init__(self):
@@ -27,9 +33,10 @@ def inspect(url):
             body = response.read(25 * 1024 * 1024)
             image = Image.open(BytesIO(body))
             image.verify()
-            return {'url': url, 'status': response.status, 'valid': True, 'type': response.headers.get('Content-Type')}
+            valid = response.status == 200 and response.headers.get('Content-Type', '').startswith('image/')
+            return {'url': url, 'status': response.status, 'valid': valid, 'type': response.headers.get('Content-Type')}
     except HTTPError as exc:
-        return {'url': url, 'status': exc.code, 'valid': False}
+        return {'url': url, 'status': exc.code, 'type': exc.headers.get('Content-Type'), 'valid': False}
     except Exception as exc:
         return {'url': url, 'valid': False, 'error': type(exc).__name__}
 
@@ -42,6 +49,7 @@ if __name__ == '__main__':
         with urlopen(origin + path, timeout=60) as response:
             parser.feed(response.read().decode())
         pages[path] = list(dict.fromkeys(urljoin(origin + path, src) for src in parser.images))
+    pages['exact_legacy_paths'] = [origin + path for path in EXACT_MEDIA_PATHS]
     urls = list(dict.fromkeys(url for values in pages.values() for url in values))
     with ThreadPoolExecutor(max_workers=6) as pool:
         results = list(pool.map(inspect, urls))

@@ -62,3 +62,29 @@ class MediaTransferTests(TestCase):
             storage.save.assert_not_called()
         self.product.refresh_from_db()
         self.assertEqual(self.product.image.name, 'products/original.jpg')
+
+@override_settings(MEDIA_STORAGE='s3')
+class LegacyMediaRedirectTests(TestCase):
+    def setUp(self):
+        from django.test import RequestFactory
+        self.factory = RequestFactory()
+        category = Category.objects.create(name='Legacy media')
+        Product.objects.create(name='Legacy image', category=category, price=10, stock=1,
+                               image='products/gallery-7.jpg')
+
+    def test_known_image_redirects_to_https_storage_without_local_serving(self):
+        from .media_redirect import media_redirect
+        with patch('shop.media_redirect.default_storage') as storage:
+            storage.url.return_value = 'https://media.example.test/media/products/gallery-7.jpg?signature=fixture'
+            response = media_redirect(self.factory.get('/media/products/gallery-7.jpg'), 'products/gallery-7.jpg')
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('no-store', response['Cache-Control'])
+            self.assertEqual(response.url, storage.url.return_value)
+            storage.open.assert_not_called()
+
+    def test_unknown_and_unsafe_keys_are_not_exposed(self):
+        from django.http import Http404
+        from .media_redirect import media_redirect
+        for name in ['private/document.pdf', '../db.sqlite3', '/products/gallery-7.jpg']:
+            with self.subTest(name=name), self.assertRaises(Http404):
+                media_redirect(self.factory.get('/media/' + name), name)

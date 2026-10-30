@@ -108,9 +108,11 @@ providers or prefixes without inventorying existing keys first.
    build step, not a media migration. Do not enable DEBUG or add Django media routes.
 7. Verify rendered banner, category tile, catalog card and detail image URLs now use
    the bucket/CDN (signed URLs if private) and return 200 image bytes. The old app
-   `/media/...` URLs are not automatically redirected by this integration; freshly
-   rendered `.image.url` values point at object storage. If legacy media URLs need
-   retention, configure explicit redirects at the edge after inventorying their keys.
+   `/media/...` URLs redirect (302, uncached) to HTTPS object storage when S3 mode
+   is enabled and the name matches an existing catalog ImageField. Following the
+   redirect must return HTTP 200 with valid image bytes. Freshly rendered
+   `.image.url` values point directly at object storage. No local files are served
+   by this compatibility route; unknown bucket keys remain inaccessible through it.
    Test a new Admin upload, restart/redeploy, then verify both old and new images.
 
 ## Verification
@@ -123,7 +125,9 @@ python tools/verify_media_http.py https://farhan-gadgetflow.onrender.com
 ```
 
 The HTTP tool fetches every img URL rendered by home/catalog/Product #1 detail,
-checks status, and decodes bytes with Pillow. It exits nonzero for broken images.
+plus the three exact originally failing `/media/...` URLs. It follows redirects,
+requires final status 200 and an image Content-Type, and decodes bytes with Pillow.
+It exits nonzero for broken images. A redirect alone is not a successful check.
 For a different production product ID, adjust the detail path in the tool.
 Local existing media tests additionally exercise real category, hero, card and
 product detail uploads through storage and HTTP; production tests confirm no
@@ -159,3 +163,37 @@ References:
 - No remote upload, push or deployment was performed. No production credentials,
   mount inspection, or remote file listing was available. Live recovery remains
   pending storage setup, production inventory comparison, transfer and deployment.
+
+### Exact-path trace
+
+| Existing URL path | Local database field | Valid local original | Object key with default prefix |
+| --- | --- | --- | --- |
+| `/media/products/gallery-7.jpg` | Product #1 `image` | `media/products/gallery-7.jpg` (JPEG) | `media/products/gallery-7.jpg` |
+| `/media/product_images/asus.webp` | Product #3 `image` | `media/product_images/asus.webp` (WebP) | `media/product_images/asus.webp` |
+| `/media/offers/Macbook-Offer-Banner-5750.jpg` | Offer #4 `image` | `media/offers/Macbook-Offer-Banner-5750.jpg` (JPEG) | `media/offers/Macbook-Offer-Banner-5750.jpg` |
+
+These mappings were re-audited without uploads or database writes. None of these
+originals is missing. Production paths and object availability must still be checked
+against the production database; no Render shell or provider credentials are available.
+The local configuration proves production filesystem media would not be served with
+DEBUG off, but public 404 responses alone cannot distinguish absent remote files
+from an absent media handler. Do not describe file loss or a failed transfer as proven.
+
+After the operator completes setup, transfer and deployment, rerun:
+
+```sh
+python tools/verify_media_http.py https://farhan-gadgetflow.onrender.com
+```
+
+The `exact_legacy_paths` group must pass for all three URLs, in addition to the
+rendered image checks. Compatibility requests first return a temporary redirect;
+final storage responses must be HTTP 200, image MIME types, and decodable originals.
+Direct HTTP 200 responses on the app host without redirects would require an edge
+proxy instead; this repair intentionally serves image bytes from durable storage.
+
+Follow-up verification: 109 tests passed, including HTTPS storage redirect,
+no local file serving, cache prevention for signed redirects, and rejection of
+unknown/unsafe keys. Django checks pass with S3 settings; all three exact URL
+paths resolve to the storage compatibility handler in that mode. A fresh live
+GET of each of the three exact URLs still returned 404 `text/html; charset=utf-8`.
+No upload/deployment was performed; production recovery is still pending.

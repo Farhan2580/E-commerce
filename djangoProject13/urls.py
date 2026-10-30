@@ -9,5 +9,8 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),  # ✅ Add this line
 ]
 
-if settings.DEBUG:
+if settings.MEDIA_STORAGE == 's3':
+    from shop.media_redirect import media_redirect
+    urlpatterns += [path('media/<path:name>', media_redirect, name='stored_media')]
+elif settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
