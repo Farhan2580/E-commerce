@@ -1,6 +1,8 @@
 ﻿# Production media recovery on Render
 
 Storage integration, recovery instructions, and historical verification results.
+For the complete Django/static/database build, startup and migration procedure,
+see [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md). Media transfer is a separate step.
 The dated preparation notes below are not proof of a current production deployment.
 
 ## Release status (2026-10-30)

@@ -39,7 +39,18 @@ STOCK_ALERT_EMAIL_READY = bool(EMAIL_HOST and DEFAULT_FROM_EMAIL)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', '0') == '1'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get(
+    'DJANGO_ALLOWED_HOSTS', os.environ.get('RENDER_EXTERNAL_HOSTNAME', '*')
+).split(',') if host.strip()]
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get(
+    'DJANGO_CSRF_TRUSTED_ORIGINS', ''
+).split(',') if origin.strip()]
+if os.environ.get('RENDER') == 'true':
+    # Render terminates TLS before forwarding requests to Gunicorn. Django must
+    # recognize HTTPS when validating Admin/checkout form origins.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 
 # Application definition
@@ -92,12 +103,8 @@ WSGI_APPLICATION = 'djangoProject13.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+from .configuration import database_configuration
+DATABASES = {'default': database_configuration(os.environ, BASE_DIR)}
 
 
 # Password validation
