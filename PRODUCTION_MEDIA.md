@@ -1,6 +1,30 @@
 ﻿# Production media recovery on Render
 
-Prepared locally; nothing pushed, deployed, or uploaded to remote storage.
+Storage integration, recovery instructions, and historical verification results.
+For the complete Django/static/database build, startup and migration procedure,
+see [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md). Media transfer is a separate step.
+The dated preparation notes below are not proof of a current production deployment.
+
+## Release status (2026-10-30)
+
+Media verification commit `599c08e` was pushed to repository branch `master`.
+All 115 Django tests and `check --deploy --tag files` passed before the push.
+The commit changes only media diagnostics, tests, the HTTP verifier and these
+instructions; the earlier S3 integration was already present on remote master.
+No database, credential, .env or uploaded-image files were included in the new commit.
+
+GitHub exposes no Render deployment/check status for this commit. Render API,
+dashboard/session access, service ID, bucket configuration and storage credentials
+are unavailable in this execution environment. The push is confirmed; a Render
+deployment is not confirmed. The first post-push HTTP audit still returned 404 HTML
+for all 14 distinct storefront image URLs. All 16 currently referenced local
+originals passed the local file audit; no remote transfer was attempted.
+
+To complete recovery, provide secure Render service access, configure/reuse the
+bucket and scoped credentials below, back up surviving production-only uploads,
+transfer originals without overwrites, deploy master, and verify live new uploads
+and persistence across redeployment. Do not claim this issue resolved based on
+the push alone.
 
 ## Observed failure (2026-10-30)
 
@@ -306,3 +330,32 @@ image URL privately from Admin, inspect it with an HTTP client and validate imag
 bytes. Also check the homepage category HTML uses this key. Featured/root category
 visibility is separate from file storage; a category not selected for display will
 not appear merely because it has an image.
+
+## Release verification (strict exit statuses)
+
+The existing S3 code only activates when Render's actual process environment sets
+`MEDIA_STORAGE=s3`; pushing this repository does not supply credentials or transfer
+media. No image recovery is complete until the production bucket and original
+objects have been verified. Keep `DJANGO_DEBUG=0`.
+
+Use these checks as release gates after configuring persistent storage:
+
+```sh
+python manage.py check --deploy --tag files
+python manage.py inspect_media --http --fail-on-error --origin https://farhan-gadgetflow.onrender.com
+python tools/verify_media_http.py https://farhan-gadgetflow.onrender.com --extra-url /media/categories/ACTUAL_NEW_UPLOAD_NAME.png
+```
+
+`--fail-on-error` makes missing/unreadable originals, failed image HTTP checks and
+empty category selections fail the command. The HTTP tool now checks the offers
+page too and accepts repeatable `--extra-url` arguments for actual new Admin uploads.
+Do not use the example upload filename literally. Repeat these checks with the
+SAME category key after redeployment to prove persistence. Preserve reports outside
+version control, including timestamps and deployment commit IDs. A valid local
+upload or successful GitHub push does not prove a Render rollout or durable storage.
+
+The commit for this release must exclude local database, .env files, credentials,
+and unrelated uploaded files. Store secrets directly in Render/storage settings.
+GitHub commit/check status is not a Render deployment status unless the Render
+integration explicitly reports it. When dashboard/API access is unavailable,
+report the deployment as unverified and the live HTTP results as observed.
