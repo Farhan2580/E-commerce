@@ -44,8 +44,12 @@ class Command(BaseCommand):
                         try:
                             row['filesystem_path'] = image.path
                         except NotImplementedError:
-                            row['bucket'] = getattr(image.storage, 'bucket_name', None)
-                            row['object_key'] = '/'.join(filter(None, [getattr(image.storage, 'location', ''), image.name]))
+                            if settings.MEDIA_STORAGE == 'cloudinary':
+                                row['cloud_name'] = image.storage.cloud_name
+                                row['public_id'] = image.storage.public_id(image.name)
+                            else:
+                                row['bucket'] = getattr(image.storage, 'bucket_name', None)
+                                row['object_key'] = '/'.join(filter(None, [getattr(image.storage, 'location', ''), image.name]))
                         row['exists'] = image.storage.exists(image.name)
                         with image.open('rb') as handle:
                             original = Image.open(handle)

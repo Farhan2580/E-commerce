@@ -7,3 +7,4 @@ django-storages[s3]>=1.14.6,<2
 boto3>=1.36,<2
 dj-database-url>=2.2,<4
 psycopg[binary]>=3.2,<4
+cloudinary>=1.44,<2

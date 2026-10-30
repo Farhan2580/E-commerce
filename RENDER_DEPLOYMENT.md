@@ -35,8 +35,9 @@ Confirm these in the existing Render service, keeping its URL and payment settin
 | `DATABASE_URL` | Existing persistent PostgreSQL connection URL |
 | `DATABASE_USE_URL` | `1` only after backup and production data reconciliation |
 | `DATABASE_SSL_REQUIRE` | `1` (default) |
-| `MEDIA_STORAGE` | `s3` |
+| `MEDIA_STORAGE` | `s3` or `cloudinary` |
 | S3 variables | Bucket/region/credentials/endpoint/prefix from PRODUCTION_MEDIA.md |
+| Cloudinary variables | Alternative to S3: see CLOUDINARY_MEDIA.md; no AWS variables required |
 | `STOREFRONT_URL` | `https://farhan-gadgetflow.onrender.com` |
 
 Do not paste secrets into commits/logs/chat. Keep all current payment configuration;

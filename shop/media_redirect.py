@@ -14,7 +14,7 @@ from django.views.decorators.http import require_safe
 @never_cache
 @require_safe
 def media_redirect(request, name):
-    if (settings.MEDIA_STORAGE != 's3' or '\\' in name
+    if (settings.MEDIA_STORAGE not in {'s3', 'cloudinary'} or '\\' in name
             or name.startswith('/') or '..' in PurePosixPath(name).parts):
         raise Http404
     # Only public catalog image references, never arbitrary bucket objects.

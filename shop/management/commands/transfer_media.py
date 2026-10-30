@@ -13,28 +13,48 @@ from PIL import Image
 
 
 class Command(BaseCommand):
-    help = 'Audit every image reference against original files; --upload copies missing S3 keys without overwriting.'
+    help = 'Audit every image reference; --upload copies originals to S3/Cloudinary without overwriting or changing DB references.'
 
     def add_arguments(self, parser):
         parser.add_argument('--source', default=str(settings.MEDIA_ROOT))
         parser.add_argument('--upload', action='store_true')
+        parser.add_argument('--manifest', help='Read references from an inspect_media JSON report instead of querying the database.')
 
     def handle(self, *args, **options):
         source = Path(options['source']).resolve()
         if not source.is_dir():
             raise CommandError('Source directory does not exist.')
         upload = options['upload']
-        if upload and settings.MEDIA_STORAGE != 's3':
-            raise CommandError('--upload requires MEDIA_STORAGE=s3; no filesystem writes are performed.')
+        if upload and settings.MEDIA_STORAGE not in {'s3', 'cloudinary'}:
+            raise CommandError('--upload requires MEDIA_STORAGE=s3 or cloudinary; no filesystem writes are performed.')
         records = []
         names = {}
-        for model in apps.get_app_config('shop').get_models():
-            for field in model._meta.fields:
-                if isinstance(field, ImageField):
-                    for pk, name in model.objects.exclude(**{field.name: ''}).exclude(**{field.name: None}).values_list('pk', field.name):
-                        row = {'model': model.__name__, 'pk': pk, 'field': field.name, 'name': name}
-                        records.append(row)
-                        names.setdefault(name, []).append(row)
+        if options['manifest']:
+            try:
+                document = json.loads(Path(options['manifest']).read_text(encoding='utf-8-sig'))
+                entries = document.get('images', document.get('references'))
+                if not isinstance(entries, list) or not entries:
+                    raise ValueError
+                for entry in entries:
+                    name = entry.get('key', entry.get('name'))
+                    if not isinstance(name, str) or not name:
+                        raise ValueError
+                    # Recovery manifests deliberately contain no database IDs,
+                    # model names, record contents, or internal storage paths.
+                    records.append({'model': entry.get('model', 'ImageField'), 'pk': entry.get('pk'),
+                                    'field': entry.get('field', 'image'), 'name': name})
+            except (OSError, ValueError, KeyError, TypeError, AttributeError):
+                raise CommandError('Manifest must be a nonempty inspect_media/transfer_media JSON report.')
+        else:
+            for model in apps.get_app_config('shop').get_models():
+                for field in model._meta.fields:
+                    if isinstance(field, ImageField):
+                        for pk, name in model.objects.exclude(**{field.name: ''}).exclude(**{field.name: None}).values_list('pk', field.name):
+                            records.append({'model': model.__name__, 'pk': pk, 'field': field.name, 'name': name})
+        for row in records:
+            if settings.MEDIA_STORAGE == 'cloudinary':
+                row['public_id'] = default_storage.public_id(row['name'])
+            names.setdefault(row['name'], []).append(row)
         failed = False
         for name, rows in names.items():
             path = (source / name).resolve()
@@ -49,7 +69,14 @@ class Command(BaseCommand):
                     status = 'valid_original'
                     for row in rows:
                         row['sha256'] = digest
-                    if upload:
+                    if upload and settings.MEDIA_STORAGE == 'cloudinary':
+                        try:
+                            with path.open('rb') as body:
+                                status = default_storage.transfer_original(name, body, digest)
+                        except Exception as exc:
+                            # Do not print provider errors containing request details.
+                            status = 'storage_error:' + type(exc).__name__
+                    elif upload:
                         # Conditional PUT is atomic: even a concurrent uploader cannot
                         # overwrite an existing object or silently rename its key.
                         from botocore.exceptions import ClientError

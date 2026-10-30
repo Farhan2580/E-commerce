@@ -1,6 +1,14 @@
 ﻿# Production media recovery on Render
 
 Storage integration, recovery instructions, and historical verification results.
+For Render Free without Shell/SSH, see [MEDIA_RECOVERY_FREE.md](MEDIA_RECOVERY_FREE.md)
+for the disabled-by-default, authenticated read-only exporter and the critical
+warning that deploying it cannot recover an older instance's lost ephemeral files.
+Optional Cloudinary support is now implemented alongside S3. See
+[CLOUDINARY_MEDIA.md](CLOUDINARY_MEDIA.md) for its exact environment variables,
+stable filename mapping, and non-overwriting manifest-based transfer workflow.
+Filesystem storage remains the default; no live Cloudinary migration or deployment
+has been performed by this integration.
 For the complete Django/static/database build, startup and migration procedure,
 see [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md). Media transfer is a separate step.
 The dated preparation notes below are not proof of a current production deployment.

@@ -152,6 +152,10 @@ STORAGES = {
 }
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Temporary read-only recovery access. Never put the bearer token in a URL/file.
+MEDIA_RECOVERY_ENABLED = os.environ.get('MEDIA_RECOVERY_ENABLED', '0') == '1'
+MEDIA_RECOVERY_TOKEN = os.environ.get('MEDIA_RECOVERY_TOKEN', '')
+MEDIA_RECOVERY_EXPIRES_AT = os.environ.get('MEDIA_RECOVERY_EXPIRES_AT', '')
 # Uploads are independent of WhiteNoise/collectstatic. Enable on Render only
 # after originals have been copied to the matching object keys.
 MEDIA_STORAGE = os.environ.get('MEDIA_STORAGE', 'filesystem')
@@ -174,9 +178,23 @@ if MEDIA_STORAGE == 's3':
             'addressing_style': os.environ.get('AWS_S3_ADDRESSING_STYLE', 'auto'),
         },
     }
+elif MEDIA_STORAGE == 'cloudinary':
+    from django.core.exceptions import ImproperlyConfigured
+    if any(not os.environ.get(name) for name in (
+            'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET')):
+        raise ImproperlyConfigured('MEDIA_STORAGE=cloudinary requires CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET')
+    STORAGES['default'] = {
+        'BACKEND': 'shop.cloudinary_storage.CloudinaryMediaStorage',
+        'OPTIONS': {
+            'cloud_name': os.environ['CLOUDINARY_CLOUD_NAME'],
+            'api_key': os.environ['CLOUDINARY_API_KEY'],
+            'api_secret': os.environ['CLOUDINARY_API_SECRET'],
+            'prefix': os.environ.get('CLOUDINARY_MEDIA_PREFIX', 'gadgetflow/media'),
+        },
+    }
 elif MEDIA_STORAGE != 'filesystem':
     from django.core.exceptions import ImproperlyConfigured
-    raise ImproperlyConfigured('MEDIA_STORAGE must be filesystem or s3')
+    raise ImproperlyConfigured('MEDIA_STORAGE must be filesystem, s3 or cloudinary')
 LOGIN_URL = '/accounts/login/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
