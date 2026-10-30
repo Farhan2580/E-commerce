@@ -162,6 +162,11 @@ def checkout_totals(lines, user, code='', strict=False, reserve=False):
 
 @transaction.atomic
 def create_order(user, session, data):
+    # Serialize this customer's checkouts before testing the idempotency key.
+    # Also protects per-customer coupon limits across different checkout tokens.
+    # SQLite uses its database write lock; PostgreSQL locks this account row.
+    from django.contrib.auth import get_user_model
+    get_user_model().objects.select_for_update().get(pk=user.pk)
     token = UUID(str(data['checkout_token']))
     previous = Order.objects.filter(checkout_token=token, user=user).first()
     if previous:

@@ -35,6 +35,18 @@ class CheckoutForm(forms.Form):
             raise forms.ValidationError('Enter a valid phone number.')
         return value
 
+    def clean_full_name(self):
+        value = self.cleaned_data['full_name'].strip()
+        if len(value) < 2 or not any(char.isalpha() for char in value):
+            raise forms.ValidationError('Enter your full name using letters.')
+        return value
+
+    def clean_address(self):
+        value = self.cleaned_data['address'].strip()
+        if len(value) < 5 or not any(char.isalnum() for char in value):
+            raise forms.ValidationError('Enter a shipping address including your area and delivery location.')
+        return value
+
     def clean(self):
         data = super().clean()
         return data
@@ -77,6 +89,8 @@ class PreOrderForm(forms.ModelForm):
 
 class AddressForm(forms.ModelForm):
     clean_phone = CheckoutForm.clean_phone
+    clean_full_name = CheckoutForm.clean_full_name
+    clean_address = CheckoutForm.clean_address
 
     class Meta:
         model = SavedAddress

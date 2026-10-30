@@ -270,8 +270,17 @@ def product_detail(request, pk):
     recent.sort(key=lambda item: viewed.index(item.pk))
     request.session['recently_viewed'] = [pk] + [value for value in viewed if value != pk][:11]
     warranty = ProductWarranty.objects.filter(product=product, is_verified=True).select_related('product').first()
+    from django.db.models import Exists, OuterRef
+    from .models import OrderItem
+    # A delivered, paid order is the evidence for this label, including COD
+    # only after authorized staff have recorded collection.
+    qualifying_purchase = OrderItem.objects.filter(
+        product=product, order__user_id=OuterRef('user_id'),
+        order__status='delivered', order__payment_status='paid')
+    reviews = product.reviews.select_related('user').annotate(
+        verified_purchase=Exists(qualifying_purchase))
     return render(request, 'shop/product_detail.html', {'product': product, 'form': form,
-                                                        'reviews': product.reviews.select_related('user'),
+                                                        'reviews': reviews,
                                                         'recently_viewed': recent[:4],
                                                         'related_products': products_query().filter(category=product.category).exclude(pk=pk)[:4],
                                                         'verified_warranty': warranty_content(warranty, language_for(request)) if warranty else None,

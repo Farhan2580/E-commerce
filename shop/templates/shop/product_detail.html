@@ -59,7 +59,7 @@
                 <dd>{{ value }}</dd>{% endfor %}</dl>{% else %}
             <p>Detailed specifications have not been provided for this product.</p>{% endif %}</section>
         <section class="gf-panel gf-section" id="reviews"><h2>Customer reviews</h2>{% for review in reviews %}
-            <article class="gf-review"><strong>{{ review.user.username }}</strong> <span>{{ review.rating }}/5</span>
+            <article class="gf-review"><strong>{{ review.user.username }}</strong> <span>{{ review.rating }}/5</span>{% if review.verified_purchase %} <span class="gf-chip">Verified purchase</span>{% endif %}
                 <p>{{ review.comment|linebreaksbr }}</p><small>{{ review.created_at|date:'d M Y' }}</small>
             </article>{% empty %}<p>No reviews yet.</p>{% endfor %}{% if user.is_authenticated %}<h3>Your review</h3>
             <form method="post" class="gf-form">{% csrf_token %}{{ form.as_p }}

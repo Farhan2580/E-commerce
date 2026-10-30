@@ -52,8 +52,28 @@ class WarrantyInline(admin.StackedInline):
     max_num = 1
 
 
+class ProductAdminForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = '__all__'
+        help_texts = {'specifications': 'Enter a JSON object with text labels and simple values, '
+                      'for example {"Model": "Manufacturer model", "Box contents": "Verified contents"}. '
+                      'Use only verified information; leave {} when unknown.'}
+
+    def clean_specifications(self):
+        value = self.cleaned_data.get('specifications')
+        if value is None:
+            return {}
+        if not isinstance(value, dict) or any(
+                not str(key).strip() or isinstance(item, (dict, list)) or item is None
+                for key, item in value.items()):
+            raise forms.ValidationError('Use a JSON object with nonempty labels and text, number or boolean values. Nested objects and lists are not supported.')
+        return value
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    form = ProductAdminForm
     list_display = ('name', 'price', 'stock', 'category', 'brand', 'featured', 'position')
     list_filter = ('category', 'brand', 'featured')
     search_fields = ('name', 'description')
