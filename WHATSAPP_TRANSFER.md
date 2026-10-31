@@ -127,7 +127,7 @@ Navigation/footer directory differences are separate content: use the earlier
 `storefront-configuration-review.json` for explicit Admin review, not blanket seeding.
 Verify the new catalog products, AMD brand filter, category section, variant,
 and original images (200 + image MIME + original hashes). Verify the widget's
-portrait, encoded `wa.me/8801300972960` URL, dismissal, keyboard focus and mobile
+portrait, encoded `wa.me/8801300972969` URL, dismissal, keyboard focus and mobile
 spacing. Repeat after redeploy. Do not open WhatsApp/send messages or place orders.
 
 Without production access, no target backup, target dry-run, import or media upload
