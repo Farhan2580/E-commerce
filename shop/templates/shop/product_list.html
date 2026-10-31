@@ -25,6 +25,7 @@
         </details>
         <div class="gf-collection-results">
             <div class="gf-catalog-toolbar"><p>Showing <strong>{{ page_obj.paginator.count }} item{{ page_obj.paginator.count|pluralize }}</strong>{% if page_obj.paginator.count %}<span> · {{ page_obj.start_index }}–{{ page_obj.end_index }}</span>{% endif %}</p>
+                <button type="button" class="gf-mobile-filter-button" data-open-filters hidden>{% include 'shop/includes/mobile_icon.html' with icon='filter' %} Filters</button>
                 <form action="{% url 'product_list' %}" method="get">{% for key,value in sort_parameters %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}<label for="collection-sort" class="gf-sr-only">Sort products</label><select id="collection-sort" name="sort"><option value="">Recommended</option><option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest</option><option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>Price: low to high</option><option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>Price: high to low</option><option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>Name</option></select><button class="gf-button gf-button-secondary" type="submit">Sort</button></form>
             </div>
             {% if filter_error %}<p class="gf-notice error" role="alert">{{ filter_error }}</p>{% endif %}

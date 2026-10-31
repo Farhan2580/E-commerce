@@ -238,7 +238,7 @@
     }));
     document.addEventListener('click', event => {
         document.querySelectorAll('.gf-account[open], .gf-category-menu details[open], .gf-mobile-menu[open]').forEach(details => {
-            if (!details.contains(event.target) && !event.target.closest('[data-open-menu]')) details.open = false;
+            if (!details.contains(event.target) && !event.target.closest('[data-open-menu]') && !event.target.closest('[data-mobile-menu-dialog]')) details.open = false;
         });
     });
     document.addEventListener('keydown', event => {

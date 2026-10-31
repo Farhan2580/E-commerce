@@ -5,11 +5,12 @@
 {% block content %}
 <div class="gf-purchase-stage"><div class="gf-shell"><nav class="gf-purchase-trail" aria-label="Shopping steps"><a href="{% url 'cart_view' %}">01 Shopping cart</a><span aria-hidden="true">—</span><span aria-current="step">02 Delivery & payment</span></nav>
 <div class="gf-purchase-card gf-checkout-card">
-<section class="gf-bag-column" aria-labelledby="checkout-bag-title"><div class="gf-purchase-heading"><h1 id="checkout-bag-title">Shopping Cart</h1><span>{{ cart_count }} item{{ cart_count|pluralize }}</span></div><div class="gf-bag-table-head"><span>Your selection</span><span>Price</span></div>
+<section class="gf-bag-column" aria-labelledby="checkout-bag-title"><div class="gf-purchase-heading"><h1 id="checkout-bag-title">Shopping Cart</h1><span>{{ cart_count }} item{{ cart_count|pluralize }}</span></div><details class="gf-checkout-bag-details" open><summary><span>View your {{ cart_count }} item{{ cart_count|pluralize }}</span><strong>৳{{ subtotal|floatformat:'2g' }}</strong></summary><div class="gf-bag-table-head"><span>Your selection</span><span>Price</span></div>
 {% for item in cart_items %}{% include 'shop/includes/purchase_item.html' with editable=False %}{% endfor %}
 <div class="gf-bag-subtotal"><span>Subtotal · {{ cart_count }} item{{ cart_count|pluralize }}</span><strong>৳{{ subtotal|floatformat:'2g' }}</strong></div>
 <div class="gf-bag-footer"><a class="gf-continue-shopping" href="{% url 'product_list' %}"><span aria-hidden="true">←</span> Continue shopping</a><a class="gf-edit-bag" href="{% url 'cart_view' %}">Edit cart</a></div>
 <div class="gf-bag-checkout-note"><span aria-hidden="true">◇</span><span>Prices, stock and delivery are confirmed again when you place your order.</span></div>
+</details>
 </section>
 <section class="gf-payment-column" aria-labelledby="payment-title"><h2 id="payment-title">Payment Details</h2><p class="gf-purchase-lead">Where should we send your next upgrade?</p>
 {% if not user.is_authenticated %}<div class="gf-checkout-guest"><span class="gf-guest-badge">Guest checkout</span><a href="{% url 'login' %}?next={% url 'checkout' %}">Sign in instead →</a></div>{% endif %}

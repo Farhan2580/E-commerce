@@ -23,7 +23,7 @@ class CollectedStaticTests(SimpleTestCase):
     def test_local_css_and_js_without_collected_assets(self):
         with TemporaryDirectory() as directory, self.settings(STATIC_ROOT=directory):
             client = Client()
-            for name in ('store-components', 'premium', 'footer', 'commerce'):
+            for name in ('store-components', 'premium', 'footer', 'commerce', 'mobile'):
                 for extension in ('css', 'js'):
                     with self.subTest(name=name, extension=extension):
                         response = client.get(f'/static/shop/{name}.{extension}')

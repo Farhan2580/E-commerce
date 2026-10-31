@@ -401,6 +401,8 @@ summary::-webkit-details-marker {
     display: none;
 }
 
+.gf-mobile-category > div > a { display: block; padding: 12px; }
+
 .gf-suggestions {
     position: absolute;
     top: calc(100% + 10px);

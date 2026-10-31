@@ -13,6 +13,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     {% include 'shop/includes/store_assets.html' %}
     {% block extra_head %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'shop/mobile.css' %}" media="(max-width: 760px)">
+    <script src="{% static 'shop/mobile.js' %}" defer></script>
 </head>
 <body>
 <a class="gf-skip" href="#main-content">Skip to content</a>
@@ -29,10 +31,9 @@
 <div class="gf-compare-bar"><a href="{% url 'compare' %}">Compare products <span data-compare-count>{{ compare_ids|length }}</span>/4 →</a></div>
 <dialog id="gf-modal" class="gf-modal" aria-labelledby="gf-modal-title"><div class="gf-dialog-heading"><h2 id="gf-modal-title">Quick view</h2><button type="button" data-close-dialog aria-label="Close quick view">×</button></div><div data-modal-content></div></dialog>
 <dialog id="gf-cart-drawer" class="gf-cart-drawer" data-url="{% url 'cart_drawer' %}" aria-labelledby="gf-cart-title"><div class="gf-dialog-heading"><h2 id="gf-cart-title">Your shopping bag <small><span data-cart-count>{{ cart_count }}</span> <span data-cart-unit>{{ cart_count|pluralize:'item,items' }}</span></small></h2><button type="button" data-close-dialog autofocus aria-label="Close shopping bag">×</button></div><p class="gf-notice error" data-drawer-status role="alert" hidden></p><div data-drawer-content aria-live="polite" aria-busy="false"></div></dialog>
-<nav class="gf-bottom-nav" aria-label="Mobile shortcuts"><a href="{% url 'home' %}">⌂<span>Home</span></a><a
-        href="#mobile-menu" data-open-menu>▦<span>Categories</span></a><a href="{% url 'offers' %}">％<span>Offers</span></a><a
-        href="{% url 'wishlist' %}">♡<span>Wishlist</span></a><a href="
-        {% if user.is_authenticated %}{% url 'profile' %}{% else %}{% url 'login' %}{% endif %}">♙<span>Account</span></a>
+<nav class="gf-bottom-nav" aria-label="Mobile shortcuts"><a href="{% url 'home' %}" data-mobile-nav="home">{% include 'shop/includes/mobile_icon.html' with icon='home' %}<span>Home</span></a><a
+        href="#mobile-menu" data-open-menu data-mobile-nav="categories" aria-controls="mobile-menu">{% include 'shop/includes/mobile_icon.html' with icon='grid' %}<span>Browse</span></a><a href="{% url 'cart_view' %}" data-open-cart data-mobile-nav="cart" aria-label="Shopping bag"><span class="gf-mobile-bag-icon">{% include 'shop/includes/mobile_icon.html' with icon='bag' %}<small data-cart-count>{{ cart_count }}</small></span><span>Bag</span></a><a
+        href="{% url 'wishlist' %}" data-mobile-nav="wishlist">{% include 'shop/includes/mobile_icon.html' with icon='heart' %}<span>Wishlist</span></a><a href="{% if user.is_authenticated %}{% url 'profile' %}{% else %}{% url 'login' %}{% endif %}" data-mobile-nav="account">{% include 'shop/includes/mobile_icon.html' with icon='user' %}<span>Account</span></a>
 </nav>
 {% block scripts %}{% endblock %}
 </body>

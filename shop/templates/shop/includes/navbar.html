@@ -1,16 +1,14 @@
 <header class="gf-header">
     <div class="gf-nav gf-shell">
         <details class="gf-mobile-menu" id="mobile-menu">
-            <summary aria-label="Open category menu">☰</summary>
+            <summary aria-label="Open category menu">{% include 'shop/includes/mobile_icon.html' with icon='menu' %}</summary>
             <div class="gf-mobile-drawer">
-                <div class="gf-drawer-heading">Shop by category
-                    <button type="button" data-close-menu aria-label="Close category menu">×</button>
-                </div>{% for category in nav_categories %}
-                <a href="{{ category.nav_url }}">{{ category.name }}</a>
-                {% for child in category.children.all %}<a class="gf-child-link"
-                                                           href="{% url 'product_list' %}?category={{ child.pk }}">{{ child.name }}</a>
-                {% endfor %}{% if category.nav_brands %}<details class="gf-mobile-brand-group"><summary>{{ category.name }} brands</summary>{% for brand in category.nav_brands %}<a class="gf-child-link" href="{{ brand.url }}">{{ brand.name }}</a>{% endfor %}</details>{% endif %}{% endfor %}<a href="{% url 'preorder' %}">Pre-order</a><a
-                    href="{% url 'offers' %}">Offers</a><a href="{% url 'pc_builder' %}">PC Builder</a><a href="{% url 'policy' 'contact' %}">Contact GadgetFlow</a>
+                <div class="gf-drawer-heading">Main Menu
+                    <button type="button" data-close-menu aria-label="Close category menu">{% include 'shop/includes/mobile_icon.html' with icon='close' %}</button>
+                </div><nav class="gf-mobile-menu-shortcuts" aria-label="Quick shopping links"><a href="{% url 'product_list' %}">All products <span aria-hidden="true">↗</span></a><a href="{% url 'pc_builder' %}">PC Builder <span aria-hidden="true">↗</span></a></nav>{% for category in nav_categories %}
+                {% if category.children.all or category.nav_brands %}<details class="gf-mobile-category"><summary>{{ category.name }}</summary><div><a href="{{ category.nav_url }}">All {{ category.name }}</a>
+                {% for child in category.children.all %}<a class="gf-child-link" href="{% url 'product_list' %}?category={{ child.pk }}">{{ child.name }}</a>{% endfor %}{% if category.nav_brands %}<p class="gf-mobile-brand-label">{{ category.name }} brands</p>{% endif %}{% for brand in category.nav_brands %}<a class="gf-child-link" href="{{ brand.url }}">{{ brand.name }}</a>{% endfor %}</div></details>{% else %}<a class="gf-mobile-category-link" href="{{ category.nav_url }}">{{ category.name }}</a>{% endif %}{% endfor %}<p class="gf-mobile-menu-label">More</p><a href="{% url 'compare' %}">Compare products <span data-compare-count>{{ compare_ids|length }}</span>/4</a><a href="{% url 'track_order' %}">Track an order</a><a href="{% url 'preorder' %}">Pre-order</a><a
+                    href="{% url 'offers' %}">Offers</a><a href="{% url 'policy' 'contact' %}">Contact GadgetFlow</a>
             </div>
         </details>
         <a class="gf-brand" href="{% url 'home' %}" aria-label="GadgetFlow home">Gadget<span>Flow</span><small>Tech.
