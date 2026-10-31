@@ -37,9 +37,11 @@ products. Relationships and homepage curation explain additional visibility:
   not iPhone Duo. Desktop has no homepage section. These choices are preserved.
 
 The existing widget is `BusinessLink(kind='whatsapp', is_verified=True)`, with
-destination `https://wa.me/8801300972960`, portrait key above, label WhatsApp,
-position zero. The general contact phone ends in **2969**, while the configured
-WhatsApp destination ends in **2960**; never substitute one for the other.
+destination `https://wa.me/8801300972969`, portrait key above, label WhatsApp,
+position zero. The owner corrected the WhatsApp number on 2026-10-31:
+both WhatsApp and the general contact phone use **01300972969**.
+The earlier WhatsApp destination ending in **2960** was incorrect.
+This correction is local for owner review; it has not been pushed or deployed.
 There is no separately stored widget greeting/enabled setting: verification enables
 it, the template contains “How can we help? / Chat on WhatsApp”, and URL `text`
 is the optional outgoing message. No outgoing text was configured locally.
@@ -127,7 +129,7 @@ Navigation/footer directory differences are separate content: use the earlier
 `storefront-configuration-review.json` for explicit Admin review, not blanket seeding.
 Verify the new catalog products, AMD brand filter, category section, variant,
 and original images (200 + image MIME + original hashes). Verify the widget's
-portrait, encoded `wa.me/8801300972960` URL, dismissal, keyboard focus and mobile
+portrait, encoded `wa.me/8801300972969` URL, dismissal, keyboard focus and mobile
 spacing. Repeat after redeploy. Do not open WhatsApp/send messages or place orders.
 
 Without production access, no target backup, target dry-run, import or media upload

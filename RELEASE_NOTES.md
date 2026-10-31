@@ -33,7 +33,7 @@ Python source. Local configured records are not transferred by Git push:
   records) and configure_footer_directory in production only after reconciliation.
   These commands never import local users/orders/payments or replace products.
 - Configure the approved public email labibf2580@gmail.com, support phone
-  01300972969, WhatsApp URL https://wa.me/8801300972960, Facebook URL
+  01300972969, WhatsApp URL https://wa.me/8801300972969, Facebook URL
   https://www.facebook.com/farhan.labib.888684 and GitHub URL
   https://github.com/Farhan2580 through Admin. Preserve any newer production values.
 - Upload the owner's original support portrait through Business Links using
