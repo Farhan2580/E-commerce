@@ -2,9 +2,15 @@ from django.urls import path
 from . import views
 from . import support_views
 from . import payment_views
+from . import commerce_views
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
+    path('pc-builder/', commerce_views.pc_builder, name='pc_builder'),
+    path('delivery/quote/', commerce_views.delivery_quote, name='delivery_quote'),
+    path('product/<int:pk>/question/', commerce_views.ask_question, name='ask_question'),
+    path('sitemap.xml', commerce_views.sitemap, name='sitemap'),
+    path('robots.txt', commerce_views.robots, name='robots'),
     path('outlets/', support_views.outlets, name='outlets'),
     path('payments/manual/<uuid:attempt_id>/', payment_views.manual_reference, name='manual_payment_reference'),
     path('payments/retry/<uuid:attempt_id>/', payment_views.retry, name='payment_retry'),

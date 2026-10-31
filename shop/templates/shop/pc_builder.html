@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}PC Builder | GadgetFlow{% endblock %}
+{% block content %}
+<div class="gf-shell gf-page gf-builder-page">
+    <nav class="gf-breadcrumb" aria-label="Breadcrumb"><a href="{% url 'home' %}">Home</a> / PC Builder</nav>
+    <section class="gf-builder-hero">
+        <div><span class="gf-eyebrow">YOUR PARTS. YOUR POSSIBILITIES.</span><h1>A PC that fits<br>your world<span>.</span></h1><p>Pick your components, explore the possibilities and keep your budget in view. We’ll check the specifications as you build.</p><div class="gf-builder-pills"><span>Live component pricing</span><span>Specification checks</span><span>One shopping bag</span></div></div>
+        <div class="gf-pc-illustration" aria-hidden="true"><svg viewBox="0 0 240 260" fill="none"><rect x="57" y="19" width="127" height="217" rx="16" fill="currentColor" opacity=".07"/><rect x="45" y="10" width="127" height="217" rx="16" stroke="currentColor" stroke-width="3"/><path d="M139 12v213M48 176h88" stroke="currentColor" stroke-width="2"/><circle cx="158" cy="32" r="4" fill="currentColor"/><rect x="64" y="35" width="57" height="65" rx="7" stroke="currentColor" stroke-width="2"/><circle cx="92" cy="67" r="21" stroke="currentColor" stroke-width="2"/><path d="m78 53 28 28m0-28L78 81M67 120h54m-54 11h54m-54 11h54" stroke="currentColor" stroke-width="3"/><rect x="64" y="188" width="56" height="20" rx="4" fill="currentColor" opacity=".2"/><circle cx="196" cy="97" r="26" fill="#ff7a18"/><path d="M184 97h24m-12-12v24" stroke="white" stroke-width="3" stroke-linecap="round"/></svg></div>
+    </section>
+    <div class="gf-builder-layout">
+        <section aria-labelledby="components-heading"><div class="gf-builder-heading"><div><span class="gf-eyebrow">01 / MAKE IT YOURS</span><h2 id="components-heading">Choose your components</h2></div><a href="{% url 'pc_builder' %}" class="gf-builder-reset">Reset build</a></div>
+            {% if not build.has_components %}<div class="gf-panel gf-builder-empty"><h3>Your next build starts here</h3><p>Component options are being prepared. Explore the catalog or ask our team to help choose the right parts.</p><a class="gf-button gf-button-secondary" href="{% url 'product_list' %}">Explore products →</a></div>{% endif %}
+            <form action="{% url 'pc_builder' %}" method="get" data-pc-builder>
+                {% for slot in build.slots %}<div class="gf-component-slot"><span class="gf-component-index" aria-hidden="true">0{{ forloop.counter }}</span><div class="gf-component-field"><label for="build-{{ slot.kind }}">{{ slot.label }} <small>{% if slot.required %}Required{% else %}Optional{% endif %}</small></label><select id="build-{{ slot.kind }}" name="{{ slot.kind }}"><option value="">{% if slot.options %}Choose {{ slot.label|lower }}{% else %}No components listed yet{% endif %}</option>{% for option in slot.options %}<option value="{{ option.key }}" {% if slot.selected == option.key %}selected{% endif %} {% if not option.available %}disabled{% endif %}>{{ option.name }} · ৳{{ option.price }}{% if not option.available %} · Out of stock{% endif %}</option>{% endfor %}</select></div></div>{% endfor %}
+                <button class="gf-button gf-button-secondary gf-build-refresh">Update build & checks</button>
+            </form>
+        </section>
+        <aside class="gf-build-sidebar" aria-label="Your build summary"><div data-build-summary aria-live="polite">{% include 'shop/includes/build_summary.html' %}</div></aside>
+    </div>
+</div>
+{% endblock %}

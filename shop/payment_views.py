@@ -8,12 +8,18 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
 from .models import PaymentAttempt
 from .payments import initiate, reconcile, retry_payment
+from .commerce import owned_order
 
 
-@login_required
+def owned_attempt(request, attempt_id, **filters):
+    attempt = get_object_or_404(PaymentAttempt, pk=attempt_id, **filters)
+    owned_order(request, attempt.order_id)
+    return attempt
+
+
 @require_POST
 def start(request, attempt_id):
-    attempt = get_object_or_404(PaymentAttempt, pk=attempt_id, order__user=request.user)
+    attempt = owned_attempt(request, attempt_id)
     try:
         url = initiate(attempt.pk)
     except (OperationalError, IntegrityError):
@@ -48,10 +54,9 @@ def ipn(request, attempt_id):
     return HttpResponse('Acknowledged', content_type='text/plain')
 
 
-@login_required
 @require_POST
 def refresh(request, attempt_id):
-    attempt = get_object_or_404(PaymentAttempt, pk=attempt_id, order__user=request.user)
+    attempt = owned_attempt(request, attempt_id)
     try:
         reconcile(attempt.pk)
     except (OperationalError, IntegrityError):
@@ -59,13 +64,12 @@ def refresh(request, attempt_id):
     return redirect('order_detail', order_id=attempt.order_id)
 
 
-@login_required
 @require_POST
 def retry(request, attempt_id):
-    attempt = get_object_or_404(PaymentAttempt, pk=attempt_id, order__user=request.user)
+    attempt = owned_attempt(request, attempt_id)
     try:
         reconcile(attempt.pk)
-        new = retry_payment(attempt.pk, request.user)
+        new = retry_payment(attempt.pk, request.user if request.user.is_authenticated and attempt.order.user_id else None)
         url = initiate(new.pk)
         if url:
             return redirect(url)
@@ -77,13 +81,12 @@ def retry(request, attempt_id):
     return redirect('order_detail', order_id=attempt.order_id)
 
 
-@login_required
 @require_POST
 def manual_reference(request, attempt_id):
     from .manual_payments import submit_reference
-    attempt = get_object_or_404(PaymentAttempt, pk=attempt_id, order__user=request.user, provider='manual_bkash')
+    attempt = owned_attempt(request, attempt_id, provider='manual_bkash')
     try:
-        submit_reference(attempt.pk, request.user, request.POST.get('reference', ''))
+        submit_reference(attempt.pk, request.user if request.user.is_authenticated and attempt.order.user_id else None, request.POST.get('reference', ''))
         messages.info(request, 'Reference saved. Awaiting verification by the store.')
     except ValidationError as exc:
         messages.error(request, ' '.join(exc.messages))

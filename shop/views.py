@@ -24,6 +24,7 @@ from .models import (Banner, Brand, Category, HomeSection, Offer, Order, Preorde
                      Product, ProductVariant, Review, SavedAddress, StockAlert, Wishlist)
 from .services import (cart_lines, cart_totals, create_order, normalized_cart,
                        checkout_totals, comparison_ids, enabled_payment_methods, quantity, set_cart, settings_for_store)
+from .commerce import accessible_orders, owned_order, remember_guest_order, selected_zone, order_progress
 
 
 def active_offers():
@@ -273,7 +274,7 @@ def product_detail(request, pk):
     if request.method == 'POST':
         if not request.user.is_authenticated:
             return redirect('login')
-        form = ReviewForm(request.POST, instance=existing)
+        form = ReviewForm(request.POST, request.FILES, instance=existing)
         if form.is_valid():
             Review.objects.update_or_create(product=product, user=request.user, defaults=form.cleaned_data)
             messages.success(request, 'Your review has been saved.')
@@ -303,7 +304,16 @@ def product_detail(request, pk):
         order__status='delivered', order__payment_status='paid')
     reviews = product.reviews.select_related('user').annotate(
         verified_purchase=Exists(qualifying_purchase))
+    from .models import DeliveryZone
+    from .seo import product_schema, safe_json_ld
+    from django import forms as django_forms
+    zones = DeliveryZone.objects.filter(active=True)
+    zone_field = django_forms.ModelChoiceField(queryset=zones, required=False, empty_label='Choose your area')
     return render(request, 'shop/product_detail.html', {'product': product, 'form': form,
+                                                        'delivery_zones': zones, 'delivery_zone_field': zone_field.widget.render('zone', request.GET.get('zone', ''), attrs={'id': 'product-delivery-zone'}),
+                                                        'product_schema_json': safe_json_ld(product_schema(request, product, reviews)),
+                                                        'product_questions': product.questions.filter(is_published=True).exclude(answer='').select_related('user')[:30],
+                                                        'warranty_record': warranty,
                                                         'gallery_images': gallery_images,
                                                         'description_images': [image for image in product.gallery.all() if image.purpose == 'description'],
                                                         'reviews': reviews,
@@ -316,7 +326,9 @@ def product_detail(request, pk):
 def signup(request):
     form = UserCreationForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        user = form.save()
+        accessible_orders(request).filter(user__isnull=True).update(user=user)
+        request.session.pop('guest_order_ids', None)
         messages.success(request, 'Your account is ready. Sign in to continue.')
         return redirect('login')
     return render(request, 'shop/signup.html', {'form': form})
@@ -403,13 +415,13 @@ def clear_cart(request):
     return cart_response(request)
 
 
-@login_required
+@never_cache
 def checkout(request):
-    initial = {'full_name': request.user.get_full_name(), 'email': request.user.email,
+    initial = {'full_name': request.user.get_full_name() if request.user.is_authenticated else '', 'email': request.user.email if request.user.is_authenticated else '',
                'coupon_code': request.session.get('coupon_code', '')}
     initial.update(request.session.get('checkout_shipping', {}))
     initial.setdefault('payment_method', 'COD' if settings_for_store().cod_enabled else '')
-    if request.method == 'GET' and request.GET.get('address'):
+    if request.user.is_authenticated and request.method == 'GET' and request.GET.get('address'):
         if not request.GET['address'].isdigit():
             raise Http404
         saved = get_object_or_404(SavedAddress, pk=request.GET['address'], user=request.user)
@@ -417,7 +429,7 @@ def checkout(request):
     data = request.POST.copy() if request.method == 'POST' else None
     if data is not None:
         request.session['checkout_shipping'] = {key: data.get(key, '')[:limit] for key, limit in
-            [('full_name', 100), ('email', 254), ('address', 2000), ('phone', 20), ('payment_method', 20)]}
+            [('full_name', 100), ('email', 254), ('address', 2000), ('phone', 20), ('payment_method', 20), ('delivery_zone', 20)]}
     if data is not None and 'shipping_address' in data and 'address' not in data:
         data['address'] = data['shipping_address']
     if data is not None and data.get('payment_method') in {'COD', 'CARD', 'ONLINE_BKASH'}:
@@ -426,7 +438,10 @@ def checkout(request):
     if request.method == 'GET':
         request.session.setdefault('checkout_token', str(uuid4()))
     initial['checkout_token'] = request.session.get('checkout_token', '')
-    form = CheckoutForm(data, initial=initial)
+    preview = data is not None and data.get('action') == 'preview'
+    # Updating an area/coupon is a quote, not an attempt to place the order.
+    # Keep entered contact details without showing premature required-field errors.
+    form = CheckoutForm(None if preview else data, initial={**initial, **data.dict()} if preview else initial)
     form.fields['payment_method'].choices = enabled_payment_methods()
     from django import forms as django_forms
     form.fields['payment_method'].widget = django_forms.RadioSelect()
@@ -435,14 +450,18 @@ def checkout(request):
         form.fields.pop('bkash_number')
         form.fields.pop('trx_id')
     status = 200
-    if request.method == 'POST' and form.is_valid() and request.POST.get('action') != 'preview':
+    if request.method == 'POST' and not preview and form.is_valid():
         try:
             order = create_order(request.user, request.session, form.cleaned_data)
         except (ValidationError, IntegrityError, OperationalError) as exc:
             # A simultaneous submission may have won the token reservation.
-            previous = Order.objects.filter(user=request.user,
+            previous = accessible_orders(request).filter(
                                             checkout_token=form.cleaned_data['checkout_token']).first()
+            if not previous and str(form.cleaned_data['checkout_token']) == request.session.get('checkout_token'):
+                previous = Order.objects.filter(user=request.user if request.user.is_authenticated else None,
+                                                checkout_token=form.cleaned_data['checkout_token']).first()
             if previous:
+                remember_guest_order(request, previous)
                 if request.session.get('checkout_token') == str(previous.checkout_token):
                     request.session['cart'] = {}
                     request.session.pop('coupon_code', None)
@@ -451,6 +470,7 @@ def checkout(request):
                                                                       ValidationError) else 'Checkout is busy. Please retry with this same form.')
             status = 400 if isinstance(exc, ValidationError) else 409
         else:
+            remember_guest_order(request, order)
             if request.session.get('checkout_token') == str(order.checkout_token):
                 request.session['cart'] = {}
                 request.session.pop('coupon_code', None)
@@ -483,21 +503,31 @@ def checkout(request):
         {'code': 'CARD', 'name': 'Card', 'icon': 'card', 'ready': method_ready('CARD'),
          'instructions': 'Pay securely on the provider’s page. Enter your card details only there.'},
     ]
-    return render(request, 'shop/checkout.html', {'form': form, 'cart_items': lines, 'addresses': request.user.addresses.all(),
+    delivery_error = ''
+    try:
+        zone = selected_zone(data.get('delivery_zone') if data is not None else initial.get('delivery_zone'))
+    except ValidationError as error:
+        zone = None
+        delivery_error = ' '.join(error.messages)
+    return render(request, 'shop/checkout.html', {'form': form, 'cart_items': lines, 'addresses': request.user.addresses.all() if request.user.is_authenticated else [],
+                                                'delivery_quote': zone,
+                                                'delivery_error': delivery_error,
                                                 'payment_choices': methods, 'selected_payment': selected,
                                                 'accepted_card_brands': accepted_card_brands() if method_ready('CARD') else [],
                                                 'payments_available': any(method['ready'] for method in methods),
                                                 'card_ready': 'CARD' in dict(enabled_payment_methods()),
                                                 'bkash_ready': 'ONLINE_BKASH' in dict(enabled_payment_methods()),
-                                                **checkout_totals(lines, request.user, coupon_code)},
+                                                **checkout_totals(lines, request.user, coupon_code, delivery_zone=zone)},
                   status=status)
 
 
-@login_required
+@never_cache
 @require_GET
 def order_success(request, order_id):
-    order = get_object_or_404(Order.objects.prefetch_related('items'), pk=order_id, user=request.user)
-    return render(request, 'shop/order_success.html', {'order': order, **manual_payment_context(order)})
+    if not request.user.is_authenticated and not request.session.get('guest_order_ids'):
+        return redirect(reverse('login') + '?next=' + request.path)
+    order = owned_order(request, order_id)
+    return render(request, 'shop/order_success.html', {'order': order, 'order_progress': order_progress(order), **manual_payment_context(order)})
 
 
 def manual_payment_context(order):
@@ -511,11 +541,13 @@ def manual_payment_context(order):
                 and not order.inventory_released and attempt.expires_at > timezone.now())}
 
 
-@login_required
+@never_cache
 @require_GET
 def order_detail(request, order_id):
-    order = get_object_or_404(Order.objects.prefetch_related('items'), pk=order_id, user=request.user)
-    return render(request, 'shop/order_detail.html', {'order': order, 'items': order.items.all(), **manual_payment_context(order)})
+    if not request.user.is_authenticated and not request.session.get('guest_order_ids'):
+        return redirect(reverse('login') + '?next=' + request.path)
+    order = owned_order(request, order_id)
+    return render(request, 'shop/order_detail.html', {'order': order, 'order_progress': order_progress(order), 'items': order.items.all(), **manual_payment_context(order)})
 
 
 @login_required
@@ -566,7 +598,8 @@ def ajax_products(request):
 @require_POST
 def ajax_submit_review(request, pk):
     product = get_object_or_404(Product, pk=pk)
-    form = ReviewForm(request.POST)
+    existing = Review.objects.filter(product=product, user=request.user).first()
+    form = ReviewForm(request.POST, request.FILES, instance=existing)
     if not form.is_valid():
         return JsonResponse({'success': False, 'errors': form.errors}, status=400)
     review, created = Review.objects.update_or_create(product=product, user=request.user, defaults=form.cleaned_data)

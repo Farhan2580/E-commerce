@@ -148,11 +148,13 @@ class Order(models.Model):
     courier_name = models.CharField(max_length=100, blank=True)
     tracking_number = models.CharField(max_length=150, blank=True)
     tracking_url = models.URLField(max_length=500, blank=True, validators=[validate_public_https])
-    STATUS_CHOICES = [('awaiting_payment', 'Awaiting payment'), ('received', 'Received'), ('processing', 'Processing'), ('shipped', 'Shipped'), ('delivered', 'Delivered'), ('cancelled', 'Cancelled')]
+    STATUS_CHOICES = [('awaiting_payment', 'Awaiting payment'), ('received', 'Received'), ('confirmed', 'Confirmed'), ('processing', 'Processing'), ('packed', 'Packed'), ('shipped', 'Shipped'), ('delivered', 'Delivered'), ('cancelled', 'Cancelled')]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='received')
     coupon_code = models.CharField(max_length=40, blank=True)
     coupon_discount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', null=True, blank=True)
+    delivery_area = models.CharField(max_length=100, blank=True)
+    delivery_estimate = models.CharField(max_length=100, blank=True)
     full_name = models.CharField(max_length=100)
     email = models.EmailField()
     address = models.TextField()
@@ -186,7 +188,7 @@ class Order(models.Model):
                                                                                  ('review', 'Payment needs reconciliation')])
 
     def __str__(self):
-        return f"Order #{self.id} by {self.user.username}"
+        return f"Order #{self.id} by {self.user.username if self.user_id else self.full_name}"
 
     def clean(self):
         if self.tracking_url and not (self.courier_name and self.tracking_number):
@@ -221,6 +223,7 @@ class OrderItem(models.Model):
 
 
 class Review(models.Model):
+    image = models.ImageField(upload_to='review_photos/', blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     rating = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])
@@ -640,6 +643,8 @@ class FooterGroup(models.Model):
 
 
 class ProductWarranty(models.Model):
+    replacement_terms = models.TextField(blank=True, help_text='Verified replacement window and conditions. Leave blank when unconfirmed.')
+    box_contents = models.TextField(blank=True, help_text='Verified contents included with this product.')
     product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='warranty')
     warranty_type = models.CharField(max_length=20, choices=[('manufacturer', 'Manufacturer'), ('seller', 'Seller'), ('service', 'Service'), ('none', 'No warranty')])
     period_en = models.CharField(max_length=100, blank=True)
@@ -689,6 +694,72 @@ class SupportRateLimit(models.Model):
     key = models.CharField(max_length=64, unique=True)
     count = models.PositiveIntegerField(default=0)
     expires_at = models.DateTimeField(db_index=True)
+
+
+class DeliveryZone(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    shipping_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0'))])
+    min_days = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    max_days = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    active = models.BooleanField(default=True)
+    position = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['position', 'name']
+
+    def clean(self):
+        if self.min_days is not None and self.max_days is not None and self.max_days < self.min_days:
+            raise ValidationError({'max_days': 'Maximum delivery days must be at least the minimum.'})
+
+    @property
+    def estimate(self):
+        return f'{self.min_days}–{self.max_days} business days'
+
+    def __str__(self):
+        return self.name
+
+
+class ProductQuestion(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='questions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    question = models.TextField(max_length=1000)
+    answer = models.TextField(blank=True, max_length=3000)
+    is_published = models.BooleanField(default=False, help_text='Publish after reviewing the question and answer. Do not include private customer information.')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.product.name}: {self.question[:60]}'
+
+
+class PCComponent(models.Model):
+    KINDS = [('cpu', 'Processor'), ('motherboard', 'Motherboard'), ('ram', 'Memory'),
+             ('gpu', 'Graphics card'), ('storage', 'Storage'), ('psu', 'Power supply'),
+             ('case', 'Case'), ('cooler', 'CPU cooler')]
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='pc_component')
+    kind = models.CharField(max_length=20, choices=KINDS)
+    active = models.BooleanField(default=True)
+    socket = models.CharField(max_length=40, blank=True, help_text='Exact CPU / motherboard socket, e.g. AM5.')
+    memory_type = models.CharField(max_length=40, blank=True, help_text='Motherboard / RAM generation, e.g. DDR5.')
+    form_factor = models.CharField(max_length=40, blank=True, help_text='Motherboard size, e.g. ATX.')
+    supported_form_factors = models.JSONField(default=list, blank=True, help_text='Case supported board sizes, e.g. ["ATX", "Micro-ATX"].')
+    storage_interface = models.CharField(max_length=40, blank=True, help_text='Storage interface, e.g. NVMe or SATA.')
+    supported_storage_interfaces = models.JSONField(default=list, blank=True, help_text='Motherboard supported storage interfaces.')
+    supported_sockets = models.JSONField(default=list, blank=True, help_text='Cooler supported CPU sockets.')
+    power_watts = models.PositiveIntegerField(null=True, blank=True, help_text='Verified CPU/GPU power estimate; PSU rated output in watts.')
+    minimum_psu_watts = models.PositiveIntegerField(null=True, blank=True, help_text='Graphics card manufacturer recommended minimum PSU rating.')
+    integrated_graphics = models.BooleanField(null=True, blank=True, help_text='CPU has integrated graphics. Unknown must remain blank.')
+
+    def clean(self):
+        for field in ['supported_form_factors', 'supported_storage_interfaces', 'supported_sockets']:
+            value = getattr(self, field)
+            if not isinstance(value, list) or any(not isinstance(item, str) or not item.strip() for item in value):
+                raise ValidationError({field: 'Enter a JSON list of nonempty text values.'})
+
+    def __str__(self):
+        return f'{self.get_kind_display()}: {self.product.name}'
 
 
 from .payment_models import PaymentAttempt, PaymentReservation, ManualPaymentClaim, ManualPaymentAudit  # noqa: E402

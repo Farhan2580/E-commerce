@@ -30,6 +30,6 @@
     <button type="button" class="gf-whatsapp-dismiss" aria-label="Dismiss WhatsApp shortcut">&times;</button>
     <a href="{{ footer_whatsapp.url }}" target="_blank" rel="noopener noreferrer" aria-label="Chat with GadgetFlow on WhatsApp (opens in a new tab)">
         <span class="gf-whatsapp-message">How can we help?<small>Chat on WhatsApp</small></span>
-        <span class="gf-whatsapp-avatar">{% if footer_whatsapp.image_url %}<img src="{{ footer_whatsapp.image_url }}" alt="GadgetFlow support contact" width="56" height="56">{% else %}{% include 'shop/includes/social_icon.html' with icon='whatsapp' %}{% endif %}</span>
+        <span class="gf-whatsapp-avatar">{% if footer_whatsapp.image_url %}<img src="{{ footer_whatsapp.image_url }}" {% if footer_whatsapp.image_key == 'business_profiles/farhan-whatsapp-portrait.png' %}data-image-fallback="{% static 'shop/support/farhan-whatsapp-portrait.png' %}"{% else %}data-image-fallback="{% static 'shop/social-brands/whatsapp.svg' %}" data-fallback-icon{% endif %} alt="GadgetFlow support contact" width="56" height="56">{% else %}{% include 'shop/includes/social_icon.html' with icon='whatsapp' %}{% endif %}</span>
     </a>
 </aside>{% endif %}

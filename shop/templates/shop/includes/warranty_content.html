@@ -1,4 +1,6 @@
 <p>{{ support_ui.warranty }}: <strong>{{ warranty.type }}</strong></p>
+{% if warranty_record.replacement_terms %}<h3>Replacement terms</h3>{{ warranty_record.replacement_terms|linebreaks }}{% endif %}
+{% if warranty_record.box_contents %}<h3>In the box</h3>{{ warranty_record.box_contents|linebreaks }}{% endif %}
 {% if warranty.period %}<p>{{ support_ui.period }}: {{ warranty.period }}</p>{% endif %}
 {% if warranty.coverage %}<h3>{{ support_ui.coverage }}</h3>{{ warranty.coverage|linebreaks }}{% endif %}
 {% if warranty.exclusions %}<h3>{{ support_ui.exclusions }}</h3>{{ warranty.exclusions|linebreaks }}{% endif %}

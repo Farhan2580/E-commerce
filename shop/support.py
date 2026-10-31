@@ -167,7 +167,7 @@ def business_links(language):
         except ValidationError:
             continue
         links.append({'label': localized(link, 'label', language), 'url': link.url, 'kind': link.kind, 'updated_at': link.updated_at,
-                      'image_url': link.image.url if link.image else ''})
+                      'image_url': link.image.url if link.image else '', 'image_key': link.image.name if link.image else ''})
     return links
 
 

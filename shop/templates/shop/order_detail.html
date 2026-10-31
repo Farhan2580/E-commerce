@@ -1,10 +1,13 @@
 ﻿{% extends 'base.html' %}
 {% block title %}Order {{ order.pk }} | GadgetFlow{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex,nofollow">{% endblock %}
 {% block content %}
     <div class="gf-shell gf-page">
-        <div class="gf-section-heading"><h1>Order #{{ order.pk }}</h1><a href="{% url 'order_history' %}">All your
-            orders →</a></div>
+        <div class="gf-section-heading"><h1>Order #{{ order.pk }}</h1>{% if user.is_authenticated %}<a href="{% url 'order_history' %}">All your orders →</a>{% else %}<span class="gf-guest-badge">Guest order</span>{% endif %}</div>
+        {% if not user.is_authenticated %}<div class="gf-guest-note"><p>This order is available in this browser. <a href="{% url 'signup' %}">Create an account to keep it in your order history →</a></p></div>{% endif %}
         <div class="gf-panel"><p>Placed {{ order.date_ordered|date:'d M Y, H:i' }}</p>
+            {% include 'shop/includes/order_progress.html' %}
+            {% if order.delivery_area %}<div class="gf-delivery-result"><strong>{{ order.delivery_area }} · {{ order.delivery_estimate }}</strong><span>Estimate recorded when the order was placed.</span></div>{% endif %}
             <p>{{ order.full_name }} · {{ order.email }} · {{ order.phone }}</p>
             <p>{{ order.address|linebreaksbr }}</p>
             <p>{{ order.get_payment_method_display }} — {{ order.get_payment_status_display }}</p>

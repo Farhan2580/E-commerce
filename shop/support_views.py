@@ -12,6 +12,7 @@ from django.views.decorators.http import require_POST, require_http_methods
 from .forms import SupportForm
 from .models import Category, FAQ, InformationPage, Order, ProductWarranty, SupportRequest
 from .services import settings_for_store
+from .commerce import accessible_orders, order_progress
 from .support import (UI, allow_submission, business_links, faq_answer, form_nonce, language_for,
                       localized, page_content, page_is_public, payment_cards, support_token, warranty_content)
 
@@ -102,6 +103,9 @@ def information(request, slug):
                        faq_group_options=list(labels.items()), faq_query=query, selected_faq_group=group)
     elif slug == 'payments':
         context['payment_cards'] = payment_cards(store, language)
+    elif slug == 'shipping':
+        from .models import DeliveryZone
+        context['delivery_zones'] = DeliveryZone.objects.filter(active=True)
     elif slug == 'cookies':
         context['cookie_inventory'] = [
             {'name': settings.SESSION_COOKIE_NAME, 'purpose': 'Account sign-in, shopping cart, comparison, browsing history, language and form security state.' if language == 'en' else 'অ্যাকাউন্ট, কার্ট, তুলনা, দেখার ইতিহাস, ভাষা ও ফর্মের নিরাপত্তার তথ্য।', 'days': settings.SESSION_COOKIE_AGE // 86400},
@@ -124,12 +128,13 @@ def information(request, slug):
 
 
 @never_cache
-@login_required(login_url='login')
 @require_http_methods(['GET', 'POST'])
 def track_order(request, order_id=None):
+    if not request.user.is_authenticated and not request.session.get('guest_order_ids'):
+        return redirect(reverse('login') + '?next=' + request.path)
     page, preview = get_page(request, 'tracking')
     language = language_for(request)
-    orders = Order.objects.filter(user=request.user).order_by('-date_ordered')
+    orders = accessible_orders(request).order_by('-date_ordered')
     selected = str(order_id or request.GET.get('order', ''))
     order = None
     if selected:
@@ -147,7 +152,7 @@ def track_order(request, order_id=None):
             messages.success(request, f'{UI[language]["received"]} {saved.reference}')
             return redirect('track_order_detail', order_id=order.pk)
         labels_bn = {'received': 'গৃহীত', 'processing': 'প্রক্রিয়াধীন', 'shipped': 'পাঠানো হয়েছে', 'delivered': 'পৌঁছে দেওয়া হয়েছে', 'cancelled': 'বাতিল'}
-        context.update(support_form=form,
+        context.update(support_form=form, order_progress=order_progress(order),
                        tracking_status=labels_bn.get(order.status, order.get_status_display()) if language == 'bn' else order.get_status_display(),
                        tracking_events=[{'label': labels_bn.get(event.status, event.get_status_display()) if language == 'bn' else event.get_status_display(),
                                          'created_at': event.created_at} for event in order.status_events.all()])

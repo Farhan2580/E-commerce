@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Checkout | GadgetFlow{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex,nofollow">{% endblock %}
 {% block content %}
-    <div class="gf-shell gf-page"><h1>Checkout</h1>
+    <div class="gf-shell gf-page"><span class="gf-eyebrow">JUST A FEW DETAILS TO GO</span><h1>Make it yours.</h1><p class="gf-checkout-intro">Your picks, your doorstep. Review the details and we’ll take it from here.</p>
+        {% if not user.is_authenticated %}<div class="gf-guest-note"><span class="gf-guest-badge">Guest checkout</span><p>No account needed. Already shop with us? <a href="{% url 'login' %}?next={% url 'checkout' %}">Sign in for saved addresses & coupons →</a></p></div>{% endif %}
         <div class="gf-checkout-layout">
             <section class="gf-panel"><h2>Delivery & payment details</h2>
                 {% if addresses %}<form action="{% url 'checkout' %}" method="get" class="gf-form"><label>Use a saved address<select name="address">{% for address in addresses %}<option value="{{ address.pk }}">{{ address.label }} — {{ address.full_name }}</option>{% endfor %}</select></label><button class="gf-button gf-button-secondary">Use address</button></form>{% endif %}
@@ -29,7 +31,7 @@
                                     <small>{{ field.help_text }}</small>{% endif %}</p>{% endif %}{% endfor %}
                     <p
                         class="gf-form-status" role="status"></p>
-                    <button class="gf-button gf-button-secondary" name="action" value="preview" formnovalidate>Review coupon & total</button>
+                    <button class="gf-button gf-button-secondary" name="action" value="preview" formnovalidate>Review delivery & total</button>
                     <button class="gf-button gf-button-primary" data-place-order data-pay-label="Pay ৳{{ grand_total }}" {% if not payments_available %}disabled data-payments-disabled{% endif %}>{% if selected_payment == 'COD' or selected_payment == 'BKASH' %}Place Order{% else %}Pay ৳{{ grand_total }}{% endif %}</button>
                 </form>
             </section>
@@ -40,9 +42,10 @@
                     <p class="gf-error">{{ item.error }}</p>{% endif %}</div>{% endfor %}<p>
                 <span>Subtotal</span><strong>৳{{ subtotal }}</strong></p>
                 {% if coupon_error %}<p class="gf-error" role="alert">{{ coupon_error }}</p>{% endif %}{% if coupon_discount %}<p><span>Coupon {{ coupon_code }}</span><strong>−৳{{ coupon_discount }}</strong></p>{% endif %}
-                <p><span>Shipping</span><strong>৳{{ shipping }}</strong></p>{% if savings %}
+                {% if delivery_error %}<p class="gf-error" role="alert">{{ delivery_error }}</p>{% endif %}
+                <p><span>Shipping{% if delivery_quote %} · {{ delivery_quote.name }}{% endif %}</span><strong>{% if shipping_pending %}Choose delivery area{% else %}৳{{ shipping }}{% endif %}</strong></p>{% if delivery_quote %}<div class="gf-delivery-result"><strong>{{ delivery_quote.estimate }}</strong><span>Estimated after order confirmation.</span></div>{% elif form.delivery_zone.field.required %}<div class="gf-notice">Choose a delivery area and review your total to confirm shipping.</div>{% endif %}{% if savings %}
                     <p><span>Savings included in item prices</span><strong>৳{{ savings }}</strong></p>{% endif %}<p
-                        class="gf-total"><span>Total payable</span><strong>৳{{ grand_total }}</strong></p><a
+                        class="gf-total"><span>{% if shipping_pending %}Total before delivery{% else %}Total payable{% endif %}</span><strong>৳{{ grand_total }}</strong></p><a
                         href="{% url 'cart_view' %}">Edit cart →</a></aside>
         </div>
     </div>{% endblock %}

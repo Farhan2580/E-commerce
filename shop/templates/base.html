@@ -18,6 +18,7 @@
 <a class="gf-skip" href="#main-content">Skip to content</a>
 {% include 'shop/includes/navbar.html' %}
 <main id="main-content">
+    {% if commerce_preview %}<div class="gf-preview-banner" role="note">LOCAL FEATURE PREVIEW · Delivery rates, component options, warranty terms and customer content here are sample data for review.</div>{% endif %}
     {% if messages %}
         <div class="gf-shell gf-messages" aria-live="polite">{% for message in messages %}
             <p class="gf-notice {{ message.tags }}">{{ message }}</p>{% endfor %}</div>{% endif %}

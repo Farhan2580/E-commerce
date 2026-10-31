@@ -35,8 +35,8 @@
                 {% if coupon_error %}<p class="gf-error" role="alert">{{ coupon_error }}</p>{% endif %}
                 {% if coupon_discount %}<p><span>Coupon {{ coupon_code }}</span><strong>−৳{{ coupon_discount }}</strong></p>{% endif %}
                 <p><span>Subtotal</span><strong>৳{{ subtotal }}</strong></p>
-                <p><span>Shipping</span><strong>৳{{ shipping }}</strong></p>{% if savings %}
-                    <p><span>You save</span><strong>৳{{ savings }}</strong></p>{% endif %}<p class="gf-total"><span>Total</span><strong>৳{{ grand_total }}</strong>
+                <p><span>Shipping</span><strong>{% if shipping_pending %}Calculated at checkout{% else %}৳{{ shipping }}{% endif %}</strong></p>{% if savings %}
+                    <p><span>You save</span><strong>৳{{ savings }}</strong></p>{% endif %}<p class="gf-total"><span>{% if shipping_pending %}Total before delivery{% else %}Total{% endif %}</span><strong>৳{{ grand_total }}</strong>
                 </p><a class="gf-button gf-button-primary" href="{% url 'checkout' %}">Continue to checkout</a><a
                         href="{% url 'product_list' %}">Continue shopping →</a></aside>
         </div>{% else %}

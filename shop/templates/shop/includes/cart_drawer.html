@@ -23,7 +23,7 @@
 <div class="gf-drawer-empty"><span aria-hidden="true">♡</span><h3>Your bag is empty.</h3><p>Find your next upgrade.</p><a class="gf-button gf-button-primary" href="{% url 'product_list' %}">Explore products</a></div>
 {% endfor %}
 <div class="gf-drawer-footer">
-    <div class="gf-drawer-totals"><p>Subtotal <strong>৳{{ subtotal|floatformat:2 }}</strong></p><p>Shipping <strong>৳{{ shipping|floatformat:2 }}</strong></p>{% if coupon_discount %}<p>Coupon {{ coupon_code }} <strong>−৳{{ coupon_discount|floatformat:2 }}</strong></p>{% endif %}{% if coupon_error %}<p class="gf-error">{{ coupon_error }}</p>{% endif %}<p class="gf-drawer-grand-total">Total <strong data-drawer-total>৳{{ grand_total|floatformat:2 }}</strong></p></div>
+    <div class="gf-drawer-totals"><p>Subtotal <strong>৳{{ subtotal|floatformat:2 }}</strong></p><p>Shipping <strong>{% if shipping_pending %}Calculated at checkout{% else %}৳{{ shipping|floatformat:2 }}{% endif %}</strong></p>{% if coupon_discount %}<p>Coupon {{ coupon_code }} <strong>−৳{{ coupon_discount|floatformat:2 }}</strong></p>{% endif %}{% if coupon_error %}<p class="gf-error">{{ coupon_error }}</p>{% endif %}<p class="gf-drawer-grand-total">{% if shipping_pending %}Total before delivery{% else %}Total{% endif %} <strong data-drawer-total>৳{{ grand_total|floatformat:2 }}</strong></p></div>
     {% if cart_valid %}<a class="gf-button gf-button-primary" href="{% url 'checkout' %}">Continue to checkout</a>{% elif items %}<p class="gf-error">Update unavailable items before checking out.</p>{% endif %}
     <a class="gf-button gf-button-secondary" href="{% url 'cart_view' %}">View full cart</a>
 </div>

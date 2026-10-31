@@ -135,8 +135,16 @@ def coupon_amount(coupon, lines, user):
     return min(eligible, discount.quantize(Decimal('.01'), rounding=ROUND_HALF_UP))
 
 
-def checkout_totals(lines, user, code='', strict=False, reserve=False):
+def checkout_totals(lines, user, code='', strict=False, reserve=False, delivery_zone=None):
     totals = cart_totals(lines)
+    from .models import DeliveryZone
+    totals['shipping_pending'] = bool(lines and not delivery_zone and DeliveryZone.objects.filter(active=True).exists())
+    if totals['shipping_pending']:
+        totals['grand_total'] -= totals['shipping']
+        totals['shipping'] = Decimal('0')
+    if delivery_zone and lines:
+        totals['grand_total'] += delivery_zone.shipping_price - totals['shipping']
+        totals['shipping'] = delivery_zone.shipping_price
     totals.update(coupon_code=code.strip().upper(), coupon_discount=Decimal('0'), coupon_error='')
     if totals['coupon_code']:
         try:
@@ -166,10 +174,12 @@ def create_order(user, session, data):
     # Also protects per-customer coupon limits across different checkout tokens.
     # SQLite uses its database write lock; PostgreSQL locks this account row.
     from django.contrib.auth import get_user_model
-    get_user_model().objects.select_for_update().get(pk=user.pk)
+    customer = user if user.is_authenticated else None
+    if customer:
+        get_user_model().objects.select_for_update().get(pk=customer.pk)
     token = UUID(str(data['checkout_token']))
-    previous = Order.objects.filter(checkout_token=token, user=user).first()
-    if previous:
+    previous = Order.objects.filter(checkout_token=token, user=customer).first()
+    if previous and (customer or previous.pk in session.get('guest_order_ids', []) or str(token) == session.get('checkout_token')):
         return previous
     if str(token) != session.get('checkout_token'):
         raise ValidationError('Checkout expired or changed. Reload checkout and try again.')
@@ -183,8 +193,11 @@ def create_order(user, session, data):
         raise ValidationError('bKash is currently unavailable. Choose another payment method.')
     # A unique token arbitrates simultaneous repeats. All reservations and writes
     # roll back together if a later line runs out of stock.
-    totals = checkout_totals(lines, user, data.get('coupon_code', session.get('coupon_code', '')), strict=True, reserve=True)
-    order = Order.objects.create(user=user, checkout_token=token,
+    from .commerce import selected_zone
+    zone = selected_zone(data.get('delivery_zone'), required=True, lock=True)
+    totals = checkout_totals(lines, user, data.get('coupon_code', session.get('coupon_code', '')), strict=True, reserve=True, delivery_zone=zone)
+    order = Order.objects.create(user=customer, checkout_token=token,
+                                 delivery_area=zone.name if zone else '', delivery_estimate=zone.estimate if zone else '',
                                  full_name=data['full_name'], email=data['email'], address=data['address'],
                                  phone=data['phone'],
                                  payment_method=data['payment_method'],

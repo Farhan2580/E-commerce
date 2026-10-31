@@ -16,7 +16,7 @@
         </form>
         {% for group in faq_groups %}<section class="gf-faq-group"><h2>{{ group.label }}</h2>{% for entry in group.entries %}<details class="gf-faq-item"><summary>{{ entry.question }}</summary><div>{{ entry.answer|linebreaks }}</div></details>{% endfor %}</section>{% empty %}<p class="gf-empty-state">{{ support_ui.no_faqs }}</p>{% endfor %}
     {% elif page.slug == 'shipping' %}
-        <div class="gf-panel gf-shipping-fact"><h2>{{ support_ui.shipping_charge }}</h2><strong>৳{{ store.shipping_price|floatformat:2 }}</strong><p>{{ support_ui.shipping_note }}</p></div>
+        <div class="gf-panel gf-shipping-fact"><h2>{{ support_ui.shipping_charge }}</h2>{% if delivery_zones %}<div class="gf-table-wrap"><table><thead><tr><th>Delivery area</th><th>Charge</th><th>Estimated delivery</th></tr></thead><tbody>{% for zone in delivery_zones %}<tr><td>{{ zone.name }}</td><td>৳{{ zone.shipping_price }}</td><td>{{ zone.estimate }}</td></tr>{% endfor %}</tbody></table></div><p>Delivery estimates start after order confirmation. Weekends and holidays may affect delivery.</p>{% else %}<strong>৳{{ store.shipping_price|floatformat:2 }}</strong><p>{{ support_ui.shipping_note }}</p>{% endif %}</div>
     {% elif page.slug == 'payments' %}
         <h2>{{ support_ui.enabled_payments }}</h2><div class="gf-payment-cards">{% for method in payment_cards %}<article class="gf-panel"><h3>{{ method.title }}</h3><p>{{ method.instructions }}</p>{% if method.number %}<p>{{ support_ui.receiving_number }}: <strong>{{ method.number }}</strong></p>{% endif %}</article>{% empty %}<p class="gf-notice">{{ support_ui.no_payments }}</p>{% endfor %}</div>
         <p class="gf-notice">{{ support_ui.payment_help }}</p>

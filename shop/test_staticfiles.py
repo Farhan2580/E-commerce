@@ -23,7 +23,7 @@ class CollectedStaticTests(SimpleTestCase):
     def test_local_css_and_js_without_collected_assets(self):
         with TemporaryDirectory() as directory, self.settings(STATIC_ROOT=directory):
             client = Client()
-            for name in ('store-components', 'premium', 'footer'):
+            for name in ('store-components', 'premium', 'footer', 'commerce'):
                 for extension in ('css', 'js'):
                     with self.subTest(name=name, extension=extension):
                         response = client.get(f'/static/shop/{name}.{extension}')
@@ -44,7 +44,7 @@ class CollectedStaticTests(SimpleTestCase):
             call_command('collectstatic', interactive=False, verbosity=0)
             links = StylesheetLinks()
             links.feed(render_to_string('shop/includes/store_assets.html'))
-            self.assertEqual(len(links.paths), 3)
+            self.assertEqual(len(links.paths), 4)
             client = Client()
             for path in links.paths:
                 with self.subTest(path=path):

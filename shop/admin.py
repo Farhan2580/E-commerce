@@ -12,6 +12,33 @@ from .models import PaymentAttempt
 from . import manual_payment_admin  # Register audited manual payment review.
 from .models import Outlet, FooterGroup
 from .models import NavigationItem
+from .models import DeliveryZone, PCComponent, ProductQuestion
+
+
+@admin.register(DeliveryZone)
+class DeliveryZoneAdmin(admin.ModelAdmin):
+    list_display = ('name', 'shipping_price', 'min_days', 'max_days', 'active', 'position')
+    list_editable = ('active', 'position')
+    list_filter = ('active',)
+
+
+@admin.register(ProductQuestion)
+class ProductQuestionAdmin(admin.ModelAdmin):
+    list_display = ('product', 'user', 'is_published', 'created_at')
+    list_filter = ('is_published',)
+    search_fields = ('question', 'product__name')
+    readonly_fields = ('user', 'product', 'question', 'created_at')
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(PCComponent)
+class PCComponentAdmin(admin.ModelAdmin):
+    list_display = ('product', 'kind', 'socket', 'memory_type', 'active')
+    list_filter = ('kind', 'active')
+    search_fields = ('product__name',)
+    autocomplete_fields = ('product',)
 
 
 @admin.register(NavigationItem)
@@ -187,7 +214,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = ('status', 'payment_method', 'payment_status', 'date_ordered')
     search_fields = ('full_name', 'phone', 'email', 'trx_id')
     readonly_fields = ('user', 'full_name', 'email', 'address', 'phone', 'total_price', 'subtotal', 'shipping_price',
-                       'savings', 'coupon_code', 'coupon_discount', 'date_ordered', 'checkout_token', 'payment_method', 'bkash_number', 'trx_id')
+                       'savings', 'coupon_code', 'coupon_discount', 'date_ordered', 'checkout_token', 'payment_method', 'bkash_number', 'trx_id', 'delivery_area', 'delivery_estimate')
     inlines = [OrderItemInline, StatusEventInline, PaymentAttemptInline]
 
     def get_readonly_fields(self, request, obj=None):

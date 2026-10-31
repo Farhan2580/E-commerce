@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}{{ title }} | GadgetFlow{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex,nofollow">{% endblock %}
 {% block content %}
 <section class="gf-shell gf-page gf-information" lang="{{ support_language }}">
     {% include 'shop/includes/information_header.html' %}
@@ -8,6 +9,7 @@
     <form action="{% url 'track_order' %}" method="get" class="gf-panel gf-faq-search"><label>{{ support_ui.choose_order }}<select name="order" required>{% for item in tracking_orders %}<option value="{{ item.pk }}" {% if tracked_order.pk == item.pk %}selected{% endif %}>{{ support_ui.order }} #{{ item.pk }} · {{ item.date_ordered|date:'d M Y' }}</option>{% endfor %}</select></label><button class="gf-button gf-button-primary" {% if not tracking_orders %}disabled{% endif %}>{{ support_ui.track }}</button></form>
     {% if not tracking_orders %}<p>{{ support_ui.no_orders }}</p>{% endif %}
     {% if tracked_order %}
+        {% include 'shop/includes/order_progress.html' %}
         <div class="gf-support-layout">
             <section class="gf-panel"><h2>{{ support_ui.order }} #{{ tracked_order.pk }}</h2><p>{{ support_ui.placed }}: {{ tracked_order.date_ordered|date:'d M Y, H:i' }}</p><h3>{{ support_ui.status }}: {{ tracking_status }}</h3>
                 <ol class="gf-timeline">{% for event in tracking_events %}<li><strong>{{ event.label }}</strong><time datetime="{{ event.created_at|date:'c' }}">{{ event.created_at|date:'d M Y, H:i' }}</time></li>{% empty %}<li>{{ support_ui.no_events }}</li>{% endfor %}</ol>

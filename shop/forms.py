@@ -3,6 +3,7 @@ from .models import Review, Preorder, SavedAddress
 
 
 class CheckoutForm(forms.Form):
+    delivery_zone = forms.ModelChoiceField(queryset=None, required=False, label='Delivery area', empty_label='Choose your delivery area')
     coupon_code = forms.CharField(max_length=40, required=False, label='Coupon code', help_text='Discount is validated again when your order is placed.')
     full_name = forms.CharField(max_length=100, label="Full Name")
     email = forms.EmailField(label="Email")
@@ -19,6 +20,16 @@ class CheckoutForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         from .services import enabled_payment_methods
+        from .models import DeliveryZone
+        self.fields['delivery_zone'].queryset = DeliveryZone.objects.filter(active=True)
+        self.fields['delivery_zone'].label_from_instance = lambda zone: f'{zone.name} · BDT {zone.shipping_price} · {zone.estimate}'
+        self.fields['delivery_zone'].required = self.fields['delivery_zone'].queryset.exists()
+        self.fields['delivery_zone'].help_text = 'Choose an area, then review delivery & total before placing your order.'
+        if not self.fields['delivery_zone'].required:
+            self.fields['delivery_zone'].widget = forms.HiddenInput()
+        self.fields['full_name'].widget.attrs['autocomplete'] = 'name'
+        self.fields['email'].widget.attrs['autocomplete'] = 'email'
+        self.fields['phone'].widget.attrs.update({'autocomplete': 'tel', 'type': 'tel'})
         self.fields['payment_method'].choices = enabled_payment_methods()
 
     def clean_payment_method(self):
@@ -64,6 +75,13 @@ class ManualReferenceForm(forms.Form):
 
 
 class ReviewForm(forms.ModelForm):
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if image and hasattr(image, 'image'):
+            if image.size > 5 * 1024 * 1024 or image.image.format not in {'JPEG', 'PNG', 'WEBP'}:
+                raise forms.ValidationError('Choose a JPEG, PNG or WebP photo up to 5 MB.')
+        return image
+
     rating = forms.ChoiceField(
         choices=[(i, str(i)) for i in range(1, 6)],  # i as int, str(i) as label
         widget=forms.RadioSelect,
@@ -72,7 +90,8 @@ class ReviewForm(forms.ModelForm):
 
     class Meta:
         model = Review
-        fields = ['rating', 'comment']
+        fields = ['rating', 'comment', 'image']
+        help_texts = {'image': 'Optional product photo. JPEG, PNG or WebP, up to 5 MB.'}
         widgets = {
             'comment': forms.Textarea(attrs={
                 'rows': 3,

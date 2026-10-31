@@ -47,11 +47,13 @@ def navigation_categories():
 
 
 def cart_count(request):
+    from django.conf import settings
     from .services import comparison_ids, normalized_cart, settings_for_store
     from .models import Category, Wishlist
     from .support import support_context
     store = settings_for_store()
-    return {'cart_count': sum(normalized_cart(request.session).values()),
+    return {'commerce_preview': getattr(settings, 'COMMERCE_PREVIEW', False),
+            'cart_count': sum(normalized_cart(request.session).values()),
             'nav_categories': navigation_categories(),
             **support_context(request, store),
             'compare_ids': comparison_ids(request.session),

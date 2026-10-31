@@ -10,7 +10,7 @@
                 {% for child in category.children.all %}<a class="gf-child-link"
                                                            href="{% url 'product_list' %}?category={{ child.pk }}">{{ child.name }}</a>
                 {% endfor %}{% if category.nav_brands %}<details class="gf-mobile-brand-group"><summary>{{ category.name }} brands</summary>{% for brand in category.nav_brands %}<a class="gf-child-link" href="{{ brand.url }}">{{ brand.name }}</a>{% endfor %}</details>{% endif %}{% endfor %}<a href="{% url 'preorder' %}">Pre-order</a><a
-                    href="{% url 'offers' %}">Offers</a><a href="{% url 'policy' 'contact' %}">Contact GadgetFlow</a>
+                    href="{% url 'offers' %}">Offers</a><a href="{% url 'pc_builder' %}">PC Builder</a><a href="{% url 'policy' 'contact' %}">Contact GadgetFlow</a>
             </div>
         </details>
         <a class="gf-brand" href="{% url 'home' %}" aria-label="GadgetFlow home">Gadget<span>Flow</span><small>Tech.
@@ -61,7 +61,7 @@
         </div>
     </div>
     <nav class="gf-categories" aria-label="Product categories">
-        <div class="gf-shell">{% for category in nav_categories %}
+        <div class="gf-shell"><a class="gf-pc-builder-link" href="{% url 'pc_builder' %}"><span aria-hidden="true">⊞</span> PC Builder</a>{% for category in nav_categories %}
             <div class="gf-category-menu"><a
                     href="{{ category.nav_url }}">{{ category.name }}</a>
                 {% if category.children.all or category.nav_brands %}
