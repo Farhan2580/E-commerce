@@ -24,7 +24,7 @@ class Command(BaseCommand):
                     raise CommandError('Configure the actual Apple brand first.')
             else:
                 # Reuse equivalent existing categories without renaming them.
-                target = {'Phones': 'Phones & Tablets', 'Laptops': 'Laptop', 'Gadgets': 'Smart Tech'}.get(label, label)
+                target = {'Laptops': 'Laptop', 'Gadgets': 'Smart Tech'}.get(label, label)
                 category = Category.objects.filter(name__iexact=target).first()
                 if not category:
                     self.stdout.write(f'New empty category: {target}')

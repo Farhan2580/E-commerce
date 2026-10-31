@@ -131,7 +131,9 @@ class ProductAdminForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = '__all__'
-        help_texts = {'specifications': 'Enter a JSON object with text labels and simple values, '
+        help_texts = {'category': 'Choose Phones for mobile phones and Tablets for iPads and other tablets. '
+                      'The storefront menu uses these same categories.',
+                      'specifications': 'Enter a JSON object with text labels and simple values, '
                       'for example {"Model": "Manufacturer model", "Box contents": "Verified contents"}. '
                       'Use only verified information; leave {} when unknown.'}
 

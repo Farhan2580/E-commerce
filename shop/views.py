@@ -620,7 +620,7 @@ def laptop_desktop(request):
 
 
 def phones_tablets(request):
-    return legacy_category(request, ['Phones & Tablets'])
+    return legacy_category(request, ['Phones', 'Phones & Tablets'])
 
 
 def sound_equipment(request):
