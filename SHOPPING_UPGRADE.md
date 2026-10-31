@@ -1,5 +1,20 @@
 # Shopping experience upgrade — local review
 
+## Cart and checkout reference design
+
+Cart and checkout now use the owner's supplied reference: a pale blue backdrop,
+one rounded white panel, product rows on the left, and a quiet payment/summary
+column on the right with a blue main action. Mobile stacks these columns. The
+existing guest checkout, coupons, area quotes, stock checks and hosted payment
+flow are preserved. No card-number/CVV collection or new payment methods were
+introduced. No new migration or database write is required for this design.
+
+All 190 Django tests pass. Browser checks at 1440, 768, 390 and 320 pixels cover
+the cart and checkout; quantity updates, removal and guest COD submission work.
+Screenshots: `.browser-preview/reference-cart-1440.png`,
+`.browser-preview/reference-checkout-1440.png` and their `390` mobile versions.
+The isolated sample preview was used for browser shopping actions.
+
 This change has not been committed, pushed or deployed by the agent. Migration
 `0021_shopping_experience` was applied to the local database after a SQLite backup
 in ignored `.local-backups/shopping-upgrade/`. Existing catalog/order records are

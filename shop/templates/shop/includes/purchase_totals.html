@@ -1,0 +1,7 @@
+<div class="gf-bag-totals"><p><span>Subtotal</span><strong>৳{{ subtotal|floatformat:'2g' }}</strong></p>
+    {% if coupon_discount %}<p><span>Coupon · {{ coupon_code }}</span><strong>−৳{{ coupon_discount|floatformat:'2g' }}</strong></p>{% endif %}
+    <p><span>Delivery{% if delivery_quote %} · {{ delivery_quote.name }}{% endif %}</span><strong>{% if shipping_pending %}Calculated at checkout{% else %}৳{{ shipping|floatformat:'2g' }}{% endif %}</strong></p>
+    {% if savings %}<p class="gf-bag-savings"><span>Savings in item prices</span><strong>৳{{ savings|floatformat:'2g' }}</strong></p>{% endif %}
+    {% if coupon_error %}<p class="gf-error" role="alert">{{ coupon_error }}</p>{% endif %}{% if delivery_error %}<p class="gf-error" role="alert">{{ delivery_error }}</p>{% endif %}
+    <p class="gf-bag-grand"><span>{% if shipping_pending %}Total before delivery{% else %}Total amount{% endif %}</span><strong>৳{{ grand_total|floatformat:'2g' }}</strong></p>
+</div>{% if delivery_quote %}<div class="gf-delivery-result"><strong>{{ delivery_quote.estimate }}</strong><span>Estimated after order confirmation.</span></div>{% elif shipping_pending %}<p class="gf-bag-note">Choose a delivery area at checkout to confirm your final total.</p>{% endif %}

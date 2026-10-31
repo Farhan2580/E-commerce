@@ -1,51 +1,30 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Checkout | GadgetFlow{% endblock %}
-{% block extra_head %}<meta name="robots" content="noindex,nofollow">{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex,nofollow"><link rel="stylesheet" href="{% static 'shop/purchase.css' %}">{% endblock %}
 {% block content %}
-    <div class="gf-shell gf-page"><span class="gf-eyebrow">JUST A FEW DETAILS TO GO</span><h1>Make it yours.</h1><p class="gf-checkout-intro">Your picks, your doorstep. Review the details and we’ll take it from here.</p>
-        {% if not user.is_authenticated %}<div class="gf-guest-note"><span class="gf-guest-badge">Guest checkout</span><p>No account needed. Already shop with us? <a href="{% url 'login' %}?next={% url 'checkout' %}">Sign in for saved addresses & coupons →</a></p></div>{% endif %}
-        <div class="gf-checkout-layout">
-            <section class="gf-panel"><h2>Delivery & payment details</h2>
-                {% if addresses %}<form action="{% url 'checkout' %}" method="get" class="gf-form"><label>Use a saved address<select name="address">{% for address in addresses %}<option value="{{ address.pk }}">{{ address.label }} — {{ address.full_name }}</option>{% endfor %}</select></label><button class="gf-button gf-button-secondary">Use address</button></form>{% endif %}
-                <form action="{% url 'checkout' %}" method="post" class="gf-form" data-checkout-form>
-                    {% csrf_token %}{{ form.checkout_token }}{{ form.non_field_errors }}
-                            {% for field in form.visible_fields %}{% if field.name == 'payment_method' %}
-                                <fieldset class="gf-payment-methods"><legend>Choose a payment method</legend>
-                                    <div id="id_payment_method">
-                                    {% for method in payment_choices %}
-                                        <label class="gf-payment-card{% if not method.ready %} gf-payment-unavailable{% endif %}">
-                                            <input type="radio" name="payment_method" value="{{ method.code }}" id="payment_{{ method.code }}"
-                                                aria-describedby="payment_help_{{ method.code }}" {% if not method.ready %}disabled{% elif selected_payment == method.code %}checked{% endif %} required>
-                                            {% if method.icon == 'wallet' %}<img class="gf-bkash-brand" src="{% static 'shop/payment-brands/bkash.png' %}" alt="" width="100" height="46">{% else %}{% include 'shop/includes/payment_icon.html' with kind=method.icon %}{% endif %}
-                                            <span><strong>{{ method.name }}</strong>{% if not method.ready %}<small>Currently unavailable</small>{% else %}{% if method.code != 'COD' %}<small>{% if method.code == 'BKASH' %}Verified business account · Store review{% else %}Secure checkout{% endif %}</small>{% endif %}{% endif %}</span>
-                                            {% if method.code == 'CARD' and accepted_card_brands %}<span class="gf-accepted-brands" aria-label="Accepted card brands">{% for brand in accepted_card_brands %}<img src="{% static brand.asset %}" alt="{{ brand.name }}" width="48" height="32">{% endfor %}</span>{% endif %}
-                                        </label>
-                                        <p id="payment_help_{{ method.code }}" data-payment-help="{{ method.code }}" {% if selected_payment != method.code and method.ready %}hidden{% endif %}>
-                                            {% if method.ready %}{{ method.instructions }}{% else %}{{ method.name }} is currently unavailable. Please choose another payment method.{% endif %}
-                                        </p>
-                                    {% endfor %}</div>{{ field.errors }}
-                                </fieldset>
-                            {% elif field.name != 'bkash_number' and field.name != 'trx_id' %}<p>
-                                {{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}
-                                    <small>{{ field.help_text }}</small>{% endif %}</p>{% endif %}{% endfor %}
-                    <p
-                        class="gf-form-status" role="status"></p>
-                    <button class="gf-button gf-button-secondary" name="action" value="preview" formnovalidate>Review delivery & total</button>
-                    <button class="gf-button gf-button-primary" data-place-order data-pay-label="Pay ৳{{ grand_total }}" {% if not payments_available %}disabled data-payments-disabled{% endif %}>{% if selected_payment == 'COD' or selected_payment == 'BKASH' %}Place Order{% else %}Pay ৳{{ grand_total }}{% endif %}</button>
-                </form>
-            </section>
-            <aside class="gf-panel gf-summary"><h2>Review your order</h2>{% for item in cart_items %}
-                <div class="gf-checkout-item"><strong>{{ item.product.name }}</strong>{% if item.variant %}
-                    <small>{{ item.variant.name }}</small>{% endif %}<p>{{ item.qty }} × ৳{{ item.price }}
-                    <strong>৳{{ item.subtotal }}</strong></p>{% if item.error %}
-                    <p class="gf-error">{{ item.error }}</p>{% endif %}</div>{% endfor %}<p>
-                <span>Subtotal</span><strong>৳{{ subtotal }}</strong></p>
-                {% if coupon_error %}<p class="gf-error" role="alert">{{ coupon_error }}</p>{% endif %}{% if coupon_discount %}<p><span>Coupon {{ coupon_code }}</span><strong>−৳{{ coupon_discount }}</strong></p>{% endif %}
-                {% if delivery_error %}<p class="gf-error" role="alert">{{ delivery_error }}</p>{% endif %}
-                <p><span>Shipping{% if delivery_quote %} · {{ delivery_quote.name }}{% endif %}</span><strong>{% if shipping_pending %}Choose delivery area{% else %}৳{{ shipping }}{% endif %}</strong></p>{% if delivery_quote %}<div class="gf-delivery-result"><strong>{{ delivery_quote.estimate }}</strong><span>Estimated after order confirmation.</span></div>{% elif form.delivery_zone.field.required %}<div class="gf-notice">Choose a delivery area and review your total to confirm shipping.</div>{% endif %}{% if savings %}
-                    <p><span>Savings included in item prices</span><strong>৳{{ savings }}</strong></p>{% endif %}<p
-                        class="gf-total"><span>{% if shipping_pending %}Total before delivery{% else %}Total payable{% endif %}</span><strong>৳{{ grand_total }}</strong></p><a
-                        href="{% url 'cart_view' %}">Edit cart →</a></aside>
-        </div>
-    </div>{% endblock %}
+<div class="gf-purchase-stage"><div class="gf-shell"><nav class="gf-purchase-trail" aria-label="Shopping steps"><a href="{% url 'cart_view' %}">01 Shopping cart</a><span aria-hidden="true">—</span><span aria-current="step">02 Delivery & payment</span></nav>
+<div class="gf-purchase-card gf-checkout-card">
+<section class="gf-bag-column" aria-labelledby="checkout-bag-title"><div class="gf-purchase-heading"><h1 id="checkout-bag-title">Shopping Cart</h1><span>{{ cart_count }} item{{ cart_count|pluralize }}</span></div><div class="gf-bag-table-head"><span>Your selection</span><span>Price</span></div>
+{% for item in cart_items %}{% include 'shop/includes/purchase_item.html' with editable=False %}{% endfor %}
+<div class="gf-bag-subtotal"><span>Subtotal · {{ cart_count }} item{{ cart_count|pluralize }}</span><strong>৳{{ subtotal|floatformat:'2g' }}</strong></div>
+<div class="gf-bag-footer"><a class="gf-continue-shopping" href="{% url 'product_list' %}"><span aria-hidden="true">←</span> Continue shopping</a><a class="gf-edit-bag" href="{% url 'cart_view' %}">Edit cart</a></div>
+<div class="gf-bag-checkout-note"><span aria-hidden="true">◇</span><span>Prices, stock and delivery are confirmed again when you place your order.</span></div>
+</section>
+<section class="gf-payment-column" aria-labelledby="payment-title"><h2 id="payment-title">Payment Details</h2><p class="gf-purchase-lead">Where should we send your next upgrade?</p>
+{% if not user.is_authenticated %}<div class="gf-checkout-guest"><span class="gf-guest-badge">Guest checkout</span><a href="{% url 'login' %}?next={% url 'checkout' %}">Sign in instead →</a></div>{% endif %}
+{% if addresses %}<form action="{% url 'checkout' %}" method="get" class="gf-form gf-saved-address"><label for="saved-address">Use a saved address</label><div class="gf-promo-input"><select id="saved-address" name="address">{% for address in addresses %}<option value="{{ address.pk }}">{{ address.label }} · {{ address.full_name }}</option>{% endfor %}</select><button type="submit">Use</button></div></form>{% endif %}
+<form action="{% url 'checkout' %}" method="post" class="gf-form gf-purchase-form" data-checkout-form>
+{% csrf_token %}{{ form.checkout_token }}{{ form.non_field_errors }}
+<div class="gf-purchase-fields">{% for field in form.visible_fields %}{% if field.name != 'payment_method' and field.name != 'coupon_code' and field.name != 'bkash_number' and field.name != 'trx_id' %}<div class="gf-purchase-field gf-field-{{ field.name }}">{{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}</div>{% endif %}{% endfor %}</div>
+<details class="gf-promo-code" {% if coupon_code or coupon_error or form.coupon_code.errors %}open{% endif %}><summary>I have a promo code <span aria-hidden="true">+</span></summary><div class="gf-purchase-field">{{ form.coupon_code.label_tag }}<div class="gf-promo-input">{{ form.coupon_code }}<button name="action" value="preview" formnovalidate>Apply</button></div>{{ form.coupon_code.errors }}<small>{% if not user.is_authenticated %}Sign in to use account coupons.{% else %}Leave blank and apply to remove a code.{% endif %}</small></div></details>
+<div class="gf-summary gf-payment-summary">{% include 'shop/includes/purchase_totals.html' %}</div>
+<fieldset class="gf-payment-methods"><legend>Payment Options<small>Choose a payment method</small></legend><div id="id_payment_method">{% for method in payment_choices %}<div class="gf-payment-option"><label class="gf-payment-card{% if not method.ready %} gf-payment-unavailable{% endif %}"><input type="radio" name="payment_method" value="{{ method.code }}" id="payment_{{ method.code }}" aria-describedby="payment_help_{{ method.code }}" {% if not method.ready %}disabled{% elif selected_payment == method.code %}checked{% endif %} required>
+{% if method.icon == 'wallet' %}<img class="gf-bkash-brand" src="{% static 'shop/payment-brands/bkash.png' %}" alt="" width="100" height="46">{% else %}{% include 'shop/includes/payment_icon.html' with kind=method.icon %}{% endif %}<span class="gf-payment-label"><strong>{{ method.name }}</strong><small>{% if not method.ready %}Currently unavailable{% elif method.code == 'COD' %}Pay when your order arrives{% elif method.code == 'BKASH' %}Store verification required{% else %}Secure hosted checkout{% endif %}</small></span>
+{% if method.code == 'CARD' and accepted_card_brands %}<span class="gf-accepted-brands" aria-label="Accepted card brands">{% for brand in accepted_card_brands %}<img src="{% static brand.asset %}" alt="{{ brand.name }}" width="48" height="32">{% endfor %}</span>{% endif %}</label><p id="payment_help_{{ method.code }}" data-payment-help="{{ method.code }}" {% if selected_payment != method.code and method.ready %}hidden{% endif %}>{% if method.ready %}{{ method.instructions }}{% else %}{{ method.name }} is currently unavailable. Please choose another payment method.{% endif %}</p></div>{% endfor %}</div>{{ form.payment_method.errors }}</fieldset>
+<p class="gf-form-status" role="status"></p><button class="gf-purchase-review" name="action" value="preview" formnovalidate>Review delivery & total</button>
+<button class="gf-purchase-primary" data-place-order data-pay-label="Pay ৳{{ grand_total }}" {% if not payments_available %}disabled data-payments-disabled{% endif %}>{% if selected_payment == 'COD' or selected_payment == 'BKASH' %}Place Order{% else %}Pay ৳{{ grand_total }}{% endif %}</button>
+<p class="gf-bag-note gf-bag-center">{% if selected_payment == 'COD' %}Pay on delivery. No advance payment needed.{% else %}Review the payment instructions above before continuing.{% endif %}</p>
+</form></section>
+</div></div></div>
+{% endblock %}

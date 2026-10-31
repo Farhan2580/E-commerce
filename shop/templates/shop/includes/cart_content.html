@@ -1,46 +1,14 @@
-<div class="gf-shell gf-page"><h1>Shopping cart</h1>{% if items %}
-        <div class="gf-checkout-layout">
-            <section class="gf-panel">{% for item in items %}
-                <article class="gf-cart-row" data-cart-key="{{ item.key }}">
-                    <div>{% if item.image_url %}
-                        <img src="{{ item.image_url }}" alt="{{ item.product.name }}" width="90"
-                             height="90">{% endif %}</div>
-                    <div><h2>{% if item.product %}
-                        <a href="{% url 'product_detail' item.product.pk %}">{{ item.product.name }}</a>{% else %}
-                        Unavailable product{% endif %}</h2>{% if item.variant %}
-                        <p>{{ item.variant.option_label }}</p>{% endif %}<p>৳{{ item.price }} each</p>{% if item.error %}
-                        <p class="gf-error" role="alert">{{ item.error }}</p>{% endif %}
-                        <form action="{% url 'update_cart' %}" method="post"
-                              class="gf-inline-form" data-cart-change>{% csrf_token %}<label
-                                for="qty-{{ forloop.counter }}">Quantity</label><input id="qty-{{ forloop.counter }}"
-                                                                                       name="qty_{{ item.key }}"
-                                                                                       type="number" min="0" max="{{ item.stock_limit }}"
-                                                                                       value="{{ item.qty }}" required>
-                            <button class="gf-button gf-button-secondary">Update</button>
-                        </form>
-                        <form action="{% url 'remove_from_cart' item.product_id %}" method="post"
-                              data-remove-line="{{ item.key }}" data-cart-change class="gf-remove-form">{% csrf_token %}<input name="key"
-                                                                                                              value="{{ item.key }}"
-                                                                                                              type="hidden">
-                            <button>Remove</button>
-                        </form>
-                    </div>
-                    <strong>৳{{ item.subtotal }}</strong></article>{% endfor %}
-                <form action="{% url 'clear_cart' %}" method="post" data-cart-change>{% csrf_token %}
-                    <button class="gf-button gf-button-secondary">Clear cart</button>
-                </form>
-            </section>
-            <aside class="gf-panel gf-summary"><h2>Order summary</h2>
-                <form action="{% url 'apply_coupon' %}" method="post" class="gf-form">{% csrf_token %}<label>Coupon code<input name="coupon_code" value="{{ coupon_code }}" maxlength="40"></label><button class="gf-button gf-button-secondary">Apply / remove coupon</button><small>Leave blank to remove.</small></form>
-                {% if coupon_error %}<p class="gf-error" role="alert">{{ coupon_error }}</p>{% endif %}
-                {% if coupon_discount %}<p><span>Coupon {{ coupon_code }}</span><strong>−৳{{ coupon_discount }}</strong></p>{% endif %}
-                <p><span>Subtotal</span><strong>৳{{ subtotal }}</strong></p>
-                <p><span>Shipping</span><strong>{% if shipping_pending %}Calculated at checkout{% else %}৳{{ shipping }}{% endif %}</strong></p>{% if savings %}
-                    <p><span>You save</span><strong>৳{{ savings }}</strong></p>{% endif %}<p class="gf-total"><span>{% if shipping_pending %}Total before delivery{% else %}Total{% endif %}</span><strong>৳{{ grand_total }}</strong>
-                </p><a class="gf-button gf-button-primary" href="{% url 'checkout' %}">Continue to checkout</a><a
-                        href="{% url 'product_list' %}">Continue shopping →</a></aside>
-        </div>{% else %}
-        <div class="gf-empty-state"><h2>Your cart is empty.</h2>
-            <p>Discover something you’ll love.</p><a class="gf-button gf-button-primary"
-                                                     href="{% url 'product_list' %}">Explore products</a>
-        </div>{% endif %}</div>
+<div class="gf-purchase-stage"><div class="gf-shell"><nav class="gf-purchase-trail" aria-label="Shopping steps"><span aria-current="step">01 Shopping cart</span><span aria-hidden="true">—</span><span>02 Delivery & payment</span></nav>
+{% if items %}<div class="gf-purchase-card">
+<section class="gf-bag-column" aria-labelledby="bag-title"><div class="gf-purchase-heading"><h1 id="bag-title">Shopping Cart</h1><span>{{ cart_count }} item{{ cart_count|pluralize }}</span></div><div class="gf-bag-table-head"><span>Your selection</span><span>Price</span></div>
+{% for item in items %}{% include 'shop/includes/purchase_item.html' with editable=True %}{% endfor %}
+<div class="gf-bag-subtotal"><span>Subtotal · {{ cart_count }} item{{ cart_count|pluralize }}</span><strong>৳{{ subtotal|floatformat:'2g' }}</strong></div>
+<div class="gf-bag-footer"><a class="gf-continue-shopping" href="{% url 'product_list' %}"><span aria-hidden="true">←</span> Continue shopping</a><form action="{% url 'clear_cart' %}" method="post" data-cart-change>{% csrf_token %}<button class="gf-clear-bag">Clear cart</button></form></div>
+</section>
+<aside class="gf-payment-column gf-summary" aria-labelledby="summary-title"><h2 id="summary-title">Order Summary</h2><p class="gf-purchase-lead">A little closer to your next upgrade.</p>
+<details class="gf-promo-code" {% if coupon_code or coupon_error %}open{% endif %}><summary>I have a promo code <span aria-hidden="true">+</span></summary><form action="{% url 'apply_coupon' %}" method="post" class="gf-form">{% csrf_token %}<label for="bag-coupon">Coupon code</label><div class="gf-promo-input"><input id="bag-coupon" name="coupon_code" value="{{ coupon_code }}" maxlength="40" placeholder="Enter your code"><button type="submit">Apply</button></div><small>Leave blank and apply to remove a code.{% if not user.is_authenticated %} Sign in to use account coupons.{% endif %}</small></form></details>
+{% include 'shop/includes/purchase_totals.html' %}
+<div class="gf-bag-checkout-note"><span aria-hidden="true">◇</span><span>Review delivery and available payment methods at checkout.</span></div>
+<a class="gf-purchase-primary" href="{% url 'checkout' %}">Continue to checkout <span aria-hidden="true">→</span></a><p class="gf-bag-note gf-bag-center">{% if user.is_authenticated %}Your order details stay in your account.{% else %}No account? You can check out as a guest.{% endif %}</p></aside>
+</div>{% else %}<div class="gf-purchase-card gf-bag-empty"><span class="gf-bag-empty-icon" aria-hidden="true">＋</span><h1>Your next find is waiting.</h1><p>Your shopping cart is empty. Explore the collection and find something you love.</p><a class="gf-purchase-primary" href="{% url 'product_list' %}">Explore products →</a></div>{% endif %}
+</div></div>

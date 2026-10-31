@@ -1,3 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Shopping cart | GadgetFlow{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex,nofollow"><link rel="stylesheet" href="{% static 'shop/purchase.css' %}">{% endblock %}
 {% block content %}<div data-cart-page>{% include 'shop/includes/cart_content.html' %}</div><p class="gf-shell gf-notice error" data-cart-page-status role="alert" hidden></p>{% endblock %}
