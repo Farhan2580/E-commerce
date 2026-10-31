@@ -116,16 +116,16 @@ html[data-theme=dark] .gf-mobile-menu-shortcuts a > span { color: #ffbd88; }
 .gf-card-media { border-radius: 10px; }
 .gf-card .gf-card-body { padding-top: 6px; }
 .gf-card-title, .gf-collection-page .gf-card-title, .gf-product-rail .gf-card-title { font-size: 12px; line-height: 1.45; min-height: 35px; margin: 3px 0 5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.gf-card-category { display: none; }
+.gf-card-category { display: block; font-size: 9px; line-height: 1.4; margin: 4px 0 3px; }
 .gf-card-price, .gf-collection-page .gf-card-price, .gf-product-rail .gf-card-price { font-size: 15px; line-height: 1.4; margin: 4px 0; }
 .gf-price-comparison { display: flex; gap: 4px; margin: 1px 0 0; }
 .gf-price-comparison del, .gf-price-comparison small { font-size: 9px; }
 .gf-card-price .gf-saving-amount { display: none; }
 .gf-card .gf-stock { min-height: 26px; font-size: 10px; line-height: 1.3; margin-block: 3px 7px; }
-.gf-card-tools { position: absolute; top: 9px; right: 9px; z-index: 2; display: flex; justify-content: flex-end; padding: 0; margin: 0; pointer-events: none; }
-.gf-card-tools > a, .gf-card-tools button { display: flex; align-items: center; justify-content: center; width: auto; min-height: 30px; padding: 4px 7px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--muted); font-size: 9px; line-height: 1.3; white-space: nowrap; text-align: center; pointer-events: auto; }
-.gf-card-tools > a { position: absolute; top: 82px; right: 0; color: var(--orange-dark); box-shadow: 0 2px 7px #18223008; }
-.gf-card-tools > form { min-width: 0; pointer-events: auto; }
+.gf-card-tools { position: static; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0; margin: 5px 0 1px; }
+.gf-card-tools > a, .gf-card-tools button { display: inline-flex; align-items: center; justify-content: center; width: auto; min-width: 0; min-height: 34px; padding: 5px 7px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--ink); font-size: 10px; line-height: 1.3; white-space: nowrap; text-align: center; }
+.gf-card-tools > a { position: static; justify-content: flex-start; padding-inline: 0; border-color: transparent; background: transparent; box-shadow: none; }
+.gf-card-tools > form { min-width: 0; margin: 0; }
 .gf-card-tools > a:focus-visible, .gf-card-tools button:focus-visible { outline: 2px solid var(--orange-dark); outline-offset: 2px; }
 .gf-card-actions, .gf-collection-page .gf-card-actions { gap: 5px; flex-wrap: nowrap; }
 .gf-card-actions .gf-button, .gf-collection-page .gf-card-actions .gf-button { min-height: 44px; font-size: 10px; padding: 8px 4px; border-radius: 10px; }

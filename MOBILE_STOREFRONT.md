@@ -18,9 +18,10 @@ There are no model or migration changes.
 - Shorter promotional/collection areas, one-row service shortcuts and a swipeable
   two-row category directory so customers reach products sooner.
 - Two-column product cards on narrow phones, swipeable home product rails and
-  uncluttered controls. Compact phone cards keep Compare at the image's top corner
-  and Quick view at the image's lower corner, without adding a separate action row.
-  Cards are approximately 298–312px tall. Quick view supports variant selection and the existing add-to-bag flow.
+  uncluttered controls. Phone cards follow the owner's reference: a plain Quick view
+  link at the left and an outlined Compare button at the right, in the same row
+  below the image. Category and product information follow underneath. Quick view
+  supports variant selection and the existing add-to-bag flow.
   Customers can also open full product details through the image/title. Comparison remains accessible
   through each card and the Browse menu, without an always-floating empty counter.
 - Mobile catalog filter sheet with native modal focus handling and real existing
