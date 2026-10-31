@@ -403,6 +403,13 @@
             button.disabled = !variant || variant.stock === 0;
             const price = document.querySelector('[data-detail-price]');
             const original = document.querySelector('[data-detail-original]');
+            const discount = document.querySelector('[data-detail-discount]');
+            const currentPrice = variant ? Number(variant.price) : Number(price.dataset.basePrice);
+            const originalPrice = variant ? Number(variant.original || 0) : Number(original.dataset.baseOriginal || 0);
+            if (discount) {
+                discount.hidden = originalPrice <= currentPrice;
+                discount.textContent = '৳' + money(Math.max(0, originalPrice - currentPrice)) + ' OFF';
+            }
             document.querySelectorAll('[data-variant-choice]').forEach(choice => choice.setAttribute('aria-pressed', String(choice.dataset.variantChoice === select.value)));
             if (!variant) {
                 price.textContent = money(price.dataset.basePrice);
@@ -419,7 +426,7 @@
             original.hidden = !variant.original || Number(variant.original) <= Number(variant.price);
             original.textContent = '৳' + money(variant.original || 0);
             document.dispatchEvent(new CustomEvent('gf-product-image', {detail:{url:variant.image || form.dataset.defaultImage}}));
-            document.querySelector('[data-detail-stock]').textContent = variant.stock ? variant.stock + ' available' : 'Out of stock';
+            document.querySelector('[data-detail-stock]').textContent = variant.stock ? 'In stock · ' + variant.stock + ' available' : 'Out of stock';
             qty.max = Math.min(99, variant.stock);
             if (variant.stock && Number(qty.value) > variant.stock) qty.value = Math.min(99, variant.stock);
         };

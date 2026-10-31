@@ -7,3 +7,4 @@ class ShopConfig(AppConfig):
 
     def ready(self):
         from . import checks  # noqa: F401
+        from . import activity  # noqa: F401

@@ -202,7 +202,7 @@
             const selected = data.ids.includes(Number(form.dataset.productId));
             form.querySelector('button').setAttribute('aria-pressed', String(selected));
             form.querySelector('[name="action"]').value = selected ? 'remove' : 'add';
-            label.textContent = selected ? 'Compared' : 'Compare';
+            label.textContent = selected ? 'Compared' : form.classList.contains('gf-detail-compare') ? 'Add to Compare' : 'Compare';
         });
         const content = document.querySelector('[data-compare-content]');
         if (content && data.html !== undefined) {

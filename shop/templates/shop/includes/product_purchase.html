@@ -1,0 +1,22 @@
+<div class="gf-product-heading-row">
+  {% if product.brand %}<a class="gf-product-brand" href="{% url 'product_list' %}?brand={{ product.brand_id }}" aria-label="Shop {{ product.brand.name }}">{% include 'shop/includes/brand_mark.html' with brand=product.brand %}</a>{% endif %}
+  <form method="post" action="{% url 'compare_toggle' product.pk %}" data-compare-form data-product-id="{{ product.pk }}" class="gf-detail-compare">{% csrf_token %}<input type="hidden" name="action" value="{% if product.pk in compare_ids %}remove{% else %}add{% endif %}"><button aria-label="Compare {{ product.name }}" aria-pressed="{% if product.pk in compare_ids %}true{% else %}false{% endif %}"><span aria-hidden="true">⇄</span> <span data-compare-label>{% if product.pk in compare_ids %}Compared{% else %}Add to Compare{% endif %}</span></button></form>
+</div>
+<h1>{{ product.name }}</h1>
+<div class="gf-product-price-meta" aria-live="polite">
+  <p class="gf-detail-price">৳<span data-detail-price data-base-price="{{ product.selling_price }}">{{ product.selling_price|floatformat:'-2g' }}</span></p>
+  <span class="gf-price-note">Price</span>
+  <span class="gf-detail-discount" data-detail-discount {% if not product.discount_percent %}hidden{% endif %}>৳{{ product.discount_amount|floatformat:'-2g' }} OFF</span>
+  <del data-detail-original data-base-original="{{ product.display_original_price|default:'' }}" {% if not product.discount_percent %}hidden{% endif %}>৳{{ product.display_original_price|floatformat:'-2g' }}</del>
+  <p class="gf-detail-meta"><strong>Availability:</strong> <span data-detail-stock>{{ product.availability }}</span></p>
+  <p class="gf-detail-meta"><strong>Code:</strong> <span data-detail-sku>{% if initial_variant %}{{ initial_variant.sku|default:'Not provided' }}{% elif product.has_variants %}Choose an option{% else %}Not provided{% endif %}</span></p>
+</div>
+<form action="{% url 'add_to_cart' product.pk %}" method="post" data-cart-form class="gf-buy-form" data-default-image="{{ gallery_images.0.url }}">
+  {% csrf_token %}{% if product.has_variants %}
+  <div data-native-variant><label for="variant-select">Choose an exact option</label><select name="variant" id="variant-select" required><option value="">Select variant</option>{% for variant in product.variants.all %}<option value="{{ variant.pk }}"{% if initial_variant.pk == variant.pk %} selected{% endif %}>{{ variant.option_label }} — ৳{{ variant.price }}{% if variant.sku %} · {{ variant.sku }}{% endif %} ({{ variant.stock }} available)</option>{% endfor %}</select></div>
+  {% if option_groups %}<div class="gf-option-groups" data-option-groups hidden>{% for group in option_groups %}<fieldset class="gf-option-group"><legend>{{ group.label }}:</legend><div class="gf-option-buttons">{% for value in group.values %}<button type="button" class="gf-option-chip" data-option-field="{{ group.field }}" data-option-value="{{ value.name }}" aria-pressed="false">{% if value.swatch %}<span class="gf-color-swatch" style="--swatch:{{ value.swatch }}" aria-hidden="true"></span>{% endif %}{{ value.name }}</button>{% endfor %}</div></fieldset>{% endfor %}<p class="gf-option-status" data-option-status role="status"></p></div>
+  {% else %}<div class="gf-variant-choices" hidden aria-label="Available product variants">{% for variant in product.variants.all %}<button type="button" data-variant-choice="{{ variant.pk }}" aria-pressed="false">{{ variant.option_label }}</button>{% endfor %}</div>{% endif %}
+  <noscript><p>Each option lists its exact price and stock. Choose the configuration above before adding to your cart.</p></noscript>{% endif %}
+  <label for="detail-quantity">Select Quantity:</label><div class="gf-detail-quantity"><button type="button" data-detail-quantity-step="-1" aria-label="Decrease quantity" hidden>−</button><input id="detail-quantity" type="number" name="quantity" value="1" min="1" max="{% if product.has_variants or product.stock is None %}99{% else %}{{ product.stock }}{% endif %}" required><button type="button" data-detail-quantity-step="1" aria-label="Increase quantity" hidden>+</button></div>
+  <div class="gf-detail-buy-actions"><button class="gf-button gf-button-primary" data-detail-cart {% if not product.can_purchase %}disabled{% endif %}>Add to Cart</button>{% if footer_whatsapp %}<a class="gf-product-whatsapp" href="{{ footer_whatsapp.url }}" target="_blank" rel="noopener noreferrer">{% include 'shop/includes/social_icon.html' with icon='whatsapp' %} WhatsApp</a>{% endif %}</div><p class="gf-form-status" role="status"></p>
+</form>

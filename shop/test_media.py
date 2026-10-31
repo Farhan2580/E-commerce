@@ -72,11 +72,12 @@ class LocalMediaTests(TestCase):
         original_url = self.product.image.url
         response = self.client.post(reverse('admin:shop_product_change', args=[self.product.pk]), {
             'name': self.product.name, 'category': self.category.pk, 'price': '100.00',
-            'stock': '5', 'position': '0', 'specifications': '{}',
+            'stock': '5', 'position': '0', 'specifications': '{}', 'low_stock_threshold': '5',
             'image': SimpleUploadedFile('real-admin-update.png', self.png, content_type='image/png'),
             'variants-TOTAL_FORMS': '0', 'variants-INITIAL_FORMS': '0',
             'gallery-TOTAL_FORMS': '0', 'gallery-INITIAL_FORMS': '0',
-            'warranty-TOTAL_FORMS': '0', 'warranty-INITIAL_FORMS': '0', '_save': 'Save',
+            'warranty-TOTAL_FORMS': '0', 'warranty-INITIAL_FORMS': '0',
+            'purposes-TOTAL_FORMS': '0', 'purposes-INITIAL_FORMS': '0', '_save': 'Save',
         }, HTTP_HOST='localhost')
         self.assertEqual(response.status_code, 302, response.content.decode()[:1200])
         self.product.refresh_from_db()

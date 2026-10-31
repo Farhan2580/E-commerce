@@ -16,6 +16,6 @@
         {% for entry in preorders %}
             <article class="gf-panel gf-order-card"><h3>{{ entry.product_name }}</h3>
                 <p>{{ entry.product_details|linebreaksbr }}</p>
-                <p>{{ entry.created_at|date:'d M Y' }} · Request received</p>{% if entry.image %}
+                <p>{{ entry.created_at|date:'d M Y' }} · {{ entry.get_status_display }}</p><p>Estimated arrival: {{ entry.estimated_arrival|date:'d M Y'|default:'Not confirmed' }}</p><p>Advance: ৳{{ entry.advance_amount }} · {{ entry.get_advance_status_display }}</p>{% if entry.customer_update %}<p>{{ entry.customer_update|linebreaksbr }}</p>{% endif %}<p>Cancellation terms: {{ entry.cancellation_terms|default:'Contact the store to confirm terms before paying an advance.' }}</p>{% if entry.image %}
                     <img src="{{ entry.image.url }}" alt="{{ entry.product_name }}" width="100" height="100">{% endif %}
             </article>{% empty %}<p>No preorder requests yet.</p>{% endfor %}</div>{% endblock %}

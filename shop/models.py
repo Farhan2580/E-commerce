@@ -65,6 +65,7 @@ class NavigationItem(models.Model):
 
 
 class Product(models.Model):
+    low_stock_threshold = models.PositiveIntegerField(default=5)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -263,6 +264,12 @@ class Offer(models.Model):
 
 
 class Preorder(models.Model):
+    status = models.CharField(max_length=20, default='requested', choices=[(x, x.replace('_', ' ').title()) for x in ['requested', 'confirmed', 'ordered', 'in_transit', 'ready', 'completed', 'cancelled']])
+    estimated_arrival = models.DateField(null=True, blank=True)
+    advance_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, validators=[MinValueValidator(Decimal('0'))])
+    advance_status = models.CharField(max_length=20, default='not_required', choices=[('not_required', 'Not required'), ('awaiting', 'Awaiting verification'), ('verified', 'Receipt verified'), ('refunded', 'Refund verified')])
+    cancellation_terms = models.TextField(blank=True)
+    customer_update = models.TextField(blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=100)
     email = models.EmailField()
@@ -294,6 +301,8 @@ class Brand(models.Model):
 
 
 class ProductVariant(models.Model):
+    ram = models.CharField(max_length=60, blank=True)
+    warranty = models.CharField(max_length=100, blank=True, help_text='Verified option warranty, e.g. Official 1 year. Leave blank if unknown.')
     image = models.ImageField(upload_to='variant_images/', blank=True, help_text='Optional actual option image; cart falls back to the product image.')
     color = models.CharField(max_length=60, blank=True)
     storage = models.CharField(max_length=60, blank=True)
@@ -319,7 +328,7 @@ class ProductVariant(models.Model):
 
     @property
     def option_label(self):
-        attributes = ' / '.join(value for value in [self.color, self.storage, self.size] if value)
+        attributes = ' / '.join(value for value in [self.color, self.storage, self.ram, self.size, self.warranty] if value)
         return f'{self.name} ({attributes})' if attributes else self.name
 
 
@@ -763,3 +772,5 @@ class PCComponent(models.Model):
 
 
 from .payment_models import PaymentAttempt, PaymentReservation, ManualPaymentClaim, ManualPaymentAudit  # noqa: E402
+from .experience_models import (ProductPurpose, Compatibility, PriceAlert, CustomerNotification,
+                                ServiceClaim, ClaimEvent, RefundRecord, CatalogActivity)  # noqa: E402

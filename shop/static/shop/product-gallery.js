@@ -85,4 +85,5 @@
     }, {passive:true});
     surface.addEventListener('touchcancel', () => { touch = null; }, {passive:true});
     show(0);
+    if (variantSelect?.value) variantSelect.dispatchEvent(new Event('change', {bubbles:true}));
 })();

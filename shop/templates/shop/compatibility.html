@@ -1,0 +1,4 @@
+{% extends 'base.html' %}
+{% block title %}Accessory compatibility | GadgetFlow{% endblock %}
+{% block content %}<div class="gf-shell gf-page"><h1>Check accessory compatibility</h1><p>Choose a phone, laptop or other device and an accessory. Review the recorded option limitations before buying.</p><form method="get" class="gf-panel gf-form gf-tools-form">{{ form.as_p }}<button class="gf-button gf-button-primary">Check compatibility</button></form>
+{% if checked %}<section class="gf-panel gf-section" aria-live="polite">{% if result %}<h2>{% if result.compatible %}Verified compatible{% else %}Verified incompatible{% endif %}</h2><p>{{ result.evidence|linebreaksbr }}</p><small>Last checked {{ result.updated_at|date:'d M Y' }}</small>{% else %}<h2>Compatibility not confirmed</h2><p>We do not have verified data for this pairing. Ask the store to confirm your exact model and accessory option.</p>{% endif %}</section>{% endif %}</div>{% endblock %}

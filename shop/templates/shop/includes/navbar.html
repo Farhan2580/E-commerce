@@ -5,7 +5,7 @@
             <div class="gf-mobile-drawer">
                 <div class="gf-drawer-heading">Main Menu
                     <button type="button" data-close-menu aria-label="Close category menu">{% include 'shop/includes/mobile_icon.html' with icon='close' %}</button>
-                </div><nav class="gf-mobile-menu-shortcuts" aria-label="Quick shopping links"><a href="{% url 'product_list' %}">All products <span aria-hidden="true">↗</span></a><a href="{% url 'pc_builder' %}">PC Builder <span aria-hidden="true">↗</span></a></nav>{% for category in nav_categories %}
+                </div><nav class="gf-mobile-menu-shortcuts" aria-label="Quick shopping links"><a href="{% url 'product_list' %}">All products <span aria-hidden="true">↗</span></a><a href="{% url 'gadget_finder' %}">Gadget Finder</a><a href="{% url 'compatibility_checker' %}">Compatibility</a><a href="{% url 'shopping_notifications' %}">My alerts</a><a href="{% url 'pc_builder' %}">PC Builder <span aria-hidden="true">↗</span></a></nav>{% for category in nav_categories %}
                 {% if category.children.all or category.nav_brands %}<details class="gf-mobile-category"><summary>{{ category.name }}</summary><div><a href="{{ category.nav_url }}">All {{ category.name }}</a>
                 {% for child in category.children.all %}<a class="gf-child-link" href="{% url 'product_list' %}?category={{ child.pk }}">{{ child.name }}</a>{% endfor %}{% if category.nav_brands %}<p class="gf-mobile-brand-label">{{ category.name }} brands</p>{% endif %}{% for brand in category.nav_brands %}<a class="gf-child-link" href="{{ brand.url }}">{{ brand.name }}</a>{% endfor %}</div></details>{% else %}<a class="gf-mobile-category-link" href="{{ category.nav_url }}">{{ category.name }}</a>{% endif %}{% endfor %}<p class="gf-mobile-menu-label">More</p><a href="{% url 'compare' %}">Compare products <span data-compare-count>{{ compare_ids|length }}</span>/4</a><a href="{% url 'track_order' %}">Track an order</a><a href="{% url 'preorder' %}">Pre-order</a><a
                     href="{% url 'offers' %}">Offers</a><a href="{% url 'policy' 'contact' %}">Contact GadgetFlow</a>
@@ -50,7 +50,7 @@
                 </summary>
                 <div class="gf-account-menu">{% if user.is_authenticated %}<p>{{ user.username }}</p>
                     <a href="{% url 'profile' %}">My account</a><a href="{% url 'order_history' %}">My orders</a>
-                    <a href="{% url 'wishlist' %}">Wishlist</a>
+                    <a href="{% url 'wishlist' %}">Wishlist</a><a href="{% url 'shopping_notifications' %}">My alerts</a><a href="{% url 'gadget_finder' %}">Gadget Finder</a><a href="{% url 'compatibility_checker' %}">Compatibility checker</a>
                     <form action="{% url 'logout' %}" method="post">{% csrf_token %}
                         <button>Sign out</button>
                     </form>{% else %}<a href="{% url 'login' %}">Sign in</a>
@@ -59,7 +59,7 @@
         </div>
     </div>
     <nav class="gf-categories" aria-label="Product categories">
-        <div class="gf-shell"><a class="gf-pc-builder-link" href="{% url 'pc_builder' %}"><span aria-hidden="true">⊞</span> PC Builder</a>{% for category in nav_categories %}
+        <div class="gf-shell"><a href="{% url 'gadget_finder' %}">Gadget Finder</a><a href="{% url 'compatibility_checker' %}">Compatibility</a><a class="gf-pc-builder-link" href="{% url 'pc_builder' %}"><span aria-hidden="true">⊞</span> PC Builder</a>{% for category in nav_categories %}
             <div class="gf-category-menu"><a
                     href="{{ category.nav_url }}">{{ category.name }}</a>
                 {% if category.children.all or category.nav_brands %}

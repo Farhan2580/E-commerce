@@ -30,10 +30,11 @@ class ProductGalleryTests(TestCase):
 
     def data(self, files):
         return {'name': self.product.name, 'category': self.category.pk, 'price': '100', 'stock': '2',
-                'position': '0', 'specifications': '{}', 'gallery_uploads': files,
+                'position': '0', 'specifications': '{}', 'gallery_uploads': files, 'low_stock_threshold': '5',
                 'variants-TOTAL_FORMS': '0', 'variants-INITIAL_FORMS': '0',
                 'gallery-TOTAL_FORMS': '0', 'gallery-INITIAL_FORMS': '0',
-                'warranty-TOTAL_FORMS': '0', 'warranty-INITIAL_FORMS': '0', '_save': 'Save'}
+                'warranty-TOTAL_FORMS': '0', 'warranty-INITIAL_FORMS': '0',
+                'purposes-TOTAL_FORMS': '0', 'purposes-INITIAL_FORMS': '0', '_save': 'Save'}
 
     def test_admin_multi_upload_keeps_original_and_saves_valid_storage_images(self):
         old = ProductImage.objects.create(product=self.product, image=photo('original.png'), position=5)

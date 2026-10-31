@@ -173,7 +173,11 @@ def release(order):
     for reservation in order.payment_reservations.order_by('pk'):
         model = ProductVariant if reservation.variant_id else Product
         pk = reservation.variant_id or reservation.product_id
-        model.objects.filter(pk=pk, stock__isnull=False).update(stock=F('stock') + reservation.quantity)
+        item = model.objects.select_for_update().filter(pk=pk, stock__isnull=False).first()
+        if item:
+            model.objects.filter(pk=pk, stock__isnull=False).update(stock=F('stock') + reservation.quantity)
+            from .activity import record_activity
+            record_activity(item, {'stock': {'before': str(item.stock), 'after': str(item.stock + reservation.quantity)}}, source=f'payment release order {order.pk}')
     for redemption in CouponRedemption.objects.filter(order=order):
         Coupon.objects.filter(pk=redemption.coupon_id, used_count__gt=0).update(used_count=F('used_count') - 1)
     CouponRedemption.objects.filter(order=order).delete()
@@ -316,6 +320,9 @@ def retry_payment(attempt_id, user):
         if item.stock is not None and not model.objects.filter(pk=pk, stock__gte=reservation.quantity).update(
                 stock=F('stock') - reservation.quantity):
             raise ValidationError('An item is out of stock. No new payment has been started.')
+        if item.stock is not None:
+            from .activity import record_activity
+            record_activity(item, {'stock': {'before': str(item.stock), 'after': str(item.stock - reservation.quantity)}}, source=f'payment retry order {order.pk}')
     current.is_current = False
     current.save(update_fields=['is_current'])
     new = PaymentAttempt.objects.create(order=order, amount=order.total_price,

@@ -3,9 +3,19 @@ from . import views
 from . import support_views
 from . import payment_views
 from . import commerce_views
+from . import experience_views, experience_admin
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
+    path('gadget-finder/', experience_views.gadget_finder, name='gadget_finder'),
+    path('compatibility/', experience_views.compatibility_checker, name='compatibility_checker'),
+    path('notifications/', experience_views.notifications, name='shopping_notifications'),
+    path('product/<int:pk>/price-alert/', experience_views.subscribe_price, name='subscribe_price'),
+    path('order/<int:order_id>/buy-again/', experience_views.buy_again, name='buy_again'),
+    path('order/<int:order_id>/services/', experience_views.order_services, name='order_services'),
+    path('pair/<int:pk>/add/', experience_views.add_pair, name='add_pair'),
+    path('staff/store-dashboard/', experience_admin.store_dashboard, name='store_dashboard'),
+    path('staff/catalog-transfer/', experience_admin.catalog_transfer, name='catalog_transfer'),
     path('pc-builder/', commerce_views.pc_builder, name='pc_builder'),
     path('delivery/quote/', commerce_views.delivery_quote, name='delivery_quote'),
     path('product/<int:pk>/question/', commerce_views.ask_question, name='ask_question'),

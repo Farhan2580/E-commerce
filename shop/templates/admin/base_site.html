@@ -1,0 +1,6 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+{% block title %}{{ title }} | {{ site_title }}{% endblock %}
+{% block branding %}<a class="gf-admin-brand" href="{% url 'admin:index' %}"><span class="gf-admin-brand-mark" aria-hidden="true">G</span><span>Gadget<span class="gf-admin-brand-accent">Flow</span><small>STORE ADMIN</small></span></a>{% endblock %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'shop/admin/workspace.css' %}"><script src="{% static 'shop/admin/workspace.js' %}" defer></script>{% endblock %}
+{% block footer %}<span class="gf-admin-footer">GadgetFlow Admin <span aria-hidden="true">·</span> Catalog, orders and storefront in one place.</span>{% endblock %}

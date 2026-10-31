@@ -1,0 +1,2 @@
+{% extends 'admin/change_form.html' %}
+{% block form_top %}{{ block.super }}{% if not is_popup %}<aside class="gf-admin-form-guide" aria-label="Editing guide"><div><h2>{{ workspace_title }}</h2><p>{{ workspace_description }}</p></div>{% if workspace_links %}<nav class="gf-admin-related" aria-label="Related admin tools">{% for link in workspace_links %}<a href="{{ link.url }}">{{ link.label }} ↗</a>{% endfor %}</nav>{% endif %}</aside>{% endif %}{% endblock %}

@@ -13,6 +13,7 @@
         <tbody>
             <tr><th scope="row">Price</th>{% for product in products %}<td>{% if product.has_variants %}From {% endif %}৳{{ product.selling_price|floatformat:2 }}</td>{% endfor %}</tr>
             <tr><th scope="row">Availability</th>{% for product in products %}<td>{{ product.availability }}</td>{% endfor %}</tr>
+            <tr><th scope="row">Options: price, warranty & stock</th>{% for product in products %}<td>{% for option in product.variants.all %}<p>{{ option.option_label }} · ৳{{ option.price }} · {{ option.stock }} available</p>{% empty %}Single product{% endfor %}</td>{% endfor %}</tr>
             <tr><th scope="row">Brand</th>{% for product in products %}<td>{{ product.brand|default:'Not provided' }}</td>{% endfor %}</tr>
             {% for row in rows %}<tr><th scope="row">{{ row.label }}</th>{% for value in row.values %}<td>{{ value }}</td>{% endfor %}</tr>{% endfor %}
         </tbody>

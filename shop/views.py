@@ -178,13 +178,15 @@ def quick_view(request, pk):
 
 def comparison_context(request):
     ids = comparison_ids(request.session)
-    products = list(products_query().filter(pk__in=ids))
+    products = list(products_query().select_related('warranty').filter(pk__in=ids))
     products.sort(key=lambda product: ids.index(product.pk))
     specifications = [product.specifications if isinstance(product.specifications, dict) else {} for product in products]
     keys = sorted({key for specs in specifications for key in specs})
     missing = (None, '', [], {})
     rows = [{'label': key, 'values': [specs.get(key) if specs.get(key) not in missing else 'Not provided'
                                     for specs in specifications]} for key in keys]
+    from .experience import warranty_label
+    rows.insert(0, {'label': 'Warranty', 'values': [warranty_label(product) for product in products]})
     return {'products': products, 'rows': rows}
 
 
@@ -279,7 +281,11 @@ def product_detail(request, pk):
             Review.objects.update_or_create(product=product, user=request.user, defaults=form.cleaned_data)
             messages.success(request, 'Your review has been saved.')
             return redirect('product_detail', pk=pk)
+    from .product_presentation import option_groups
+    grouped_options = option_groups(product.variants.all())
+    initial_variant = product.pricing_item if grouped_options else None
     variants = [{'id': v.pk, 'name': v.option_label, 'sku': v.sku, 'price': str(v.price), 'stock': v.stock,
+                 'color': v.color, 'storage': v.storage, 'ram': v.ram, 'size': v.size, 'warranty': v.warranty,
                  'image': v.image.url if v.image else '',
                  'original': str(v.compare_at_price) if v.compare_at_price else ''} for v in product.variants.all()]
     gallery_images, seen_images = [], set()
@@ -310,6 +316,8 @@ def product_detail(request, pk):
     zones = DeliveryZone.objects.filter(active=True)
     zone_field = django_forms.ModelChoiceField(queryset=zones, required=False, empty_label='Choose your area')
     return render(request, 'shop/product_detail.html', {'product': product, 'form': form,
+                                                        'option_groups': grouped_options, 'initial_variant': initial_variant,
+                                                        'compatible_pairs': product.accessory_matches.filter(verified=True, compatible=True, bought_together=True).select_related('accessory').prefetch_related('accessory__variants'),
                                                         'delivery_zones': zones, 'delivery_zone_field': zone_field.widget.render('zone', request.GET.get('zone', ''), attrs={'id': 'product-delivery-zone'}),
                                                         'product_schema_json': safe_json_ld(product_schema(request, product, reviews)),
                                                         'product_questions': product.questions.filter(is_published=True).exclude(answer='').select_related('user')[:30],
@@ -678,7 +686,7 @@ def subscribe_stock(request, pk):
         if item.stock is None or item.stock > 0:
             raise ValidationError('This item is already available to order.')
         StockAlert.objects.update_or_create(user=request.user, product=product, variant=variant,
-                                           defaults={'email': email, 'active': True, 'sent_at': None})
+                                           defaults={'email': email, 'active': True, 'sent_at': None, 'created_at': timezone.now()})
         messages.success(request, 'Stock alert saved. Email delivery requires the store’s email service to be configured.')
     except ValidationError as exc:
         messages.error(request, ' '.join(exc.messages))

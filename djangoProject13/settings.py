@@ -58,7 +58,7 @@ if os.environ.get('RENDER') == 'true':
 INSTALLED_APPS = [
     'shop',
     'widget_tweaks',
-    'django.contrib.admin',
+    'djangoProject13.admin_apps.StoreAdminConfig',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -73,6 +73,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'shop.activity.ActivityMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

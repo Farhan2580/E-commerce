@@ -1,0 +1,8 @@
+{% load i18n %}
+<button class="sticky toggle-nav-sidebar" id="toggle-nav-sidebar" aria-label="Toggle admin navigation"></button>
+<nav class="sticky gf-admin-sidebar" id="nav-sidebar" aria-label="Admin navigation">
+  <a class="gf-admin-overview-link" href="{% url 'admin:index' %}"{% if request.path == '/admin/' %} aria-current="page"{% endif %}><span aria-hidden="true">◫</span> Store overview</a>
+  <label class="visually-hidden" for="nav-filter">Filter admin navigation</label><input type="search" id="nav-filter" placeholder="Find a menu item…" aria-label="Filter admin navigation">
+  {% for section in store_admin_groups %}<div class="module gf-admin-nav-group"><table><caption>{{ section.title }}</caption><tbody>{% for model in section.models %}<tr{% if model.current %} class="current-model"{% endif %}><th scope="row"><a href="{{ model.url }}"{% if model.current %} aria-current="page"{% endif %}>{{ model.name }}</a></th>{% if model.add_url %}<td><a class="gf-admin-nav-add" href="{{ model.add_url }}" aria-label="Add {{ model.name }}">+</a></td>{% endif %}</tr>{% endfor %}</tbody></table></div>{% endfor %}
+  {% if store_admin_tools.operations or store_admin_tools.csv %}<div class="gf-admin-sidebar-tools"><span>WORKSPACE TOOLS</span>{% if store_admin_tools.operations %}<a href="{% url 'store_dashboard' %}">Store operations ↗</a>{% endif %}{% if store_admin_tools.csv %}<a href="{% url 'catalog_transfer' %}">CSV import / export ↗</a>{% endif %}</div>{% endif %}
+</nav>

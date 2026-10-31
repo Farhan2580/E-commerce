@@ -240,6 +240,8 @@ def create_order(user, session, data):
                 stock=F('stock') - line['qty'])
             if not reserved:
                 raise ValidationError(f'{line["product"].name} has insufficient stock. Please update your cart.')
+            from .activity import record_activity
+            record_activity(current, {'stock': {'before': str(current.stock), 'after': str(current.stock - line['qty'])}}, source=f'checkout order {order.pk}')
             if online:
                 from .models import PaymentReservation
                 PaymentReservation.objects.create(order=order, quantity=line['qty'],

@@ -103,7 +103,7 @@ class ReviewForm(forms.ModelForm):
 class PreOrderForm(forms.ModelForm):
     class Meta:
         model = Preorder
-        exclude = ['user']
+        fields = ['name', 'email', 'phone', 'address', 'product_name', 'product_details', 'image']
 
 
 class AddressForm(forms.ModelForm):

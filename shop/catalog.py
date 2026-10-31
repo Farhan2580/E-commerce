@@ -14,12 +14,12 @@ SPEC_LABELS = {
 
 def catalog_facets(scope, params):
     facets = []
-    for field in ('storage', 'color', 'size'):
+    for field in ('storage', 'ram', 'color', 'size', 'warranty'):
         values = list(ProductVariant.objects.filter(product__in=scope.values('pk')).exclude(
             **{field: ''}).order_by(field).values_list(field, flat=True).distinct())
         if values:
             selected = params.getlist('option_' + field)[:50]
-            facets.append({'label': field.title(), 'param': 'option_' + field, 'variant': field,
+            facets.append({'label': SPEC_LABELS.get(field, field.title()), 'param': 'option_' + field, 'variant': field,
                            'options': [{'value': v, 'checked': v in selected} for v in values]})
     specs = defaultdict(dict)
     for data in scope.prefetch_related(None).values_list('specifications', flat=True).iterator(chunk_size=500):
