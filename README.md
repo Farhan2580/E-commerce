@@ -1,72 +1,217 @@
 <div align="center">
 
-  <h1>🛒 GadgetFlow</h1>
-  <p><b>Next-Gen E-Commerce Platform for Tech & Electronics</b></p>
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=32&pause=1000&color=6366F1&center=true&vCenter=true&width=600&lines=🛒+GadgetFlow;Next-Gen+E-Commerce;Built+with+Django+%26+Love" alt="Typing SVG" />
 
-  [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-  [![Django](https://img.shields.io/badge/Django-4.2+-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
-  [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
-  [![Status](https://img.shields.io/badge/Status-Production--Ready-brightgreen?style=for-the-badge)]()
-  [![Deployment](https://img.shields.io/badge/Render-Deployed-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://farhan-gadgetflow.onrender.com/)
+<br/>
 
-  <br />
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Django-4.2+-092E20?style=for-the-badge&logo=django&logoColor=white" />
+  <img src="https://img.shields.io/badge/SQLite-3-003B57?style=for-the-badge&logo=sqlite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Render-Deployed-46E3B7?style=for-the-badge&logo=render&logoColor=white" />
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" />
+</p>
 
-  <a href="https://farhan-gadgetflow.onrender.com/"><b>🌐 Explore Live Storefront</b></a> •
-  <a href="#-key-features"><b>Features</b></a> •
-  <a href="#-tech-stack"><b>Tech Stack</b></a> •
-  <a href="#-getting-started"><b>Local Setup</b></a>
+<p align="center">
+  <img src="https://img.shields.io/github/stars/Farhan2580/E-commerce?style=social" />
+  <img src="https://img.shields.io/github/forks/Farhan2580/E-commerce?style=social" />
+  <img src="https://img.shields.io/github/watchers/Farhan2580/E-commerce?style=social" />
+</p>
+
+<br/>
+
+> **🌐 Production-ready full-stack E-Commerce platform for tech & electronics — built with Django, glassmorphic UI, and BDT (৳) localized payments.**
+
+<br/>
+
+<a href="https://farhan-gadgetflow.onrender.com/">
+  <img src="https://img.shields.io/badge/🌐 Live Demo-Visit GadgetFlow-6366F1?style=for-the-badge&labelColor=1e1e2e" />
+</a>
 
 </div>
 
 ---
 
-## 📖 Overview
+## 📸 Preview
 
-**GadgetFlow** is a production-ready, full-stack E-commerce platform built on Django's robust backend architecture and designed with a modern glassmorphic interface. It delivers a seamless online shopping experience with localized BDT (৳) pricing, dynamic catalog management, automated cart workflows, and interactive checkout systems.
+<div align="center">
 
----
+```
+╔══════════════════════════════════════════════════════╗
+║          🛒  G A D G E T F L O W                    ║
+║    ─────────────────────────────────────────         ║
+║    📱 Smartphones  💻 Laptops  🎧 Audio  ⌚ Wearables ║
+║    ─────────────────────────────────────────         ║
+║      Search · Filter · Cart · Checkout · Pay         ║
+╚══════════════════════════════════════════════════════╝
+```
 
-## ✨ Key Features
-
-- **📱 Mobile Universe & Specialized Zones:** Dynamic storefront segments for flagship smartphones, laptops, flash sales, and trending tech gadgetry.
-- **⚡ Async Cart & Dynamic Badge Updates:** Instant product additions, live subtotal updates, and badge counters powered by lightweight asynchronous JavaScript.
-- **🔍 Granular UI Filtering & Search:** Rapid categorization and real-time filtering across Audio, Wearables, Smartphones, Laptops, and Smart Accessories.
-- **🎨 Glassmorphic Aesthetic:** Premium UI layout built with smooth custom drop-shadows, responsive grid components, and modern typography.
-- **💳 Localized Checkout & Payment Manual Integration:** Native support for BDT (৳) transactions with manual Bkash settlement workflows and instructions.
-- **⚙️ Multi-Environment Static & Media Handling:** Powered by WhiteNoise for production assets with zero-downtime static collection and isolated local media streaming.
-
----
-
-## 🛠️ Tech Stack & Architecture
-
-| Layer | Tools & Technologies |
-| :--- | :--- |
-| **Backend Core** | Python, Django Framework (MVC / MTV) |
-| **Database Storage** | SQLite3 (Configured natively for rapid development & relational integrity) |
-| **Frontend UI** | HTML5, CSS3 Grid/Flexbox, Vanilla JavaScript (ES6+) |
-| **Static & Media Asset Delivery** | WhiteNoise Middleware, Native Django Media Local Stream |
-| **Design & Typography** | Glassmorphism, Google Inter Fonts, FontAwesome 6 Icons |
-| **Production Deployment** | Render Cloud Platform Hosting Engine |
+</div>
 
 ---
 
-## 📁 Repository Directory Structure
+## ✨ Features
 
-```text
-E-commerce/
-├── 📁 djangoProject13/       # Main Django Project Configuration Modules
-│   ├── settings.py           # Core Application Settings
-│   ├── development.py        # Local Media/Development Settings Overrides
-│   └── urls.py               # Root URL Routing Engine
-├── 📁 shop/                  # Primary Application Domain
-│   ├── 📁 models/            # Relational Data Schema Models (Products, Orders, Categories)
-│   ├── 📁 views/             # Core Business Logic & API Handlers
-│   ├── 📁 templates/         # Dynamic Django HTML Layout Templates
-│   └── urls.py               # App-level Route Mappings
-├── 📁 media/                 # Dynamic User & Staff Uploaded Graphics
-├── 📁 static/                # Static CSS, JavaScript, and UI Assets
-├── db.sqlite3                # Local Relational Asset Database
-├── manage.py                 # Django Execution CLI Executable
-├── PREMIUM_STOREFRONT.md     # Storefront, Coupon, and Email Alert Guidelines
-├── INFORMATION_SUPPORT.md    # Documentation for Support Pages & Legal Policies
-└── requirements.txt          # Frozen Production Dependency Manifest
+<table>
+<tr>
+<td width="50%">
+
+### 🛍️ Shopping Experience
+- 📱 **Mobile Universe** — Flagship smartphones zone
+- 💻 **Laptop Lounge** — Premium laptop section
+- ⚡ **Flash Sales** — Real-time deal countdowns
+- 🔥 **Trending Zone** — Hot & popular gadgets
+
+</td>
+<td width="50%">
+
+### ⚙️ Technical Features
+- 🛒 **Async Cart** — Live badge & subtotal updates
+- 🔍 **Smart Filtering** — Category-based real-time search
+- 💳 **BDT Payment** — Bkash & local checkout support
+- 🎨 **Glassmorphic UI** — Modern premium aesthetic
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🛠️ Tech Stack
+
+<div align="center">
+
+| Layer | Technology |
+|-------|-----------|
+| 🔙 **Backend** | Python · Django (MTV Architecture) |
+| 🗄️ **Database** | SQLite3 |
+| 🎨 **Frontend** | HTML5 · CSS3 Grid/Flexbox · Vanilla JS ES6+ |
+| 📦 **Static Files** | WhiteNoise Middleware |
+| 🖋️ **Design** | Glassmorphism · Google Inter · FontAwesome 6 |
+| ☁️ **Deployment** | Render Cloud Platform |
+
+</div>
+
+---
+
+## 📁 Project Structure
+
+```
+🗂️ E-commerce/
+├── 📁 djangoProject13/       # Django core config
+│   ├── settings.py           # App settings
+│   ├── development.py        # Dev overrides
+│   └── urls.py               # Root URL routing
+│
+├── 📁 shop/                  # Main app
+│   ├── 📁 models/            # Product, Order, Category schemas
+│   ├── 📁 views/             # Business logic & API handlers
+│   ├── 📁 templates/         # Django HTML templates
+│   └── urls.py               # App-level routes
+│
+├── 📁 media/                 # Uploaded images
+├── 📁 static/                # CSS, JS, assets
+├── manage.py                 # Django CLI
+└── requirements.txt          # Python dependencies
+```
+
+---
+
+## 🚀 Local Setup
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Farhan2580/E-commerce.git
+cd E-commerce
+
+# 2. Create virtual environment
+python -m venv venv
+source venv/bin/activate       # Windows: venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Setup environment variables
+cp .env.example .env
+# Edit .env with your config
+
+# 5. Run migrations
+python manage.py migrate
+
+# 6. Start the server
+python manage.py runserver
+```
+
+> 🌐 Open **http://127.0.0.1:8000** in your browser
+
+---
+
+## 🌍 Deployment
+
+This project is deployed on **[Render](https://render.com/)** using:
+
+- `render-build.sh` — Build script for production
+- `render-start.sh` — Server start script
+- **WhiteNoise** — Static file serving in production
+
+[![Deploy on Render](https://render.com/images/deploy-to-render-button.svg)](https://farhan-gadgetflow.onrender.com/)
+
+---
+
+## 📦 Category Zones
+
+```
+🛍️ GadgetFlow Storefront
+│
+├── 📱 Smartphones      → Flagship & Budget phones
+├── 💻 Laptops          → Gaming, Ultrabooks, Business
+├── 🎧 Audio            → Earbuds, Headphones, Speakers
+├── ⌚ Wearables        → Smartwatches, Fitness Bands
+└── 🔌 Accessories      → Cables, Cases, Chargers
+```
+
+---
+
+## 💳 Payment
+
+GadgetFlow supports **BDT (৳) localized payments** with:
+
+- 📲 **Bkash** manual settlement workflow
+- 💰 Full BDT pricing across all products
+- 🧾 Order summary & checkout confirmation
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to:
+
+1. 🍴 Fork the repository
+2. 🌿 Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. 💾 Commit your changes (`git commit -m 'Add amazing feature'`)
+4. 📤 Push to branch (`git push origin feature/amazing-feature`)
+5. 🔁 Open a Pull Request
+
+---
+
+## 📄 License
+
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
+
+---
+
+<div align="center">
+
+**Made with ❤️ by [Farhan](https://github.com/Farhan2580)**
+
+<br/>
+
+<a href="https://farhan-gadgetflow.onrender.com/">
+  <img src="https://img.shields.io/badge/🚀 Visit Live Site-GadgetFlow-6366F1?style=for-the-badge" />
+</a>
+
+<br/><br/>
+
+⭐ **Star this repo if you found it helpful!** ⭐
+
+</div>
