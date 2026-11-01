@@ -1,16 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-</head>
-<body>
-
 <!--
 ██████████████████████████████████████████████████████
-█                                                    █
 █   THIS README USES ANIMATED SVG + HTML ELEMENTS   █
 █   Best viewed on GitHub with a modern browser     █
-█                                                   █
 ██████████████████████████████████████████████████████
 -->
 
@@ -22,7 +13,7 @@
 
 <div align="center">
 
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=24&pause=800&color=FF6B00&center=true&vCenter=true&multiline=false&width=600&lines=🛒+Next-Gen+E-Commerce+Platform;⚡+Built+with+Django+%26+Love;🎨+Glassmorphic+UI+Design;💳+BDT+Localized+Payments;🚀+Deployed+on+Render+Cloud)](https://git.io/typing-svg)
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=24&pause=800&color=FF6B00&center=true&vCenter=true&multiline=false&width=600&lines=🛒+Next-Gen+E-Commerce+Platform;⚡+Built+with+Django+%26+Love;🎨+Glassmorphic+UI+Design;💳+Cash+on+Delivery+%7C+More+Coming+Soon;🚀+Deployed+on+Render+Cloud)](https://git.io/typing-svg)
 
 </div>
 
@@ -34,7 +25,7 @@
 ![Django](https://img.shields.io/badge/Django-4.2+-092E20?style=for-the-badge&logo=django&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
 ![Render](https://img.shields.io/badge/Render-Deployed-46E3B7?style=for-the-badge&logo=render&logoColor=white)
-![MIT License](https://img.shields.io/badge/License-MIT-FF6B00?style=for-the-badge)
+![Cloudinary](https://img.shields.io/badge/Cloudinary-Media_Storage-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)
 
 </div>
 
@@ -76,7 +67,7 @@
 ### ⚙️ Technical Features
 > 🛒 **Async Cart** — Live badge & subtotal updates  
 > 🔍 **Smart Filtering** — Category-based real-time search  
-> 💳 **BDT Payment** — Bkash & local checkout support  
+> 🖼️ **Cloudinary CDN** — Fast cloud media delivery  
 > 🎨 **Glassmorphic UI** — Modern premium aesthetic  
 
 </td>
@@ -111,7 +102,8 @@
 | 🔙 **Backend** | Python · Django (MTV) |
 | 🗄️ **Database** | SQLite3 |
 | 🎨 **Frontend** | HTML5 · CSS3 · Vanilla JS ES6+ |
-| 📦 **Assets** | WhiteNoise Middleware |
+| 🖼️ **Media Storage** | Cloudinary CDN |
+| 📦 **Static Assets** | WhiteNoise Middleware |
 | ☁️ **Deploy** | Render Cloud Platform |
 
 </div>
@@ -136,7 +128,7 @@
 │   ├── 🎨 templates/         # Django HTML templates
 │   └── 🔗 urls.py            # App-level routes
 │
-├── 🖼️  media/                # Uploaded images
+├── 🖼️  media/                # Cloudinary media references
 ├── 🎨 static/                # CSS, JS, assets
 ├── ⚡ manage.py              # Django CLI
 └── 📋 requirements.txt       # Python dependencies
@@ -146,49 +138,18 @@
 
 <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
-## <img src="https://media.giphy.com/media/LnQjpWaON8nhr21vNW/giphy.gif" width="30"> Local Setup
-
-```bash
-# 📥 1. Clone the repository
-git clone https://github.com/Farhan2580/E-commerce.git
-cd E-commerce
-
-# 🐍 2. Create virtual environment
-python -m venv venv
-source venv/bin/activate      # 🪟 Windows: venv\Scripts\activate
-
-# 📦 3. Install dependencies
-pip install -r requirements.txt
-
-# 🔐 4. Setup environment variables
-cp .env.example .env
-
-# 🗄️ 5. Run migrations
-python manage.py migrate
-
-# 🚀 6. Start the server
-python manage.py runserver
-```
+## 🖼️ Media & Images
 
 <div align="center">
 
-> 🌐 Open **http://127.0.0.1:8000** in your browser
+> All product images, banners, and media assets are hosted on **[Cloudinary](https://cloudinary.com/)** — a powerful cloud-based media management platform.
 
-</div>
-
----
-
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
-
-## 💳 Payment Support
-
-<div align="center">
-
-| Method | Details |
+| Feature | Details |
 |:---:|:---|
-| 📲 **Bkash** | Manual settlement workflow |
-| 💰 **BDT (৳)** | Full localized pricing |
-| 🧾 **Receipt** | Order summary & confirmation |
+| ☁️ **Cloud Storage** | All images stored on Cloudinary CDN |
+| ⚡ **Fast Delivery** | Global CDN for instant image loading |
+| 🔄 **Auto Optimize** | Automatic image compression & resizing |
+| 🔗 **Secure URLs** | HTTPS delivery for all media |
 
 </div>
 
@@ -196,24 +157,17 @@ python manage.py runserver
 
 <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
-## 🤝 Contributing
+## 💳 Payment
 
 <div align="center">
 
-```
-1. 🍴 Fork the repository
-        ↓
-2. 🌿 Create feature branch
-   git checkout -b feature/amazing-feature
-        ↓
-3. 💾 Commit your changes
-   git commit -m 'Add amazing feature'
-        ↓
-4. 📤 Push to branch
-   git push origin feature/amazing-feature
-        ↓
-5. 🔁 Open a Pull Request
-```
+| Method | Status |
+|:---:|:---:|
+| 💵 **Cash on Delivery** | ✅ Available Now |
+| 💳 **Card Payment** | 🔄 Coming Soon |
+| 🅿️ **PayPal** | 🔄 Coming Soon |
+
+> 🚧 Card and PayPal integrations are currently under development and will be available in a future update.
 
 </div>
 
@@ -237,15 +191,11 @@ python manage.py runserver
 
 <div align="center">
 
-### 📄 License
+### 👨‍💻 Made by
 
-Distributed under the **MIT License**
+## **Farhan Labib**
 
----
-
-###  Made by Farhan Labib
-
-[![Farhan](https://img.shields.io/badge/GitHub-Farhan2580-1a1a2e?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Farhan2580)
+[![GitHub](https://img.shields.io/badge/GitHub-Farhan2580-1a1a2e?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Farhan2580)
 
 <br/>
 
@@ -260,4 +210,3 @@ Distributed under the **MIT License**
 <img src="https://capsule-render.vercel.app/api?type=waving&color=FF6B00&height=120&section=footer" width="100%"/>
 
 </div>
-
