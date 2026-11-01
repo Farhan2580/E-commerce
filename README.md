@@ -7,11 +7,11 @@
 
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=FF6B00&height=200&section=header&text=GadgetFlow&fontSize=70&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Tech.%20Connected.&descAlignY=58&descAlign=50" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=FF6B00&height=140&section=header&animation=fadeIn" width="100%"/>
 
-</div>
+<img src="logo.svg" alt="GadgetFlow Logo" width="420"/>
 
-<div align="center">
+<br/><br/>
 
 [![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=24&pause=800&color=FF6B00&center=true&vCenter=true&multiline=false&width=600&lines=🛒+Next-Gen+E-Commerce+Platform;⚡+Built+with+Django+%26+Love;🎨+Glassmorphic+UI+Design;💳+Cash+on+Delivery+%7C+More+Coming+Soon;🚀+Deployed+on+Render+Cloud)](https://git.io/typing-svg)
 
@@ -29,15 +29,7 @@
 
 </div>
 
-<div align="center">
 
-![Stars](https://img.shields.io/github/stars/Farhan2580/E-commerce?style=social)
-![Forks](https://img.shields.io/github/forks/Farhan2580/E-commerce?style=social)
-![Watchers](https://img.shields.io/github/watchers/Farhan2580/E-commerce?style=social)
-
-</div>
-
-<br/>
 
 <div align="center">
 
