@@ -168,7 +168,15 @@ python manage.py migrate
 
 # 🚀 6. Start the server
 python manage.py runserver
+```
 
+<div align="center">
+
+> 🌐 Open **http://127.0.0.1:8000** in your browser
+
+</div>
+
+---
 
 <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
 
@@ -235,7 +243,7 @@ Distributed under the **MIT License**
 
 ---
 
-### Made by Farhan Labib
+###  Made by Farhan Labib
 
 [![Farhan](https://img.shields.io/badge/GitHub-Farhan2580-1a1a2e?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Farhan2580)
 
