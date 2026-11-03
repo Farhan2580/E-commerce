@@ -13,7 +13,6 @@
 
 <br/><br/>
 
-[![Typing SVG](🛒+Next-Gen+E-Commerce+Platform;⚡+Built+with+Django+%26+Love;🎨+Glassmorphic+UI+Design;💳+Cash+on+Delivery+%7C+More+Coming+Soon;🚀+Deployed+on+Render+Cloud)](https://git.io/typing-svg)
 
 </div>
 
