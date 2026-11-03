@@ -13,7 +13,7 @@
 
 <br/><br/>
 
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=24&pause=800&color=FF6B00&center=true&vCenter=true&multiline=false&width=600&lines=🛒+Next-Gen+E-Commerce+Platform;⚡+Built+with+Django+%26+Love;🎨+Glassmorphic+UI+Design;💳+Cash+on+Delivery+%7C+More+Coming+Soon;🚀+Deployed+on+Render+Cloud)](https://git.io/typing-svg)
+[![Typing SVG](🛒+Next-Gen+E-Commerce+Platform;⚡+Built+with+Django+%26+Love;🎨+Glassmorphic+UI+Design;💳+Cash+on+Delivery+%7C+More+Coming+Soon;🚀+Deployed+on+Render+Cloud)](https://git.io/typing-svg)
 
 </div>
 
